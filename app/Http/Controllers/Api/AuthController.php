@@ -29,11 +29,11 @@ class AuthController extends Controller
         try {
             $dto = PhoneLoginData::fromRequest($request);
 
-            $res = $this->authService->sendOtp($dto);
+            $res = $this->authService->sendOtp($dto, $request);
             return $this->successResponse([
                 'phone' => $res['phone'],
-                'method' => $res['method']
-            ], 'OTP sent successfully');
+                'method' => $res['method'],
+            ], 'تم إرسال رمز التحقق بنجاح');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);
         }
@@ -57,7 +57,7 @@ class AuthController extends Controller
                 ],
                 'token' => $res['token'],
                 'token_type' => 'Bearer'
-            ], 'OTP verified successfully');
+            ], 'تم التحقق من رمز OTP بنجاح');
         } catch (\Exception $e) {
             return $this->validationError(['otp' => [$e->getMessage()]]);
         }
@@ -76,14 +76,14 @@ class AuthController extends Controller
 
         return $this->successResponse([
             'user' => $user->only(['id', 'name', 'email', 'full_phone'])
-        ], 'Profile completed successfully');
+        ], 'تم إكمال الملف الشخصي بنجاح');
     }
 
     // Logout (current token)
     public function logout(Request $request)
     {
         //  $request->user()->currentAccessToken()?->delete();
-        return $this->successResponse(null, 'Logged out successfully');
+        return $this->successResponse(null, 'تم تسجيل الخروج بنجاح');
     }
 
     // Current user
@@ -98,7 +98,7 @@ class AuthController extends Controller
         $request->validate(['phone_number' => ['required', 'string']]);
         $fullPhone = $request->input('phone_number');
         if (!$this->authService->canResend($fullPhone)) {
-            return $this->errorResponse('Too many OTP requests. Please try again later.', 429);
+            return $this->errorResponse('طلبات رمز التحقق كثيرة جدًا. الرجاء المحاولة لاحقًا .', 429);
         }
 
         // reuse sendOtp logic: create a fake Request DTO from number
@@ -107,7 +107,7 @@ class AuthController extends Controller
         try {
             $parts = $this->splitFullPhone($fullPhone);
             $dto = new PhoneLoginData($parts['country_code'], $parts['phone_number']);
-            $res = $this->authService->sendOtp($dto);
+            $res = $this->authService->sendOtp($dto, $request);
             return $this->successResponse(['phone' => $res['phone'], 'method' => $res['method']], 'OTP resent');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);

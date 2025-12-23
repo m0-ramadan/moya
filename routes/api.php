@@ -20,7 +20,6 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{id}', [UserAddressController::class, 'destroy']);
         });
 
-
         Route::prefix('auth')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout']);
             Route::get('/user', [AuthController::class, 'user']);
@@ -35,5 +34,4 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::get('home', [HomeController::class, 'index']);
-
 });

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Request;
 use App\Services\TwilioService;
 use App\Exceptions\OtpException;
 use App\Services\Otp\OtpManager;
@@ -24,35 +25,32 @@ class AuthService
     /**
      * Send OTP (tries Twilio Verify, falls back to SMS via local generated OTP)
      */
-    public function sendOtp(PhoneLoginData $data): array
+    public function sendOtp(PhoneLoginData $data, Request $request): array
     {
-        // 1️⃣ find or create user
+        // 1️⃣ Find or create user
         $user = $this->users->findByFullPhone($data->full_phone)
             ?? $this->users->createByPhone($data->country_code, $data->phone_number);
 
         /* ==========================
-     | Try WhatsApp OTP first
+     | Check if user requested SMS explicitly
      ========================== */
-        $res = $this->twilio->sendOtpWhatsapp($data->full_phone);
-
-
-        // dd($res);
-
-        if ($res['success'] ?? false) {
-            return [
-                'method' => 'whatsapp_verify',
-                'phone' => $data->full_phone,
-            ];
+        if ($request->input('otp_method') === 'sms') {
+            $res = $this->twilio->sendOtpSms($data->full_phone);
+            if (!empty($res['success']) && $res['success'] === true) {
+                return [
+                    'method' => 'sms_verify',
+                    'phone' => $data->full_phone,
+                ];
+            }
         }
 
         /* ==========================
-     | Fallback to SMS OTP
+     | Try WhatsApp OTP
      ========================== */
-        $res = $this->twilio->sendOtpSms($data->full_phone);
-
-        if ($res['success'] ?? false) {
+        $res = $this->twilio->sendOtpWhatsapp($data->full_phone);
+        if (!empty($res['success']) && $res['success'] === true) {
             return [
-                'method' => 'sms_verify',
+                'method' => 'whatsapp_verify',
                 'phone' => $data->full_phone,
             ];
         }
@@ -67,8 +65,8 @@ class AuthService
             "رمز التحقق الخاص بك هو: $otp\nصالح لمدة 10 دقائق"
         );
 
-        if (!($sms['success'] ?? false)) {
-            throw new OtpException('Failed to send OTP via all channels');
+        if (empty($sms['success']) || $sms['success'] !== true) {
+            throw new OtpException('فشل إرسال رمز التحقق عبر جميع القنوات');
         }
 
         return [
@@ -76,6 +74,7 @@ class AuthService
             'phone' => $data->full_phone,
         ];
     }
+
 
 
     /**
