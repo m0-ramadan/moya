@@ -26,27 +26,57 @@ class AuthService
      */
     public function sendOtp(PhoneLoginData $data): array
     {
-        // find or create user
+        // 1️⃣ find or create user
         $user = $this->users->findByFullPhone($data->full_phone)
             ?? $this->users->createByPhone($data->country_code, $data->phone_number);
 
-        // Try Twilio Verify
-        $res = $this->twilio->sendOtp($data->full_phone);
+        /* ==========================
+     | Try WhatsApp OTP first
+     ========================== */
+        $res = $this->twilio->sendOtpWhatsapp($data->full_phone);
 
-        if (!($res['success'] ?? false)) {
-            // fallback: generate local otp + send sms
-            $otp = $this->otpManager->generateAndStore($user);
-            $sms = $this->twilio->sendSms($data->full_phone, "Your OTP is: $otp. Valid for 10 minutes.");
 
-            if (!($sms['success'] ?? false)) {
-                throw new OtpException('Failed to send OTP via fallback SMS');
-            }
+dd($res);
 
-            return ['method' => 'sms_fallback', 'phone' => $data->full_phone];
+        if ($res['success'] ?? false) {
+            return [
+                'method' => 'whatsapp_verify',
+                'phone' => $data->full_phone,
+            ];
         }
 
-        return ['method' => 'twilio_verify', 'phone' => $data->full_phone];
+        /* ==========================
+     | Fallback to SMS OTP
+     ========================== */
+        // $res = $this->twilio->sendOtpSms($data->full_phone);
+
+        // if ($res['success'] ?? false) {
+        //     return [
+        //         'method' => 'sms_verify',
+        //         'phone' => $data->full_phone,
+        //     ];
+        // }
+
+        /* ==========================
+     | Final fallback: Local OTP + SMS
+     ========================== */
+        $otp = $this->otpManager->generateAndStore($user);
+
+        $sms = $this->twilio->sendSms(
+            $data->full_phone,
+            "رمز التحقق الخاص بك هو: $otp\nصالح لمدة 10 دقائق"
+        );
+
+        if (!($sms['success'] ?? false)) {
+            throw new OtpException('Failed to send OTP via all channels');
+        }
+
+        return [
+            'method' => 'local_sms_fallback',
+            'phone' => $data->full_phone,
+        ];
     }
+
 
     /**
      * Verify OTP: try Twilio verify then fallback local verification

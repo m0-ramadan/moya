@@ -7,91 +7,132 @@ use Exception;
 
 class TwilioService
 {
-    protected $client;
-    protected $verifySid;
+    protected Client $client;
+    protected string $verifySid;
 
     public function __construct()
     {
-        $sid = config('services.twilio.sid');
-        $token = config('services.twilio.auth_token');
-        $this->verifySid = config('services.twilio.verify_sid');
+        $this->client = new Client(
+            config('services.twilio.sid'),
+            config('services.twilio.auth_token')
+        );
 
-        $this->client = new Client($sid, $token);
+        $this->verifySid = config('services.twilio.verify_sid');
     }
 
-    /**
-     * Send OTP via SMS
-     */
-    public function sendOtp(string $phoneNumber): array
+    /* =======================
+     | OTP
+     ======================= */
+
+    // OTP via SMS
+    public function sendOtpSms(string $phone): array
+    {
+        return $this->sendVerifyOtp($phone, 'sms');
+    }
+
+    // OTP via WhatsApp
+    public function sendOtpWhatsapp(string $phone): array
+    {
+        return $this->sendVerifyOtp("whatsapp:$phone", 'whatsapp');
+    }
+
+    protected function sendVerifyOtp(string $to, string $channel): array
     {
         try {
-            $verification = $this->client->verify->v2->services($this->verifySid)
+            $verification = $this->client
+                ->verify->v2
+                ->services($this->verifySid)
                 ->verifications
-                ->create($phoneNumber, "sms");
+                ->create($to, $channel);
 
             return [
                 'success' => true,
-                'sid' => $verification->sid,
+                'channel' => $channel,
                 'status' => $verification->status,
-                'to' => $verification->to
             ];
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
 
-    /**
-     * Verify OTP
-     */
-    public function verifyOtp(string $phoneNumber, string $code): array
+    public function verifyOtp(string $phone, string $code): array
     {
         try {
-            $verificationCheck = $this->client->verify->v2->services($this->verifySid)
+            $check = $this->client
+                ->verify->v2
+                ->services($this->verifySid)
                 ->verificationChecks
                 ->create([
-                    'to' => $phoneNumber,
-                    'code' => $code
+                    'to' => $phone,
+                    'code' => $code,
                 ]);
 
             return [
-                'success' => $verificationCheck->status === 'approved',
-                'status' => $verificationCheck->status,
-                'valid' => $verificationCheck->valid
+                'success' => $check->status === 'approved',
+                'status' => $check->status,
             ];
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
 
-    /**
-     * Send SMS directly (fallback method)
-     */
-    public function sendSms(string $to, string $message): array
+    /* =======================
+     | WhatsApp Messages
+     ======================= */
+
+    public function sendWhatsapp(string $to, string $message): array
     {
         try {
-            $message = $this->client->messages->create(
-                $to,
+            $msg = $this->client->messages->create(
+                "whatsapp:$to",
                 [
-                    'from' => config('services.twilio.from'),
-                    'body' => $message
+                    'from' => config('services.twilio.whatsapp_from'),
+                    'body' => $message,
                 ]
             );
 
             return [
                 'success' => true,
-                'sid' => $message->sid,
-                'status' => $message->status
+                'sid' => $msg->sid,
+                'status' => $msg->status,
             ];
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /* =======================
+     | SMS Fallback
+     ======================= */
+
+    public function sendSms(string $to, string $message): array
+    {
+        try {
+            $msg = $this->client->messages->create(
+                $to,
+                [
+                    'from' => config('services.twilio.from'),
+                    'body' => $message,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'sid' => $msg->sid,
+            ];
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
             ];
         }
     }
