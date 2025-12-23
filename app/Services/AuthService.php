@@ -36,7 +36,7 @@ class AuthService
         $res = $this->twilio->sendOtpWhatsapp($data->full_phone);
 
 
-dd($res);
+        // dd($res);
 
         if ($res['success'] ?? false) {
             return [
@@ -48,14 +48,14 @@ dd($res);
         /* ==========================
      | Fallback to SMS OTP
      ========================== */
-        // $res = $this->twilio->sendOtpSms($data->full_phone);
+        $res = $this->twilio->sendOtpSms($data->full_phone);
 
-        // if ($res['success'] ?? false) {
-        //     return [
-        //         'method' => 'sms_verify',
-        //         'phone' => $data->full_phone,
-        //     ];
-        // }
+        if ($res['success'] ?? false) {
+            return [
+                'method' => 'sms_verify',
+                'phone' => $data->full_phone,
+            ];
+        }
 
         /* ==========================
      | Final fallback: Local OTP + SMS

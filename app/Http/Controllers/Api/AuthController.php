@@ -28,7 +28,7 @@ class AuthController extends Controller
     {
         try {
             $dto = PhoneLoginData::fromRequest($request);
-        
+
             $res = $this->authService->sendOtp($dto);
             return $this->successResponse([
                 'phone' => $res['phone'],
@@ -58,7 +58,6 @@ class AuthController extends Controller
                 'token' => $res['token'],
                 'token_type' => 'Bearer'
             ], 'OTP verified successfully');
-
         } catch (\Exception $e) {
             return $this->validationError(['otp' => [$e->getMessage()]]);
         }
@@ -83,14 +82,14 @@ class AuthController extends Controller
     // Logout (current token)
     public function logout(Request $request)
     {
-      //  $request->user()->currentAccessToken()?->delete();
+        //  $request->user()->currentAccessToken()?->delete();
         return $this->successResponse(null, 'Logged out successfully');
     }
 
     // Current user
     public function user(Request $request)
     {
-        return $this->successResponse(['user' => $request->user()->load('profile')]);
+        return $this->successResponse(['user' => $request->user()]);
     }
 
     // Resend OTP
