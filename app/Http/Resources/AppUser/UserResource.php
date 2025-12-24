@@ -21,7 +21,7 @@ class UserResource extends JsonResource
             'full_phone'   => $this->full_phone,
             'phone_number' => $this->phone_number,
             'country_code' => $this->country_code,
-            'avatar'       => $this->avatar ? asset('storage/' . $this->avatar) : null,
+            'avatar'       => get_user_image($this->avatar),
         ];
     }
 }
