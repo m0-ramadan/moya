@@ -25,44 +25,62 @@ class AuthService
     /**
      * Send OTP (tries Twilio Verify, falls back to SMS via local generated OTP)
      */
-    public function sendOtp(PhoneLoginData $data, Request $request): array
+    public function sendOtp(PhoneLoginData $data,  $request): array
     {
-        $code = random_int(100000, 999999);
         // 1️⃣ Find or create user
         $user = $this->users->findByFullPhone($data->full_phone)
             ?? $this->users->createByPhone($data->country_code, $data->phone_number);
 
+        // 2️⃣ Generate OTP once
+        $otp = $this->otpManager->generateAndStore($user);
+
         /* ==========================
-     | Check if user requested SMS explicitly
+     | User explicitly wants SMS
      ========================== */
-        if ($request->input('otp_method') === 'sms') {
-            $res = $this->twilio->sendOtpSms($data->full_phone);
-            if (!empty($res['success']) && $res['success'] === true) {
+        if ($request->input('otp_method') === "sms") {
+
+            $sms = $this->twilio->sendSms(
+                $data->full_phone,
+                "رمز التحقق الخاص بك هو: $otp\nصالح لمدة 10 دقائق"
+            );
+
+            if (!empty($sms['success']) && $sms['success'] === true) {
                 return [
                     'method' => 'sms_verify',
                     'phone' => $data->full_phone,
+                    'otp' => $otp,
+
+                ];
+            } else {
+                // لو فشل الإرسال، نرجع السبب
+                return [
+                    'method' => 'sms_verify',
+                    'phone' => $data->full_phone,
+                    'otp' => $otp,
+
+                    'success' => false,
+                    'error' => $sms['error'] ?? 'فشل إرسال الرسالة بدون سبب محدد',
                 ];
             }
         }
 
+
         /* ==========================
      | Try WhatsApp OTP
      ========================== */
-        $res = $this->twilio->sendWhatsappOtp($data->full_phone, $code);
+        $whatsapp = $this->twilio->sendWhatsappOtp($data->full_phone, $otp);
 
-        if (!empty($res['success']) && $res['success'] === true) {
+        if (!empty($whatsapp['success']) && $whatsapp['success'] === true) {
             return [
                 'method' => 'whatsapp_verify',
                 'phone' => $data->full_phone,
-                'code' => $code,
+                'otp' => $otp,
             ];
         }
 
         /* ==========================
-     | Final fallback: Local OTP + SMS
+     | Final fallback: SMS
      ========================== */
-        $otp = $this->otpManager->generateAndStore($user);
-
         $sms = $this->twilio->sendSms(
             $data->full_phone,
             "رمز التحقق الخاص بك هو: $otp\nصالح لمدة 10 دقائق"
@@ -73,7 +91,7 @@ class AuthService
         }
 
         return [
-            'method' => 'local_sms_fallback',
+            'method' => 'sms_fallback',
             'phone' => $data->full_phone,
         ];
     }
