@@ -70,16 +70,27 @@ class AuthController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'unique:users,email']
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif', 'max:2048'], // 2MB max
+            'email' => ['nullable', 'email', 'max:255'],
         ]);
 
         $user = $request->user();
-        $user->update($request->only(['name', 'email']));
+
+        $data = $request->only(['name', 'email']);
+
+        // لو فيه صورة
+        if ($request->hasFile('avatar')) {
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            $data['avatar'] = $avatarPath;
+        }
+
+        $user->update($data);
 
         return $this->successResponse([
             'user' => new UserResource($user)
         ], 'تم إكمال الملف الشخصي بنجاح');
     }
+
 
     // Logout (current token)
     public function logout(Request $request)
