@@ -3,14 +3,15 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\PhoneLoginRequest;
-use App\Http\Requests\Auth\VerifyOtpRequest;
-use App\DataTransferObjects\PhoneLoginData;
+use App\Models\User;
+use Illuminate\Http\Request;
 use App\Services\AuthService;
 use App\Traits\ApiResponseTrait;
-use Illuminate\Http\Request;
-use App\Models\User;
+use App\Http\Controllers\Controller;
+use App\DataTransferObjects\PhoneLoginData;
+use App\Http\Requests\Auth\VerifyOtpRequest;
+use App\Http\Resources\AppUser\UserResource;
+use App\Http\Requests\Auth\PhoneLoginRequest;
 
 class AuthController extends Controller
 {
@@ -34,8 +35,6 @@ class AuthController extends Controller
                 'phone' => $res['phone'],
                 'method' => $res['method'],
                 'otp' => $res['otp'],
-
-
             ], 'تم إرسال رمز التحقق بنجاح');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);
@@ -78,21 +77,21 @@ class AuthController extends Controller
         $user->update($request->only(['name', 'email']));
 
         return $this->successResponse([
-            'user' => $user->only(['id', 'name', 'email', 'full_phone'])
+            'user' => new UserResource($user)
         ], 'تم إكمال الملف الشخصي بنجاح');
     }
 
     // Logout (current token)
     public function logout(Request $request)
     {
-        //  $request->user()->currentAccessToken()?->delete();
+        $request->user()->currentAccessToken()?->delete();
         return $this->successResponse(null, 'تم تسجيل الخروج بنجاح');
     }
 
     // Current user
     public function user(Request $request)
     {
-        return $this->successResponse(['user' => $request->user()]);
+        return $this->successResponse(new UserResource($request->user()));
     }
 
     // Resend OTP
