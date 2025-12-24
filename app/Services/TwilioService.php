@@ -33,8 +33,9 @@ class TwilioService
     // OTP via WhatsApp
     public function sendOtpWhatsapp(string $phone): array
     {
-        return $this->sendVerifyOtp("whatsapp:$phone", 'whatsapp');
+        return $this->sendVerifyOtp($phone, 'whatsapp');
     }
+
 
     protected function sendVerifyOtp(string $to, string $channel): array
     {
@@ -86,14 +87,17 @@ class TwilioService
      | WhatsApp Messages
      ======================= */
 
-    public function sendWhatsapp(string $to, string $message): array
+    public function sendWhatsappOtp(string $to, string $code): array
     {
         try {
             $msg = $this->client->messages->create(
                 "whatsapp:$to",
                 [
-                    'from' => config('services.twilio.whatsapp_from'),
-                    'body' => $message,
+                    'from' => 'whatsapp:+14155238886', // أو config
+                    'contentSid' => 'HX229f5a04fd0510ce1b071852155d3e75',
+                    'contentVariables' => json_encode([
+                        '1' => $code
+                    ]),
                 ]
             );
 
@@ -102,13 +106,14 @@ class TwilioService
                 'sid' => $msg->sid,
                 'status' => $msg->status,
             ];
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return [
                 'success' => false,
                 'error' => $e->getMessage(),
             ];
         }
     }
+
 
     /* =======================
      | SMS Fallback

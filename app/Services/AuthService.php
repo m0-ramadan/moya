@@ -27,6 +27,7 @@ class AuthService
      */
     public function sendOtp(PhoneLoginData $data, Request $request): array
     {
+        $code = random_int(100000, 999999);
         // 1️⃣ Find or create user
         $user = $this->users->findByFullPhone($data->full_phone)
             ?? $this->users->createByPhone($data->country_code, $data->phone_number);
@@ -47,11 +48,13 @@ class AuthService
         /* ==========================
      | Try WhatsApp OTP
      ========================== */
-        $res = $this->twilio->sendOtpWhatsapp($data->full_phone);
+        $res = $this->twilio->sendWhatsappOtp($data->full_phone, $code);
+
         if (!empty($res['success']) && $res['success'] === true) {
             return [
                 'method' => 'whatsapp_verify',
                 'phone' => $data->full_phone,
+                'code' => $code,
             ];
         }
 
