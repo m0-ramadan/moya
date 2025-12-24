@@ -34,8 +34,9 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'otp_expires_at' => 'datetime',
     ];
-  /**
+    /**
      * Get the user's formatted phone number
      */
     public function getFormattedPhoneAttribute(): string
@@ -109,5 +110,4 @@ class User extends Authenticatable
 
         return false;
     }
-
 }
