@@ -22,8 +22,6 @@ class SliderResource extends JsonResource
             'link' => $this->link,
             'order' => $this->order,
             'is_active' => $this->is_active,
-            'created_at' => $this->created_at->toDateTimeString(),
-            'updated_at' => $this->updated_at->toDateTimeString(),
         ];
     }
 }

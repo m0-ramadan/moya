@@ -5,10 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\SliderController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\StaticPagesController;
-use App\Http\Controllers\Api\Website\CartController;
 use App\Http\Controllers\Api\Website\HomeController;
-use App\Http\Controllers\Api\Website\ProductController;
-use App\Http\Controllers\Api\Website\CategoryController;
 use App\Http\Controllers\Api\Website\UserAddressController;
 
 
@@ -30,8 +27,6 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/services', [ServiceController::class, 'index']);
         Route::get('/sliders', [SliderController::class, 'index']);
-
-        Route::get('static-pages/{slug}', [StaticPagesController::class, 'index']);
     });
 
     Route::prefix('auth')->group(function () {
@@ -41,4 +36,5 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::get('home', [HomeController::class, 'index']);
+    Route::get('static-pages/{slug}', [StaticPagesController::class, 'index']);
 });

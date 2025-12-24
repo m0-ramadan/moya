@@ -13,9 +13,7 @@ class StaticPagesController extends Controller
     use ApiResponseTrait;
     public function index($slug)
     {
-
         $page = StaticPage::where('slug', $slug)->first();
-
         return $this->success(new StaticPageResource($page), 'تم جلب بيانات الصفحة بنجاح');
     }
 }

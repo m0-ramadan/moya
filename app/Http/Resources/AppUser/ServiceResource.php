@@ -13,7 +13,7 @@ class ServiceResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             //'image_url' => $this->image ? asset('storage/' . $this->image) : null,
-            'image_url' => $this->image ? asset('storage/' . $this->image) : null,
+            'image_url' => 'https://i.ibb.co/HfQygsxR/Whats-App-Image-2025-12-25-at-12-09-56-AM.jpg',
             'is_active' => $this->is_active,
         ];
     }
