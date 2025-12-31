@@ -33,6 +33,8 @@ Route::prefix('v1')->group(function () {
         });
     });
     Route::get('/services', [ServiceController::class, 'index']);
+    Route::get('/type-water', [ServiceController::class, 'typeWater']);
+
     Route::get('/sliders', [SliderController::class, 'index']);
 
     Route::prefix('auth')->group(function () {
