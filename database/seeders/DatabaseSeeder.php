@@ -28,9 +28,11 @@ class DatabaseSeeder extends Seeder
             //    UserSeeder::class,
 
             //    SocialMediaSeeder::class,
-            ServiceSeeder::class,
-            SliderSeeder::class,
+            // ServiceSeeder::class,
+            // SliderSeeder::class,
 
+            ArticleCategorySeeder::class,
+            ArticleSeeder::class,
         ]);
     }
 }

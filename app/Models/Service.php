@@ -13,5 +13,7 @@ class Service extends Model
         'name',
         'image',
         'is_active',
+        'start_price',
+        'title',
     ];
 }

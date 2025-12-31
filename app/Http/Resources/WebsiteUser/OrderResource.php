@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Http\Resources\WebsiteUser;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+
+class OrderResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+
+            'service' => [
+                'id'   => $this->service->id,
+                'name' => $this->service->name,
+                'image' => $this->service->image,
+            ],
+
+            'water_type' => $this->waterType ? [
+                'id'   => $this->waterType->id,
+                'name' => $this->waterType->name,
+                'image' => $this->waterType->image,
+            ] : null,
+
+            'location' => [
+                'id'        => $this->location->id,
+                'name'      => $this->location->name,
+                'address'   => $this->location->address,
+                'latitude'  => $this->location->latitude,
+                'longitude' => $this->location->longitude,
+            ],
+
+            'status' => [
+                'id'    => $this->status->id,
+                'name'  => $this->status->name,
+                'label' => $this->status->label,
+            ],
+
+            'driver' => $this->driver ? [
+                'id'    => $this->driver->id,
+                'name'  => $this->driver->name,
+                'phone' => $this->driver->phone,
+            ] : null,
+
+            'price' => optional($this->acceptedOffer)->price,
+
+            'created_at' => $this->created_at->format('Y-m-d H:i'),
+        ];
+    }
+}
