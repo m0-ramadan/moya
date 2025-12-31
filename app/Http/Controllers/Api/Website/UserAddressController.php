@@ -3,55 +3,124 @@
 namespace App\Http\Controllers\Api\Website;
 
 use App\Models\UserAddress;
-use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
+use App\Models\SavedLocation;
+use App\Traits\ApiResponseTrait;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\Website\UserAddressResource;
 use App\Http\Requests\Website\StoreUserAddressRequest;
 use App\Http\Requests\Website\UpdateUserAddressRequest;
+use App\Http\Resources\WebsiteUser\SavedLocationResource;
 
 
 class UserAddressController extends Controller
 {
     use ApiResponseTrait;
 
+    /**
+     * كل عناوين المستخدم
+     */
     public function index()
     {
-        $addresses = UserAddress::where('user_id', Auth::id())->get();
-        return $this->success(UserAddressResource::collection($addresses), 'تم جلب العناوين بنجاح');
+        $addresses = SavedLocation::where('user_id', Auth::id())
+            ->latest()
+            ->get();
+
+        return $this->success(
+            SavedLocationResource::collection($addresses),
+            'تم جلب العناوين بنجاح'
+        );
     }
 
+    /**
+     * عنوان واحد
+     */
     public function show($id)
     {
-        $address = UserAddress::where('user_id', Auth::id())->find($id);
+        $address = SavedLocation::where('user_id', Auth::id())
+            ->find($id);
+
         return $address
-            ? $this->success(new UserAddressResource($address), 'تم جلب العنوان بنجاح')
+            ? $this->success(new SavedLocationResource($address), 'تم جلب العنوان بنجاح')
             : $this->error('العنوان غير موجود', 404);
     }
 
-    public function store(StoreUserAddressRequest $request)
+    /**
+     * إضافة عنوان
+     */
+    public function store(Request $request)
     {
-        $address = UserAddress::create($request->validated() + ['user_id' => Auth::id()]);
-        return $this->success(new UserAddressResource($address), 'تم إضافة العنوان بنجاح', 201);
+        $validated = $request->validate([
+            'name'       => 'nullable|string|max:255',
+            'address'    => 'nullable|string',
+            'city'       => 'nullable|string|max:255',
+            'area'       => 'nullable|string|max:255',
+            'latitude'   => 'nullable|numeric',
+            'longitude'  => 'nullable|numeric',
+            'type'       => 'nullable|string', // home, work
+            'is_favorite' => 'boolean',
+            'additional_info' => 'nullable|string',
+        ]);
+
+        $address = SavedLocation::create([
+            'user_id' => Auth::id(),
+            ...$validated,
+        ]);
+
+        return $this->success(
+            new SavedLocationResource($address),
+            'تم إضافة العنوان بنجاح',
+            201
+        );
     }
 
-    public function update(UpdateUserAddressRequest $request, $id)
+    /**
+     * تحديث عنوان
+     */
+    public function update(Request $request, $id)
     {
-        $address = UserAddress::where('user_id', Auth::id())->find($id);
+        $address = SavedLocation::where('user_id', Auth::id())
+            ->find($id);
 
-        if (!$address) return $this->error('العنوان غير موجود', 404);
+        if (!$address) {
+            return $this->error('العنوان غير موجود', 404);
+        }
 
-        $address->update($request->validated());
-        return $this->success(new UserAddressResource($address), 'تم تحديث العنوان بنجاح');
+        $validated = $request->validate([
+            'name'       => 'nullable|string|max:255',
+            'address'    => 'nullable|string',
+            'city'       => 'nullable|string|max:255',
+            'area'       => 'nullable|string|max:255',
+            'latitude'   => 'nullable|numeric',
+            'longitude'  => 'nullable|numeric',
+            'type'       => 'nullable|string',
+            'is_favorite' => 'boolean',
+            'additional_info' => 'nullable|string',
+        ]);
+
+        $address->update($validated);
+
+        return $this->success(
+            new SavedLocationResource($address),
+            'تم تحديث العنوان بنجاح'
+        );
     }
 
+    /**
+     * حذف عنوان
+     */
     public function destroy($id)
     {
-        $address = UserAddress::where('user_id', Auth::id())->find($id);
-        if (!$address) return $this->error('العنوان غير موجود', 404);
+        $address = SavedLocation::where('user_id', Auth::id())
+            ->find($id);
+
+        if (!$address) {
+            return $this->error('العنوان غير موجود', 404);
+        }
 
         $address->delete();
+
         return $this->success(null, 'تم حذف العنوان بنجاح');
     }
 }
