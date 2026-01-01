@@ -7,7 +7,7 @@ use App\Models\WaterType;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponseTrait;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\AppUser\ServiceResource;
+use App\Http\Resources\WebsiteUser\ServiceResource;
 use App\Http\Resources\WebsiteUser\WaterTypeResource;
 
 class ServiceController extends Controller
