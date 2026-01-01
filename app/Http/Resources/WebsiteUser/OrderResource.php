@@ -47,7 +47,7 @@ class OrderResource extends JsonResource
 
             'price' => optional($this->acceptedOffer)->price,
 
-            'order_date' => $this->order_date->format('Y-m-d H:i'),
+            'order_date' => $this->order_date,
 
             'created_at' => $this->created_at->format('Y-m-d H:i'),
         ];
