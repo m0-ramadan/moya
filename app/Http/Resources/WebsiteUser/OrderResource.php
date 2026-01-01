@@ -25,19 +25,19 @@ class OrderResource extends JsonResource
                 'image' => $this->waterType->image,
             ] : null,
 
-            'location' => [
+            'location' => $this->location ? [
                 'id'        => $this->location->id,
                 'name'      => $this->location->name,
                 'address'   => $this->location->address,
                 'latitude'  => $this->location->latitude,
                 'longitude' => $this->location->longitude,
-            ],
+            ] : null,
 
-            'status' => [
+            'status' => $this->status ? [
                 'id'    => $this->status->id,
                 'name'  => $this->status->name,
                 'label' => $this->status->label,
-            ],
+            ] : null,
 
             'driver' => $this->driver ? [
                 'id'    => $this->driver->id,
@@ -46,6 +46,8 @@ class OrderResource extends JsonResource
             ] : null,
 
             'price' => optional($this->acceptedOffer)->price,
+
+            'order_date' => $this->order_date->format('Y-m-d H:i'),
 
             'created_at' => $this->created_at->format('Y-m-d H:i'),
         ];

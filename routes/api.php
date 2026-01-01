@@ -31,6 +31,14 @@ Route::prefix('v1')->group(function () {
             Route::get('/user', [AuthController::class, 'user']);
             Route::post('/complete-profile', [AuthController::class, 'completeProfile']);
         });
+
+        // إنشاء طلب
+
+        Route::prefix('orders')->group(function () {
+            Route::post('/', [OrderController::class, 'store']);
+            Route::get('/', [OrderController::class, 'index']);
+            Route::get('/{id}', [OrderController::class, 'show']);
+        });
     });
     Route::get('/services', [ServiceController::class, 'index']);
     Route::get('/type-water', [ServiceController::class, 'typeWater']);
@@ -90,10 +98,6 @@ Route::prefix('v1')->group(function () {
 
     Route::post('contact-us', [ContactUsController::class, 'store']);
 
-    // إنشاء طلب
-    Route::post('/orders', [OrderController::class, 'store']);
-    Route::get('/orders', [OrderController::class, 'index']);
-    Route::get('/orders/{id}', [OrderController::class, 'show']);
 
     // حفظ عنوان
     Route::post('/locations', [SavedLocationController::class, 'store']);

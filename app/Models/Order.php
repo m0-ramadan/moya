@@ -15,6 +15,7 @@ class Order extends Model
         'saved_location_id',
         'order_status_id',
         'price',
+        'order_date'
     ];
 
     // المستخدم

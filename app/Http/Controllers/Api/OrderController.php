@@ -20,32 +20,24 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'service_id'        => 'required|exists:services,id',
-            'water_type_id'     => 'nullable|exists:water_types,id',
+            'water_type_id'     => 'nullable',
             'saved_location_id' => 'required|exists:saved_locations,id',
         ]);
 
         try {
             DB::beginTransaction();
-
             $order = Order::create([
                 'user_id'           => auth()->id(),
                 'service_id'        => $validated['service_id'],
                 'water_type_id'     => $validated['water_type_id'] ?? null,
                 'saved_location_id' => $validated['saved_location_id'],
                 'order_status_id'   => 1, // pending
+                'order_date'        => $validated['order_date'] ?? now(),
             ]);
-
             DB::commit();
 
             return $this->successResponse(
-                new OrderResource(
-                    $order->load([
-                        'service',
-                        'waterType',
-                        'location',
-                        'status',
-                    ])
-                ),
+                new OrderResource($order),
                 'تم إنشاء الطلب بنجاح',
                 201
             );
@@ -53,7 +45,7 @@ class OrderController extends Controller
             DB::rollBack();
 
             return $this->errorResponse(
-                'فشل إنشاء الطلب',
+                $e->getMessage(),
                 500
             );
         }
