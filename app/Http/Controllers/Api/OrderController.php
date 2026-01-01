@@ -21,6 +21,7 @@ class OrderController extends Controller
         $validated = $request->validate([
             'service_id'        => 'required|exists:services,id',
             'water_type_id'     => 'nullable',
+            'order_date'        => 'nullable',
             'saved_location_id' => 'required|exists:saved_locations,id',
         ]);
 
