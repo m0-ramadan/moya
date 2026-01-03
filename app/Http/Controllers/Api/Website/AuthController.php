@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Api\Website;
 
 use App\Models\User;
+use App\Models\DeviceToken;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponseTrait;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
+use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\Website\LoginRequest;
 use App\Http\Requests\Website\RegisterRequest;
 use App\Http\Requests\Website\SocialMediaLoginRequest;
@@ -55,6 +56,14 @@ class AuthController extends Controller
                 return $this->error('بيانات الدخول غير صحيحة', 401);
             }
 
+            if ($request->has('device_token')) {
+                DeviceToken::whereNull('user_id')
+                    ->where('token', $request->device_token)
+                    ->update([
+                        'user_id' => auth()->id()
+                    ]);
+            }
+
             $token = $user->createToken('api_token')->plainTextToken;
 
             return $this->success([
@@ -76,8 +85,8 @@ class AuthController extends Controller
             $column = "{$request->provider}_id";
 
             $user = User::where($column, $request->provider_id)
-                        ->orWhere('email', $request->email)
-                        ->first();
+                ->orWhere('email', $request->email)
+                ->first();
 
             if (!$user) {
                 $user = User::create([

@@ -231,7 +231,7 @@ class NotificationController extends Controller
             }
 
             // تسجيل النشاط (اختياري)
-          //  $this->logNotificationActivity($sender, $receiver, $notification);
+            //  $this->logNotificationActivity($sender, $receiver, $notification);
 
             return $this->successResponse(
                 [
@@ -423,39 +423,34 @@ class NotificationController extends Controller
     {
         $request->validate([
             'token' => 'required|string',
-            'device_type' => 'nullable|string|in:android,ios,web',
+            'device_type' => 'nullable|in:android,ios,web',
             'device_name' => 'nullable|string',
             'device_model' => 'nullable|string',
             'app_version' => 'nullable|string',
         ]);
 
-        $user = Auth::user();
+        $user = Auth::user(); // ممكن null
 
-        try {
-            // تحديث أو إنشاء token
-            $deviceToken = DeviceToken::updateOrCreate(
-                [
-                    'token' => $request->token,
-                    'user_id' => $user->id,
-                ],
-                [
-                    'device_type' => $request->device_type,
-                    'device_name' => $request->device_name,
-                    'device_model' => $request->device_model,
-                    'app_version' => $request->app_version,
-                    'is_active' => true,
-                ]
-            );
+        $deviceToken = DeviceToken::updateOrCreate(
+            [
+                'token' => $request->token,
+            ],
+            [
+                'user_id'      => $user?->id, // 👈 مهم
+                'device_type'  => $request->device_type,
+                'device_name'  => $request->device_name,
+                'device_model' => $request->device_model,
+                'app_version'  => $request->app_version,
+                'is_active'    => true,
+            ]
+        );
 
-            return $this->successResponse(
-                $deviceToken,
-                'تم تسجيل جهازك للإشعارات بنجاح'
-            );
-        } catch (\Exception $e) {
-            Log::error('Failed to register device token: ' . $e->getMessage());
-            return $this->errorResponse('فشل تسجيل الجهاز', 500);
-        }
+        return $this->successResponse(
+            $deviceToken,
+            'تم تسجيل الجهاز بنجاح'
+        );
     }
+
 
     /**
      * Remove device token.
@@ -466,21 +461,15 @@ class NotificationController extends Controller
             'token' => 'required|string',
         ]);
 
-        $user = Auth::user();
-
-        $deleted = DeviceToken::where('user_id', $user->id)
-            ->where('token', $request->token)
-            ->delete();
+        $deleted = DeviceToken::where('token', $request->token)->delete();
 
         if ($deleted) {
-            return $this->successResponse(
-                null,
-                'تم إزالة الجهاز بنجاح'
-            );
+            return $this->successResponse(null, 'تم إزالة الجهاز');
         }
 
         return $this->errorResponse('الجهاز غير موجود', 404);
     }
+
 
     /**
      * Get user's device tokens.

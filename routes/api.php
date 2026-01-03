@@ -71,9 +71,6 @@ Route::prefix('v1')->group(function () {
             Route::post('/send-to-multiple', [NotificationController::class, 'sendToMultipleUsers'])->middleware('can:admin');
             Route::post('/send-test/{userId}', [NotificationController::class, 'sendTestToUser'])->middleware('can:admin');
 
-            // إدارة أجهزة المستخدم
-            Route::post('/register-device', [NotificationController::class, 'registerDeviceToken']);
-            Route::post('/remove-device', [NotificationController::class, 'removeDeviceToken']);
             Route::get('/user-devices/{userId}', [NotificationController::class, 'getUserDevices']);
 
             // Admin only route
@@ -145,4 +142,11 @@ Route::prefix('v1')->group(function () {
 
     // حفظ عنوان
     Route::post('/locations', [SavedLocationController::class, 'store']);
+
+    // Notification routes
+    Route::prefix('notifications')->group(function () {
+        // إدارة أجهزة المستخدم
+        Route::post('/register-device', [NotificationController::class, 'registerDeviceToken']);
+        Route::post('/remove-device', [NotificationController::class, 'removeDeviceToken']);
+    });
 });
