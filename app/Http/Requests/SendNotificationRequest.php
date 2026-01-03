@@ -9,7 +9,7 @@ class SendNotificationRequest extends FormRequest
     public function authorize()
     {
         // يمكنك تعديل الصلاحيات هنا
-        return $this->user()->hasRole('admin') || $this->user()->hasPermission('send_notifications');
+        return true;
     }
 
     public function rules()
