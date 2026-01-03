@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Order;
+use App\Models\OrderStatus;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\DB;
@@ -55,25 +56,35 @@ class OrderController extends Controller
     /**
      * كل طلبات المستخدم
      */
-    public function index()
+    public function index(Request $request)
     {
-        $orders = Order::with([
+        $query = Order::with([
             'service',
             'waterType',
             'location',
             'status',
             'driver',
             'acceptedOffer',
-        ])
-            ->where('user_id', auth()->id())
-            ->latest()
-            ->get();
+        ])->where('user_id', auth()->id());
 
-        return $this->successResponse(
+        // 🔍 فلترة حسب الحالة
+        if ($request->filled('status_id')) {
+            $query->where('status_id', $request->status_id);
+        }
+
+        // 📄 Pagination
+        $perPage = $request->get('per_page', 10);
+
+        $orders = $query
+            ->latest()
+            ->paginate($perPage);
+
+        return $this->paginated(
             OrderResource::collection($orders),
             'تم جلب الطلبات بنجاح'
         );
     }
+
 
     /**
      * تفاصيل طلب واحد
@@ -94,6 +105,19 @@ class OrderController extends Controller
         return $this->successResponse(
             new OrderResource($order),
             'تم جلب تفاصيل الطلب'
+        );
+    }
+
+    /**
+     * جلب حالات الطلبات
+     */
+    public function statuses()
+    {
+        $statuses = OrderStatus::all();
+
+        return $this->successResponse(
+            $statuses,
+            'تم جلب حالات الطلبات بنجاح'
         );
     }
 }

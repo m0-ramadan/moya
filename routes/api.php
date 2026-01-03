@@ -6,8 +6,10 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\SliderController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\ContactUsController;
 use App\Http\Controllers\Api\StaticPagesController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\Website\HomeController;
 use App\Http\Controllers\Api\SavedLocationController;
 use App\Http\Controllers\Api\ArticleCommentController;
@@ -33,17 +35,49 @@ Route::prefix('v1')->group(function () {
         });
 
         // إنشاء طلب
-
         Route::prefix('orders')->group(function () {
             Route::post('/', [OrderController::class, 'store']);
             Route::get('/', [OrderController::class, 'index']);
+            Route::get('/statuses', [OrderController::class, 'statuses']);
             Route::get('/{id}', [OrderController::class, 'show']);
+        });
+
+        // عقود المستخدم
+        Route::prefix('contracts')->group(function () {
+            Route::get('/', [ContractController::class, 'index']);
+            Route::post('/', [ContractController::class, 'store']);
+            Route::get('/active', [ContractController::class, 'active']);
+            Route::get('/{id}', [ContractController::class, 'show']);
+            Route::post('/{id}/renew', [ContractController::class, 'renew']);
+            Route::post('/{id}/cancel', [ContractController::class, 'cancel']);
+
+            // مدفوعات العقد
+            Route::post('/{contractId}/payments', [ContractController::class, 'addPayment']);
+            // مواقع توصيل العقد
+            Route::post('/{contractId}/locations', [ContractController::class, 'addDeliveryLocation']);
+            Route::delete('/{contractId}/locations/{locationId}', [ContractController::class, 'removeDeliveryLocation']);
+        });
+
+        // Notification routes
+        Route::prefix('notifications')->group(function () {
+            Route::get('/', [NotificationController::class, 'index']);
+            Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+            Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+            Route::delete('/clear-all', [NotificationController::class, 'clearAll']);
+            Route::post('/{notification}/mark-read', [NotificationController::class, 'markAsRead']);
+            Route::delete('/{notification}', [NotificationController::class, 'destroy']);
+
+            // Admin only route
+            Route::post('/test-firebase', [NotificationController::class, 'testFirebase'])
+                ->middleware('can:admin');
         });
     });
     Route::get('/services', [ServiceController::class, 'index']);
     Route::get('/type-water', [ServiceController::class, 'typeWater']);
 
     Route::get('/sliders', [SliderController::class, 'index']);
+
+    Route::get('/banners', [SliderController::class, 'banners']);
 
     Route::prefix('auth')->group(function () {
         Route::post('/send-otp', [AuthController::class, 'sendOtp']);
@@ -95,6 +129,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('comments')->middleware('auth:sanctum')->group(function () {
         Route::post('/{commentId}/like', [ArticleCommentController::class, 'like']);
     });
+
 
     Route::post('contact-us', [ContactUsController::class, 'store']);
 

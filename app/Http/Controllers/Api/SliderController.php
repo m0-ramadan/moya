@@ -19,4 +19,16 @@ class SliderController extends Controller
             'تم جلب الصور المتحركة بنجاح'
         );
     }
+
+    public function banners()
+    {
+        $banners = Slider::where('is_active', 1)
+            ->where('type', 'banner')
+            ->get();
+
+        return $this->successResponse(
+            SliderResource::collection($banners),
+            'تم جلب البانرات بنجاح'
+        );
+    }
 }

@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\Notifiable as LaravelNotifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Traits\CustomNotifiable;
+use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
+    use HasApiTokens, Notifiable, CustomNotifiable;
 
     protected $fillable = [
         'name',
@@ -37,6 +39,7 @@ class User extends Authenticatable
         'password' => 'hashed',
         'otp_expires_at' => 'datetime',
     ];
+
     /**
      * Get the user's formatted phone number
      */
@@ -110,5 +113,40 @@ class User extends Authenticatable
         }
 
         return false;
+    }
+
+    // علاقة المستخدم مع العقود
+    public function contracts()
+    {
+        return $this->hasMany(Contract::class);
+    }
+
+    // علاقة المستخدم مع المدفوعات
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    // العقد النشط الحالي للمستخدم
+    public function activeContract()
+    {
+        return $this->hasOne(Contract::class)
+            ->where('status', 'active')
+            ->where('end_date', '>=', now())
+            ->orderBy('created_at', 'desc');
+    }
+
+    // طلبات المستخدم
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Clear all notifications (يمكن حذف هذه الدالة لأنها موجودة في الـ trait)
+     */
+    public function clearAllNotifications(): int
+    {
+        return $this->clearNotifications();
     }
 }
