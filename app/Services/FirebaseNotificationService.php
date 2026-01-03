@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use App\Models\Notification;
 use Kreait\Firebase\Factory;
 use Illuminate\Support\Facades\Log;
@@ -264,5 +265,37 @@ class FirebaseNotificationService
         }
 
         return $result;
+    }
+    /**
+     * Send notification to user by ID.
+     */
+    public function sendToUser(int $userId, array $notificationData, array $data = []): array
+    {
+        try {
+            $user = User::with('activeDeviceTokens')->findOrFail($userId);
+            $tokens = $user->activeDeviceTokens->pluck('token')->toArray();
+
+            if (empty($tokens)) {
+                return [
+                    'success' => false,
+                    'message' => 'User has no active device tokens',
+                    'user_id' => $userId,
+                ];
+            }
+
+            $result = $this->sendToMultipleDevices($tokens, $notificationData, $data);
+
+            return array_merge($result, [
+                'user_id' => $userId,
+                'user_name' => $user->name,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Send to user failed: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'user_id' => $userId,
+            ];
+        }
     }
 }

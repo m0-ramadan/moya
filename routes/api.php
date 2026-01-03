@@ -66,6 +66,15 @@ Route::prefix('v1')->group(function () {
             Route::delete('/clear-all', [NotificationController::class, 'clearAll']);
             Route::post('/{notification}/mark-read', [NotificationController::class, 'markAsRead']);
             Route::delete('/{notification}', [NotificationController::class, 'destroy']);
+            // الطرق الجديدة لإرسال الإشعارات
+            Route::post('/send-to-user', [NotificationController::class, 'sendToUser'])->middleware('can:admin');
+            Route::post('/send-to-multiple', [NotificationController::class, 'sendToMultipleUsers'])->middleware('can:admin');
+            Route::post('/send-test/{userId}', [NotificationController::class, 'sendTestToUser'])->middleware('can:admin');
+
+            // إدارة أجهزة المستخدم
+            Route::post('/register-device', [NotificationController::class, 'registerDeviceToken']);
+            Route::post('/remove-device', [NotificationController::class, 'removeDeviceToken']);
+            Route::get('/user-devices/{userId}', [NotificationController::class, 'getUserDevices']);
 
             // Admin only route
             Route::post('/test-firebase', [NotificationController::class, 'testFirebase'])

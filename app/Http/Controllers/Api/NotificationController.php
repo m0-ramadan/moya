@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Models\DeviceToken;
 use App\Models\Notification;
-use App\Services\FirebaseNotificationService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Support\FacadesLog;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use App\Services\FirebaseNotificationService;
+use App\Http\Requests\SendNotificationRequest;
 
 class NotificationController extends Controller
 {
@@ -200,6 +205,333 @@ class NotificationController extends Controller
         return $this->paginated(
             $notifications,
             "تم جلب إشعارات النوع {$type} بنجاح"
+        );
+    }
+    /**
+     * Send notification to specific user by ID.
+     */
+    public function sendToUser(SendNotificationRequest $request)
+    {
+        try {
+            $sender = Auth::user();
+            $receiver = User::findOrFail($request->user_id);
+
+            // إنشاء الإشعار في قاعدة البيانات
+            $notification = $receiver->createNotification([
+                'title' => $request->title,
+                'message' => $request->message,
+                'type' => $request->type ?? 'info',
+                'data' => $request->data ?? [],
+            ]);
+
+            // إرسال إلى Firebase إذا كان مطلوبًا
+            $firebaseResult = null;
+            if ($request->boolean('send_to_firebase', true)) {
+                $firebaseResult = $this->sendFirebaseNotification($receiver, $notification, $request);
+            }
+
+            // تسجيل النشاط (اختياري)
+          //  $this->logNotificationActivity($sender, $receiver, $notification);
+
+            return $this->successResponse(
+                [
+                    'notification' => $notification,
+                    'firebase_result' => $firebaseResult,
+                    'receiver' => [
+                        'id' => $receiver->id,
+                        'name' => $receiver->name,
+                        'email' => $receiver->email,
+                    ]
+                ],
+                'تم إرسال الإشعار بنجاح'
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to send notification: ' . $e->getMessage());
+            return $this->errorResponse(
+                'فشل إرسال الإشعار: ' . $e->getMessage(),
+                500
+            );
+        }
+    }
+
+    /**
+     * Send notification to multiple users.
+     */
+    public function sendToMultipleUsers(Request $request)
+    {
+        $request->validate([
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'exists:users,id',
+            'title' => 'required|string|max:255',
+            'message' => 'required|string',
+            'type' => 'nullable|string',
+            'data' => 'nullable|array',
+        ]);
+
+        $results = [];
+        $sender = Auth::user();
+
+        foreach ($request->user_ids as $userId) {
+            try {
+                $receiver = User::find($userId);
+
+                $notification = $receiver->createNotification([
+                    'title' => $request->title,
+                    'message' => $request->message,
+                    'type' => $request->type ?? 'info',
+                    'data' => $request->data ?? [],
+                ]);
+
+                // إرسال إلى Firebase
+                $firebaseResult = $this->sendFirebaseNotification($receiver, $notification, $request);
+
+                $results[] = [
+                    'user_id' => $userId,
+                    'success' => true,
+                    'notification_id' => $notification->id,
+                    'firebase_result' => $firebaseResult,
+                ];
+            } catch (\Exception $e) {
+                $results[] = [
+                    'user_id' => $userId,
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                ];
+            }
+        }
+
+        $successCount = count(array_filter($results, fn($r) => $r['success']));
+        $failedCount = count($results) - $successCount;
+
+        return $this->successResponse(
+            [
+                'results' => $results,
+                'summary' => [
+                    'total' => count($results),
+                    'successful' => $successCount,
+                    'failed' => $failedCount,
+                ]
+            ],
+            "تم إرسال الإشعار إلى {$successCount} مستخدم، فشل {$failedCount}"
+        );
+    }
+
+    /**
+     * Send Firebase notification.
+     */
+    private function sendFirebaseNotification(User $user, Notification $notification, Request $request): array
+    {
+        try {
+            // الحصول على tokens الأجهزة النشطة للمستخدم
+            $deviceTokens = $user->activeDeviceTokens()->pluck('token')->toArray();
+
+            if (empty($deviceTokens)) {
+                return [
+                    'sent' => false,
+                    'message' => 'No active device tokens found',
+                    'device_count' => 0,
+                ];
+            }
+
+            $sendAsBroadcast = $request->boolean('send_as_broadcast', false);
+            $firebaseData = array_merge($request->data ?? [], [
+                'notification_id' => $notification->id,
+                'type' => $notification->type,
+                'user_id' => $user->id,
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+            ]);
+
+            if ($sendAsBroadcast) {
+                // إرسال لجميع أجهزة المستخدم
+                $result = $this->firebaseService->sendToMultipleDevices(
+                    $deviceTokens,
+                    [
+                        'title' => $notification->title,
+                        'body' => $notification->message,
+                    ],
+                    $firebaseData
+                );
+
+                return [
+                    'sent' => true,
+                    'method' => 'broadcast',
+                    'device_count' => count($deviceTokens),
+                    'successful' => $result['successful'] ?? 0,
+                    'failed' => $result['failed'] ?? 0,
+                ];
+            } else {
+                // إرسال للأجهزة بشكل فردي (أو الجهاز الرئيسي)
+                $results = [];
+                foreach ($deviceTokens as $token) {
+                    $success = $this->firebaseService->sendToDevice(
+                        $token,
+                        [
+                            'title' => $notification->title,
+                            'body' => $notification->message,
+                        ],
+                        $firebaseData
+                    );
+
+                    $results[] = [
+                        'token' => substr($token, 0, 20) . '...',
+                        'success' => $success,
+                    ];
+                }
+
+                $successCount = count(array_filter($results, fn($r) => $r['success']));
+
+                return [
+                    'sent' => true,
+                    'method' => 'individual',
+                    'device_count' => count($deviceTokens),
+                    'successful' => $successCount,
+                    'failed' => count($deviceTokens) - $successCount,
+                    'results' => $results,
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('Firebase notification failed: ' . $e->getMessage());
+            return [
+                'sent' => false,
+                'error' => $e->getMessage(),
+                'device_count' => 0,
+            ];
+        }
+    }
+
+    /**
+     * Log notification activity.
+     */
+    // private function logNotificationActivity(User $sender, User $receiver, Notification $notification): void
+    // {
+    //     // يمكنك إضافة سجل للنشاط هنا
+    //     activity()
+    //         ->causedBy($sender)
+    //         ->performedOn($receiver)
+    //         ->withProperties([
+    //             'notification_id' => $notification->id,
+    //             'title' => $notification->title,
+    //             'type' => $notification->type,
+    //         ])
+    //         ->log('sent_notification');
+    // }
+
+    /**
+     * Register/save device token for push notifications.
+     */
+    public function registerDeviceToken(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+            'device_type' => 'nullable|string|in:android,ios,web',
+            'device_name' => 'nullable|string',
+            'device_model' => 'nullable|string',
+            'app_version' => 'nullable|string',
+        ]);
+
+        $user = Auth::user();
+
+        try {
+            // تحديث أو إنشاء token
+            $deviceToken = DeviceToken::updateOrCreate(
+                [
+                    'token' => $request->token,
+                    'user_id' => $user->id,
+                ],
+                [
+                    'device_type' => $request->device_type,
+                    'device_name' => $request->device_name,
+                    'device_model' => $request->device_model,
+                    'app_version' => $request->app_version,
+                    'is_active' => true,
+                ]
+            );
+
+            return $this->successResponse(
+                $deviceToken,
+                'تم تسجيل جهازك للإشعارات بنجاح'
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to register device token: ' . $e->getMessage());
+            return $this->errorResponse('فشل تسجيل الجهاز', 500);
+        }
+    }
+
+    /**
+     * Remove device token.
+     */
+    public function removeDeviceToken(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+        ]);
+
+        $user = Auth::user();
+
+        $deleted = DeviceToken::where('user_id', $user->id)
+            ->where('token', $request->token)
+            ->delete();
+
+        if ($deleted) {
+            return $this->successResponse(
+                null,
+                'تم إزالة الجهاز بنجاح'
+            );
+        }
+
+        return $this->errorResponse('الجهاز غير موجود', 404);
+    }
+
+    /**
+     * Get user's device tokens.
+     */
+    public function getUserDevices($userId)
+    {
+        // صلاحيات: فقط المدير أو المستخدم نفسه
+        $currentUser = Auth::user();
+
+        if ($currentUser->id != $userId && !$currentUser->hasRole('admin')) {
+            return $this->errorResponse('غير مصرح لك', 403);
+        }
+
+        $user = User::findOrFail($userId);
+        $devices = $user->deviceTokens()->get();
+
+        return $this->successResponse(
+            $devices,
+            'تم جلب أجهزة المستخدم بنجاح'
+        );
+    }
+
+    /**
+     * Send test notification to specific user.
+     */
+    public function sendTestToUser(Request $request, $userId)
+    {
+        $request->validate([
+            'title' => 'nullable|string|max:255',
+            'message' => 'nullable|string',
+        ]);
+
+        $sender = Auth::user();
+        $receiver = User::findOrFail($userId);
+
+        $notification = $receiver->createNotification([
+            'title' => $request->title ?? 'إشعار تجريبي',
+            'message' => $request->message ?? 'هذا إشعار تجريبي لاختبار النظام',
+            'type' => 'system',
+            'data' => ['test' => true],
+        ]);
+
+        // إرسال Firebase
+        $firebaseResult = $this->sendFirebaseNotification($receiver, $notification, $request);
+
+        return $this->successResponse(
+            [
+                'notification' => $notification,
+                'firebase_result' => $firebaseResult,
+            ],
+            'تم إرسال الإشعار التجريبي بنجاح'
         );
     }
 }

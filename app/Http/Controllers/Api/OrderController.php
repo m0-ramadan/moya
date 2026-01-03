@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use Carbon\Carbon;
 use App\Models\Order;
 use App\Models\OrderStatus;
 use Illuminate\Http\Request;
@@ -67,9 +68,44 @@ class OrderController extends Controller
             'acceptedOffer',
         ])->where('user_id', auth()->id());
 
-        // 🔍 فلترة حسب الحالة
-        if ($request->filled('status_id')) {
-            $query->where('status_id', $request->status_id);
+        // 🔍 فلترة الحالات (أكثر من حالة)
+        if ($request->filled('status_ids')) {
+            $statusIds = is_array($request->status_ids)
+                ? $request->status_ids
+                : explode(',', $request->status_ids);
+
+            $query->whereIn('order_status_id', $statusIds);
+        }
+
+        // ⏱️ فلترة الوقت
+        if ($request->filled('period')) {
+            match ($request->period) {
+                'yesterday' => $query->whereDate(
+                    'created_at',
+                    Carbon::yesterday()
+                ),
+
+                '7_days' => $query->where(
+                    'created_at',
+                    '>=',
+                    Carbon::now()->subDays(7)
+                ),
+
+                'week' => $query->whereBetween(
+                    'created_at',
+                    [
+                        Carbon::now()->startOfWeek(),
+                        Carbon::now()->endOfWeek(),
+                    ]
+                ),
+
+                'month' => $query->whereMonth(
+                    'created_at',
+                    Carbon::now()->month
+                ),
+
+                default => null,
+            };
         }
 
         // 📄 Pagination
@@ -79,12 +115,16 @@ class OrderController extends Controller
             ->latest()
             ->paginate($perPage);
 
+        // 🧼 Resource fix
+        $orders->setCollection(
+            OrderResource::collection($orders->getCollection())->collection
+        );
+
         return $this->paginated(
-            OrderResource::collection($orders),
+            $orders,
             'تم جلب الطلبات بنجاح'
         );
     }
-
 
     /**
      * تفاصيل طلب واحد

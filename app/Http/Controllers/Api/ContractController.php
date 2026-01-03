@@ -237,7 +237,7 @@ class ContractController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'لا يوجد عقد نشط'
-            ], 404);
+            ], 200);
         }
 
         return response()->json([
