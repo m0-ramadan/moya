@@ -22,7 +22,7 @@ class NotificationController extends Controller
 
     public function __construct(FirebaseNotificationService $firebaseService)
     {
-        $this->middleware('auth');
+        //  $this->middleware('auth');
         $this->firebaseService = $firebaseService;
     }
 
