@@ -26,14 +26,14 @@ class ArticleCommentResource extends JsonResource
             'guest_name' => $this->when($this->isGuest(), $this->guest_name),
             'guest_email' => $this->when($this->isGuest(), $this->guest_email),
             'replies' => ArticleCommentResource::collection($this->whenLoaded('replies')),
-            'created_at' => $this->created_at->format('Y-m-d H:i:s'),
-            'created_at_human' => $this->created_at->diffForHumans(),
-            'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
-            'links' => [
-                'self' => route('comments.show', $this->id),
-                'like' => route('comments.like', $this->id),
-                'reply' => route('comments.reply', $this->id)
-            ]
+            // 'created_at' => $this->created_at->format('Y-m-d H:i:s'),
+             'created_at_human' => $this->created_at->diffForHumans(),
+            // 'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
+            // 'links' => [
+            //     'self' => route('comments.show', $this->id),
+            //     'like' => route('comments.like', $this->id),
+            //     'reply' => route('comments.reply', $this->id)
+            // ]
         ];
     }
 }

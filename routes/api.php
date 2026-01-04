@@ -114,6 +114,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/{id}/share', [ArticleInteractionController::class, 'share']);
         });
     });
+    // تعليقات المقالات
+    Route::prefix('articles/{articleId}/comments')->group(function () {
+        Route::get('/', [ArticleCommentController::class, 'index']);
+        Route::post('/', [ArticleCommentController::class, 'store']);
+
+        // إعجاب بالتعليق (تتطلب مصادقة)
+        //  Route::middleware('auth:sanctum')->post('/{commentId}/like', [ArticleCommentController::class, 'like']);
+    });
 
     // أقسام المقالات
     Route::prefix('categories')->group(function () {
@@ -122,14 +130,6 @@ Route::prefix('v1')->group(function () {
         Route::get('/{slug}/articles', [ArticleCategoryController::class, 'articles']);
     });
 
-    // تعليقات المقالات
-    Route::prefix('articles/{articleId}/comments')->group(function () {
-        Route::get('/', [ArticleCommentController::class, 'index']);
-        Route::post('/', [ArticleCommentController::class, 'store']);
-
-        // إعجاب بالتعليق (تتطلب مصادقة)
-        Route::middleware('auth:sanctum')->post('/{commentId}/like', [ArticleCommentController::class, 'like']);
-    });
 
     // التعليقات العامة
     Route::prefix('comments')->middleware('auth:sanctum')->group(function () {

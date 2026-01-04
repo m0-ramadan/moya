@@ -54,7 +54,7 @@ class ArticleCommentController extends Controller
             'user_agent' => $request->userAgent()
         ];
 
-        if (Auth::check()) {
+        if (auth()->guard('sanctum')->check()) {
             $commentData['user_id'] = Auth::id();
             $commentData['status'] = 'approved'; // الموافقة التلقائية للمستخدمين المسجلين
         } else {
