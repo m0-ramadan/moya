@@ -213,6 +213,7 @@ class NotificationController extends Controller
     public function sendToUser(SendNotificationRequest $request)
     {
         try {
+            dd(1);
             $sender = Auth::user();
             $receiver = User::findOrFail($request->user_id);
 

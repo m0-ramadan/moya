@@ -42,7 +42,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/statuses', [OrderController::class, 'statuses']);
             Route::get('/{id}', [OrderController::class, 'show']);
         });
-        
+
         Route::patch('/user/settings/notifications', [AuthController::class, 'updateNotifications']);
 
         // عقود المستخدم
@@ -70,15 +70,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/{notification}/mark-read', [NotificationController::class, 'markAsRead']);
             Route::delete('/{notification}', [NotificationController::class, 'destroy']);
             // الطرق الجديدة لإرسال الإشعارات
-            Route::post('/send-to-user', [NotificationController::class, 'sendToUser'])->middleware('can:admin');
-            Route::post('/send-to-multiple', [NotificationController::class, 'sendToMultipleUsers'])->middleware('can:admin');
-            Route::post('/send-test/{userId}', [NotificationController::class, 'sendTestToUser'])->middleware('can:admin');
+            Route::post('/send-to-user', [NotificationController::class, 'sendToUser']);
+            Route::post('/send-to-multiple', [NotificationController::class, 'sendToMultipleUsers']);
+            Route::post('/send-test/{userId}', [NotificationController::class, 'sendTestToUser']);
 
             Route::get('/user-devices/{userId}', [NotificationController::class, 'getUserDevices']);
 
             // Admin only route
-            Route::post('/test-firebase', [NotificationController::class, 'testFirebase'])
-                ->middleware('can:admin');
+            Route::post('/test-firebase', [NotificationController::class, 'testFirebase']);
         });
     });
     Route::get('/services', [ServiceController::class, 'index']);

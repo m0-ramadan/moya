@@ -9,7 +9,7 @@ class SendNotificationRequest extends FormRequest
     public function authorize()
     {
         // يمكنك تعديل الصلاحيات هنا
-        return false;
+        return true;
     }
 
     public function rules()
