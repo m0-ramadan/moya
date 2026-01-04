@@ -70,7 +70,7 @@ class ArticleController extends Controller
      */
     public function show($slug)
     {
-        $article = Article::with(['author', 'category', 'sections'])
+        $article = Article::with(['author', 'category'])
             ->where('slug', $slug)
             ->published()
             ->firstOrFail();

@@ -25,14 +25,14 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
 
-            //    UserSeeder::class,
+            //   UserSeeder::class,
 
-            //    SocialMediaSeeder::class,
+             // SocialMediaSeeder::class,
             // ServiceSeeder::class,
-            // SliderSeeder::class,
+          //   SliderSeeder::class,
 
-            ArticleCategorySeeder::class,
-            ArticleSeeder::class,
+         // ArticleCategorySeeder::class,
+        // ArticleSeeder::class,
         ]);
     }
 }
