@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ContactUsController;
 use App\Http\Controllers\Api\StaticPagesController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\Website\HomeController;
+use App\Http\Controllers\Api\Website\PageController;
 use App\Http\Controllers\Api\SavedLocationController;
 use App\Http\Controllers\Api\ArticleCommentController;
 use App\Http\Controllers\Api\ArticleCategoryController;
@@ -41,6 +42,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/statuses', [OrderController::class, 'statuses']);
             Route::get('/{id}', [OrderController::class, 'show']);
         });
+        
+        Route::patch('/user/settings/notifications', [AuthController::class, 'updateNotifications']);
 
         // عقود المستخدم
         Route::prefix('contracts')->group(function () {
@@ -89,6 +92,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/send-otp', [AuthController::class, 'sendOtp']);
         Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
         Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
+        Route::post('/complete-profile', [AuthController::class, 'completeProfile']);
     });
 
     Route::get('home', [HomeController::class, 'index']);
@@ -142,6 +146,7 @@ Route::prefix('v1')->group(function () {
 
     // حفظ عنوان
     Route::post('/locations', [SavedLocationController::class, 'store']);
+    Route::get('pages/{key}', [PageController::class, 'show']);
 
     // Notification routes
     Route::prefix('notifications')->group(function () {

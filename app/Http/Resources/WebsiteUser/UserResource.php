@@ -24,6 +24,7 @@ class UserResource extends JsonResource
                 return $this->roles->first()?->name;
             }),
             'is_verified' => (bool) $this->phone_verified_at,
+            'allow_notifications' => (bool) $this->allow_notifications,
             'created_at' => $this->created_at->format('Y-m-d H:i:s')
         ];
     }

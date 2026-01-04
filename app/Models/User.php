@@ -26,7 +26,7 @@ class User extends Authenticatable
         'phone_verified_at',
         'otp',
         'otp_expires_at',
-        'avatar'
+        'avatar','allow_notifications'
     ];
 
     protected $hidden = [

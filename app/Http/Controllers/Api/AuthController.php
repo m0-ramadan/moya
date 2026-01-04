@@ -144,4 +144,23 @@ class AuthController extends Controller
         }
         return ['country_code' => '+966', 'phone_number' => $full];
     }
+
+    // Update notification preference
+    public function updateNotifications(Request $request)
+    {
+        $request->validate([
+            'allow_notifications' => ['required', 'boolean'],
+        ]);
+
+        $user = $request->user();
+        $user->allow_notifications = $request->input('allow_notifications');
+        $user->save();
+
+        return $this->successResponse([
+            'user' => [
+                'id' => $user->id,
+                'allow_notifications' => $user->allow_notifications,
+            ]
+        ], 'تم تحديث إعدادات الإشعارات بنجاح');
+    }
 }
