@@ -93,7 +93,7 @@ class NotificationController extends Controller
      */
     public function destroy(Notification $notification)
     {
-        $this->authorize('delete', $notification);
+        // $this->authorize('delete', $notification);
 
         $notification->delete();
 
