@@ -1,7 +1,9 @@
 <?php
 
+use Pusher\Pusher;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\SliderController;
 use App\Http\Controllers\Api\ArticleController;
@@ -17,6 +19,7 @@ use App\Http\Controllers\Api\ArticleCommentController;
 use App\Http\Controllers\Api\ArticleCategoryController;
 use App\Http\Controllers\Api\ArticleInteractionController;
 use App\Http\Controllers\Api\Website\UserAddressController;
+use Illuminate\Http\Request;
 
 
 Route::prefix('v1')->group(function () {
@@ -78,6 +81,28 @@ Route::prefix('v1')->group(function () {
 
             // Admin only route
             Route::post('/test-firebase', [NotificationController::class, 'testFirebase']);
+        });
+
+        // Chat routes
+        Route::prefix('chats')->group(function () {
+            Route::get('/', [ChatController::class, 'index']);
+            Route::post('/create', [ChatController::class, 'getOrCreateChat']);
+            Route::get('/{chat}/messages', [ChatController::class, 'getMessages']);
+            Route::post('/{chat}/send', [ChatController::class, 'sendMessage']);
+            Route::post('/messages/{message}/read', [ChatController::class, 'markAsRead']);
+            Route::delete('/messages/{message}', [ChatController::class, 'deleteMessage']);
+        });
+
+        // Pusher authentication
+        Route::post('/broadcasting/auth', function (Request $request) {
+            $pusher = new Pusher(
+                config('broadcasting.connections.pusher.key'),
+                config('broadcasting.connections.pusher.secret'),
+                config('broadcasting.connections.pusher.app_id'),
+                config('broadcasting.connections.pusher.options')
+            );
+
+            return $pusher->socket_auth($request->channel_name, $request->socket_id);
         });
     });
     Route::get('/services', [ServiceController::class, 'index']);
