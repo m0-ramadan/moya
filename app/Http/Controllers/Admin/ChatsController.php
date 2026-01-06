@@ -484,7 +484,7 @@ class ChatsController extends Controller
             ->orderBy('name')
             ->get();
 
-        $drivers = Driver::select('id', 'full_name', 'phone')
+        $drivers = Driver::select('id', 'full_name', 'phone_number')
             ->where('status', 'active')
             ->orderBy('full_name')
             ->get();
@@ -499,7 +499,7 @@ class ChatsController extends Controller
     {
         $request->validate([
             'participant_id' => 'required|string',
-            'participant_type' => 'required|in:user,driver',
+            'participant_type' => 'required',
             'initial_message' => 'nullable|string|max:1000'
         ]);
 
@@ -622,10 +622,10 @@ class ChatsController extends Controller
                 'data' => [
                     'id' => $participant->id,
                     'name' => $participant->name,
-                    'email' => $participant->email,
-                    'phone' => $participant->phone,
-                    'avatar' => $participant->avatar,
-                    'is_online' => $participant->is_online ?? false,
+                    // 'email' => $participant->email,
+                    'phone' => $participant->phone_number,
+                    // 'avatar' => $participant->avatar,
+                    // 'is_online' => $participant->is_online ?? false,
                     'last_seen' => $participant->last_seen ? $participant->last_seen->diffForHumans() : 'غير متصل'
                 ]
             ]);
@@ -643,7 +643,7 @@ class ChatsController extends Controller
     public function searchParticipants(Request $request)
     {
         $request->validate([
-            'search' => 'required|string|min:2',
+            'search' => 'nullable|string|min:2',
             'type' => 'nullable|in:all,user,driver'
         ]);
 
@@ -656,8 +656,8 @@ class ChatsController extends Controller
             $users = User::where('status', 'active')
                 ->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
+                        // ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone_number', 'like', "%{$search}%");
                 })
                 ->limit(10)
                 ->get()
@@ -665,9 +665,9 @@ class ChatsController extends Controller
                     return [
                         'id' => $user->id,
                         'name' => $user->name,
-                        'email' => $user->email,
-                        'phone' => $user->phone,
-                        'avatar' => $user->avatar,
+                        // 'email' => $user->email,
+                        'phone' => $user->phone_number,
+                        // 'avatar' => $user->avatar,
                         'type' => 'user',
                         'type_label' => 'مستخدم'
                     ];
@@ -679,9 +679,9 @@ class ChatsController extends Controller
         if ($type == 'all' || $type == 'driver') {
             $drivers = Driver::where('status', 'active')
                 ->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
+                    $q->where('full_name', 'like', "%{$search}%")
+                        // ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone_number', 'like', "%{$search}%");
                 })
                 ->limit(10)
                 ->get()
@@ -689,12 +689,12 @@ class ChatsController extends Controller
                     return [
                         'id' => $driver->id,
                         'name' => $driver->name,
-                        'email' => $driver->email,
-                        'phone' => $driver->phone,
-                        'avatar' => $driver->avatar,
+                        // 'email' => $driver->email,
+                        'phone_number' => $driver->phone_number,
+                        // 'avatar' => $driver->avatar,
                         'type' => 'driver',
                         'type_label' => 'سائق',
-                        'is_online' => $driver->is_online
+                        // 'is_online' => $driver->is_online
                     ];
                 });
 

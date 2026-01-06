@@ -397,7 +397,6 @@
                 if (searchTerm.length < 2 && searchTerm !== '') {
                     return;
                 }
-
                 $.ajax({
                     url: "{{ route('admin.adminChats.search-participants') }}",
                     type: 'GET',
@@ -408,17 +407,23 @@
                     success: function(response) {
                         displayResults(response.results);
                     },
-                    error: function() {
+                    error: function(xhr, status, error) {
+                        // طباعة الخطأ في الـ console
+                        console.error("AJAX Error:", status, error);
+                        console.log("Response Text:", xhr.responseText);
+
+                        // لو عايز تظهر رسالة للمستخدم برضه
                         $('#searchResults').html(`
-                            <div class="empty-state">
-                                <div class="empty-state-icon">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                </div>
-                                <p class="text-muted">حدث خطأ أثناء البحث</p>
-                            </div>
-                        `);
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <p class="text-muted">حدث خطأ أثناء البحث</p>
+            </div>
+        `);
                     }
                 });
+
             }
 
             // عرض نتائج البحث
