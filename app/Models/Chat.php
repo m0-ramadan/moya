@@ -59,16 +59,25 @@ class Chat extends Model
     }
 
     // علاقة للحصول على معلومات المشاركين
-    public function participantDetails()
+    // public function participantDetails()
+    // {
+    //     return $this->hasManyThrough(
+    //         User::class,
+    //         Driver::class,
+    //         'id',
+    //         'id',
+    //         'participants',
+    //         'participants'
+    //     );
+    // }
+    public function getParticipantDetailsAttribute()
     {
-        return $this->hasManyThrough(
-            User::class,
-            Driver::class,
-            'id',
-            'id',
-            'participants',
-            'participants'
-        );
+        $participants = $this->participants ?? [];
+
+        $users = User::whereIn('id', $participants)->get();
+        $drivers = Driver::whereIn('id', $participants)->get();
+
+        return $users->concat($drivers);
     }
 
     // دالة للحصول على تسمية النوع
@@ -78,10 +87,11 @@ class Chat extends Model
             'user_user' => 'مستخدم - مستخدم',
             'user_driver' => 'مستخدم - سائق',
             'driver_driver' => 'سائق - سائق',
+            'admin_user' => 'مشرف - مستخدم',
+            'admin_driver' => 'مشرف - سائق',
             default => $this->type
         };
     }
-
     // دالة للتحقق إذا كانت المحادثة نشطة (آخر رسالة قبل أقل من 10 دقائق)
     public function getIsActiveAttribute()
     {

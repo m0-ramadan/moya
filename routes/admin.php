@@ -292,6 +292,22 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         Route::delete('/message/{message}', [ChatsController::class, 'destroyMessage'])->name('destroy-message');
         Route::post('/{chat}/mark-read', [ChatsController::class, 'markRead'])->name('mark-read');
         Route::get('/export', [ChatsController::class, 'export'])->name('export');
+        Route::post('/{chat}/send', [ChatsController::class, 'sendMessage'])->name('send-message');
+
+        // محادثاتي المباشرة (Admin Chats)
+        Route::get('/admin-chats', [ChatsController::class, 'adminChats'])->name('adminChats');
+
+        // إنشاء محادثات جديدة
+        Route::get('/create', [ChatsController::class, 'create'])->name('create');
+        Route::post('/', [ChatsController::class, 'store'])->name('store');
+
+        // البحث والمساعدة
+        Route::get('/search-participants', [ChatsController::class, 'searchParticipants'])->name('search-participants');
+        Route::get('/get-participant-info', [ChatsController::class, 'getParticipantInfo'])->name('get-participant-info');
+
+        // إدارة المحادثات الفردية
+        Route::get('/{chat}', [ChatsController::class, 'show'])->name('show');
+        Route::delete('/{chat}', [ChatsController::class, 'destroy'])->name('destroy');
     });
 
     Route::get('order/statistics', [OrderController::class, 'statistics'])->name('orders.statistics');

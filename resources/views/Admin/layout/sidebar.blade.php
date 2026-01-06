@@ -103,6 +103,12 @@
                    <div>الشات</div>
                </a>
            </li>
+           <li class="menu-item">
+               <a href="{{ route('admin.chats.adminChats') }}" class="menu-link">
+                   <i class="menu-icon ti ti-message-circle"></i>
+                   <div>محادثاتي</div>
+               </a>
+           </li>
 
            <li class="menu-item ">
                <a href="{{ route('admin.payment-methods.index') }}" class="menu-link">

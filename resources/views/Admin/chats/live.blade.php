@@ -229,7 +229,7 @@
         const channel = pusher.subscribe('admin-chats');
 
         // استقبال رسائل جديدة
-        channel.bind('message.sent', function(data) {
+        channel.bind('MessageSent', function(data) {
             addNewMessage(data.message);
         });
 

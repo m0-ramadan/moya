@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use App\Models\Chat;
-use App\Models\Message;
 use App\Models\User;
 use App\Models\Driver;
+use App\Models\Message;
+use App\Events\MessageSent;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use App\Http\Controllers\Controller;
 
 class ChatsController extends Controller
 {
@@ -32,11 +34,8 @@ class ChatsController extends Controller
 
         // الاستعلام الأساسي للمحادثات مع البيانات المرتبطة
         $query = Chat::with([
-            'messages' => function ($q) {
-                $q->latest()->limit(5); // آخر 5 رسائل لكل محادثة
-            },
+            'messages' => fn($q) => $q->latest()->limit(5),
             'latestMessage.sender',
-            'participantDetails' // علاقة جديدة سنقوم بإنشائها
         ]);
 
         // فلترة حسب النوع
@@ -97,7 +96,7 @@ class ChatsController extends Controller
                 ->count();
 
             // جلب معلومات المشاركين
-            $chat->participants_info = $this->getParticipantsInfo($chat);
+            $chat->participants_info = $this->getParticipantsInfo($chat, $users, $drivers);
         }
 
         return view('Admin.chats.index', compact('chats', 'stats', 'users', 'drivers'));
@@ -108,38 +107,80 @@ class ChatsController extends Controller
      */
     public function show(Chat $chat)
     {
-        // تحميل البيانات المرتبطة
+        // تحميل الرسائل مرة واحدة
         $chat->load([
+            'messages' => fn($q) => $q->orderBy('created_at', 'desc'),
             'messages.sender',
-            'messages' => function ($q) {
-                $q->orderBy('created_at', 'desc');
-            }
         ]);
 
-        // جلب معلومات المشاركين
-        $participantsInfo = $this->getParticipantsInfo($chat);
+        /* ============================
+       Participants (Optimized)
+    ============================ */
 
-        // جلب الإحصائيات الخاصة بالمحادثة
+        $participantIds = collect($chat->participants)->unique();
+
+        $users = User::whereIn('id', $participantIds)->get()->keyBy('id');
+        $drivers = Driver::whereIn('id', $participantIds)->get()->keyBy('id');
+
+        $participantsInfo = collect($chat->participants)->map(function ($id) use ($users, $drivers) {
+
+            if ($users->has($id)) {
+                $u = $users[$id];
+                return [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'email' => $u->email,
+                    'avatar' => $u->avatar,
+                    'type' => 'user',
+                    'is_online' => $u->last_seen && $u->last_seen->gt(now()->subMinutes(5)),
+                ];
+            }
+
+            if ($drivers->has($id)) {
+                $d = $drivers[$id];
+                return [
+                    'id' => $d->id,
+                    'name' => $d->name,
+                    'email' => $d->email,
+                    'avatar' => $d->avatar,
+                    'type' => 'driver',
+                    'is_online' => $d->last_seen && $d->last_seen->gt(now()->subMinutes(5)),
+                ];
+            }
+
+            return null;
+        })->filter()->values()->toArray();
+
+        /* ============================
+       Chat Stats (No Extra Queries)
+    ============================ */
+
+        $messages = $chat->messages;
+
         $chatStats = [
-            'total_messages' => $chat->messages()->count(),
-            'unread_messages' => $chat->messages()->where('is_read', false)->count(),
-            'voice_messages' => $chat->messages()->where('message_type', 'voice')->count(),
-            'image_messages' => $chat->messages()->where('message_type', 'image')->count(),
-            'file_messages' => $chat->messages()->where('message_type', 'file')->count(),
-            'first_message_date' => $chat->messages()->oldest()->first()->created_at ?? null,
-            'last_message_date' => $chat->messages()->latest()->first()->created_at ?? null,
+            'total_messages' => $messages->count(),
+            'unread_messages' => $messages->where('is_read', false)->count(),
+            'voice_messages' => $messages->where('message_type', 'voice')->count(),
+            'image_messages' => $messages->where('message_type', 'image')->count(),
+            'file_messages' => $messages->where('message_type', 'file')->count(),
+            'first_message_date' => $messages->last()?->created_at,
+            'last_message_date' => $messages->first()?->created_at,
         ];
 
-        // تحديث حالة القراءة للرسائل
-        $chat->messages()
+        /* ============================
+       Mark as Read
+    ============================ */
+
+        Message::where('chat_id', $chat->id)
             ->where('is_read', false)
             ->update([
                 'is_read' => true,
-                'read_at' => now()
+                'read_at' => now(),
             ]);
 
         return view('Admin.chats.show', compact('chat', 'participantsInfo', 'chatStats'));
     }
+
 
     /**
      * حذف محادثة
@@ -271,23 +312,75 @@ class ChatsController extends Controller
      */
     public function live()
     {
-        // جلب أحدث المحادثات النشطة
+        /* ============================
+       Recent Active Chats
+    ============================ */
+
         $recentChats = Chat::with(['latestMessage.sender'])
-            ->where('last_message_at', '>=', Carbon::now()->subMinutes(30))
+            ->where('last_message_at', '>=', now()->subMinutes(30))
             ->orderBy('last_message_at', 'desc')
             ->limit(20)
-            ->get()
-            ->map(function ($chat) {
-                $chat->unread_count = $chat->messages()
-                    ->where('is_read', false)
-                    ->count();
-                $chat->participants_info = $this->getParticipantsInfo($chat);
-                return $chat;
-            });
+            ->get();
 
-        // جلب أحدث الرسائل مباشرة
+        /* ============================
+       Unread Counts (One Query)
+    ============================ */
+
+        $unreadCounts = Message::whereIn('chat_id', $recentChats->pluck('id'))
+            ->where('is_read', false)
+            ->selectRaw('chat_id, COUNT(*) as count')
+            ->groupBy('chat_id')
+            ->pluck('count', 'chat_id');
+
+        /* ============================
+       Participants (Optimized)
+    ============================ */
+
+        $participantIds = $recentChats->pluck('participants')
+            ->flatten()
+            ->unique()
+            ->values();
+
+        $users = User::whereIn('id', $participantIds)->get()->keyBy('id');
+        $drivers = Driver::whereIn('id', $participantIds)->get()->keyBy('id');
+
+        foreach ($recentChats as $chat) {
+            $chat->unread_count = $unreadCounts[$chat->id] ?? 0;
+
+            $chat->participants_info = collect($chat->participants)->map(function ($id) use ($users, $drivers) {
+
+                if ($users->has($id)) {
+                    $u = $users[$id];
+                    return [
+                        'id' => $u->id,
+                        'name' => $u->name,
+                        'avatar' => $u->avatar,
+                        'type' => 'user',
+                        'is_online' => $u->last_seen && $u->last_seen->gt(now()->subMinutes(5)),
+                    ];
+                }
+
+                if ($drivers->has($id)) {
+                    $d = $drivers[$id];
+                    return [
+                        'id' => $d->id,
+                        'name' => $d->name,
+                        'avatar' => $d->avatar,
+                        'type' => 'driver',
+                        'is_online' => $d->last_seen && $d->last_seen->gt(now()->subMinutes(5)),
+                    ];
+                }
+
+                return null;
+            })->filter()->values();
+        }
+
+        /* ============================
+       Recent Messages
+    ============================ */
+
         $recentMessages = Message::with(['chat', 'sender'])
-            ->where('created_at', '>=', Carbon::now()->subMinutes(10))
+            ->where('created_at', '>=', now()->subMinutes(10))
             ->orderBy('created_at', 'desc')
             ->limit(50)
             ->get();
@@ -298,40 +391,77 @@ class ChatsController extends Controller
     /**
      * الحصول على معلومات المشاركين
      */
-    private function getParticipantsInfo(Chat $chat)
+    private function getParticipantsInfo(Chat $chat, $users, $drivers)
     {
-        $participants = [];
+        return collect($chat->participants)->map(function ($id) use ($users, $drivers) {
 
-        foreach ($chat->participants as $participantId) {
-            // محاولة العثور على مستخدم
-            $user = User::find($participantId);
-            if ($user) {
-                $participants[] = [
+            if ($users->has($id)) {
+                $user = $users[$id];
+
+                return [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
                     'avatar' => $user->avatar,
                     'type' => 'user',
-                    'is_online' => $user->last_seen && $user->last_seen->diffInMinutes(now()) < 5
+                    'is_online' => $user->last_seen && $user->last_seen->diffInMinutes(now()) < 5,
                 ];
-                continue;
             }
 
-            // محاولة العثور على سائق
-            $driver = Driver::find($participantId);
-            if ($driver) {
-                $participants[] = [
+            if ($drivers->has($id)) {
+                $driver = $drivers[$id];
+
+                return [
                     'id' => $driver->id,
                     'name' => $driver->name,
                     'email' => $driver->email,
                     'avatar' => $driver->avatar,
                     'type' => 'driver',
-                    'is_online' => $driver->last_seen && $driver->last_seen->diffInMinutes(now()) < 5
+                    'is_online' => $driver->last_seen && $driver->last_seen->diffInMinutes(now()) < 5,
                 ];
             }
-        }
 
-        return $participants;
+            return null;
+        })->filter()->values()->toArray();
+    }
+    /**
+     * إرسال رسالة كمشرف
+     */
+    public function sendMessage(Request $request, Chat $chat)
+    {
+        $request->validate([
+            'message' => 'required|string|max:1000',
+            'message_type' => 'nullable|in:text,voice,image,file'
+        ]);
+
+        try {
+            $message = $chat->messages()->create([
+                'sender_id' => auth()->id(),
+                'sender_type' => 'admin', // نوع خاص للمشرف
+                'message' => $request->message,
+                'message_type' => $request->message_type ?? 'text',
+                'is_read' => false
+            ]);
+
+            // تحديث آخر رسالة في المحادثة
+            $chat->update([
+                'last_message' => Str::limit($request->message, 50),
+                'last_message_at' => now()
+            ]);
+
+            // بث الحدث
+            broadcast(new MessageSent($message))->toOthers();
+
+            return response()->json([
+                'success' => true,
+                'message' => $message->load('sender')
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء إرسال الرسالة'
+            ], 500);
+        }
     }
 
     /**
@@ -341,5 +471,364 @@ class ChatsController extends Controller
     {
         // هنا يمكنك إضافة كود لتصدير المحادثات بصيغة CSV أو Excel
         // حسب احتياجاتك
+    }
+
+    /**
+     * عرض صفحة إنشاء محادثة جديدة
+     */
+    public function create()
+    {
+        // جلب جميع المستخدمين والسائقين
+        $users = User::select('id', 'name', 'email', 'phone', 'avatar')
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
+        $drivers = Driver::select('id', 'name', 'email', 'phone', 'avatar', 'is_online')
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
+        return view('Admin.chats.create', compact('users', 'drivers'));
+    }
+
+    /**
+     * إنشاء محادثة جديدة
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'participant_id' => 'required|string',
+            'participant_type' => 'required|in:user,driver',
+            'initial_message' => 'nullable|string|max:1000'
+        ]);
+
+        try {
+            $currentUser = auth()->user();
+            $participantId = $request->participant_id;
+
+            // تحديد نوع المحادثة
+            $type = $request->participant_type == 'user' ? 'admin_user' : 'admin_driver';
+
+            // إنشاء مصفوفة المشاركين
+            $participants = [
+                (string)$currentUser->id,
+                $participantId
+            ];
+            sort($participants);
+
+            // التحقق إذا كانت المحادثة موجودة مسبقاً
+            $chat = Chat::where('type', $type)
+                ->whereJsonContains('participants', $participants[0])
+                ->whereJsonContains('participants', $participants[1])
+                ->first();
+
+            if (!$chat) {
+                $chat = Chat::create([
+                    'chat_uuid' => Str::uuid(),
+                    'type' => $type,
+                    'participants' => $participants,
+                    'last_message' => $request->initial_message ? Str::limit($request->initial_message, 50) : 'بداية المحادثة',
+                    'last_message_at' => now()
+                ]);
+            }
+
+            // إذا كان هناك رسالة أولية، إرسالها
+            if ($request->filled('initial_message')) {
+                $message = $chat->messages()->create([
+                    'sender_id' => $currentUser->id,
+                    'sender_type' => 'admin', // نوع خاص للمشرف
+                    'message' => $request->initial_message,
+                    'message_type' => 'text',
+                    'is_read' => false
+                ]);
+
+                // تحديث آخر رسالة في المحادثة
+                $chat->update([
+                    'last_message' => Str::limit($request->initial_message, 50),
+                    'last_message_at' => now()
+                ]);
+
+                // بث الحدث
+                broadcast(new MessageSent($message))->toOthers();
+            }
+
+            return redirect()->route('admin.chats.show', $chat->id)
+                ->with('success', 'تم إنشاء المحادثة بنجاح');
+        } catch (\Exception $e) {
+            return back()->with('error', 'حدث خطأ أثناء إنشاء المحادثة: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * إرسال رسالة مباشرة من الإدارة
+     */
+    public function sendAdminMessage(Request $request, Chat $chat)
+    {
+        $request->validate([
+            'message' => 'required|string|max:1000',
+            'message_type' => 'nullable|in:text,voice,image,file'
+        ]);
+
+        try {
+            $message = $chat->messages()->create([
+                'sender_id' => auth()->id(),
+                'sender_type' => 'admin',
+                'message' => $request->message,
+                'message_type' => $request->message_type ?? 'text',
+                'is_read' => false
+            ]);
+
+            // تحديث آخر رسالة في المحادثة
+            $chat->update([
+                'last_message' => Str::limit($request->message, 50),
+                'last_message_at' => now()
+            ]);
+
+            // بث الحدث
+            broadcast(new MessageSent($message))->toOthers();
+
+            return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء إرسال الرسالة'
+            ], 500);
+        }
+    }
+
+    /**
+     * جلب المشارك بناءً على النوع
+     */
+    public function getParticipantInfo(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|in:user,driver',
+            'id' => 'required'
+        ]);
+
+        try {
+            if ($request->type == 'user') {
+                $participant = User::findOrFail($request->id);
+            } else {
+                $participant = Driver::findOrFail($request->id);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $participant->id,
+                    'name' => $participant->name,
+                    'email' => $participant->email,
+                    'phone' => $participant->phone,
+                    'avatar' => $participant->avatar,
+                    'is_online' => $participant->is_online ?? false,
+                    'last_seen' => $participant->last_seen ? $participant->last_seen->diffForHumans() : 'غير متصل'
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'لم يتم العثور على المشارك'
+            ], 404);
+        }
+    }
+
+    /**
+     * البحث عن مستخدمين أو سائقين
+     */
+    public function searchParticipants(Request $request)
+    {
+        $request->validate([
+            'search' => 'required|string|min:2',
+            'type' => 'nullable|in:all,user,driver'
+        ]);
+
+        $search = $request->search;
+        $type = $request->type ?? 'all';
+
+        $results = [];
+
+        if ($type == 'all' || $type == 'user') {
+            $users = User::where('status', 'active')
+                ->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+                })
+                ->limit(10)
+                ->get()
+                ->map(function ($user) {
+                    return [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'phone' => $user->phone,
+                        'avatar' => $user->avatar,
+                        'type' => 'user',
+                        'type_label' => 'مستخدم'
+                    ];
+                });
+
+            $results = array_merge($results, $users->toArray());
+        }
+
+        if ($type == 'all' || $type == 'driver') {
+            $drivers = Driver::where('status', 'active')
+                ->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+                })
+                ->limit(10)
+                ->get()
+                ->map(function ($driver) {
+                    return [
+                        'id' => $driver->id,
+                        'name' => $driver->name,
+                        'email' => $driver->email,
+                        'phone' => $driver->phone,
+                        'avatar' => $driver->avatar,
+                        'type' => 'driver',
+                        'type_label' => 'سائق',
+                        'is_online' => $driver->is_online
+                    ];
+                });
+
+            $results = array_merge($results, $drivers->toArray());
+        }
+
+        return response()->json([
+            'success' => true,
+            'results' => $results
+        ]);
+    }
+
+    /**
+     * جلب قائمة المحادثات المباشرة (Admin Chats)
+     */
+    public function adminChats(Request $request)
+    {
+
+        $currentUser = auth()->user();
+
+        // جلب المحادثات التي يكون المشرف طرفاً فيها
+        $query = Chat::with(['latestMessage.sender'])
+            ->whereJsonContains('participants', (string)$currentUser->id)
+            ->where(function ($q) {
+                $q->where('type', 'admin_user')
+                    ->orWhere('type', 'admin_driver');
+            });
+
+        // فلترة حسب النوع
+        if ($request->filled('chat_type')) {
+            $query->where('type', $request->chat_type);
+        }
+
+        // فلترة حسب الرسائل غير المقروءة
+        if ($request->has('unread_only')) {
+            $query->whereHas('messages', function ($q) {
+                $q->where('is_read', false);
+            });
+        }
+
+        // فلترة حسب البحث
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('chat_uuid', 'like', "%{$search}%")
+                    ->orWhere('last_message', 'like', "%{$search}%")
+                    ->orWhereHas('messages', function ($q2) use ($search) {
+                        $q2->where('message', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // الترتيب من الأحدث
+        $chats = $query->orderBy('last_message_at', 'desc')
+            ->paginate(20);
+
+        // حساب الرسائل غير المقروءة لكل محادثة
+        foreach ($chats as $chat) {
+            $chat->unread_count = $chat->messages()
+                ->where('is_read', false)
+                ->count();
+
+            // جلب معلومات المشارك الآخر
+            $chat->other_participant = $this->getOtherParticipantInfo($chat, $currentUser->id);
+        }
+
+        return view('Admin.chats.admin_chats', compact('chats'));
+    }
+
+    /**
+     * جلب معلومات المشارك الآخر
+     */
+    private function getOtherParticipantInfo(Chat $chat, $currentUserId)
+    {
+        $participants = collect($chat->participants)
+            ->filter(fn($id) => $id != $currentUserId);
+
+        $otherId = $participants->first();
+
+        if (!$otherId) {
+            return null;
+        }
+
+        // محاولة العثور على مستخدم
+        $user = User::find($otherId);
+        if ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'avatar' => $user->avatar,
+                'type' => 'user',
+                'is_online' => $user->last_seen && $user->last_seen->diffInMinutes(now()) < 5
+            ];
+        }
+
+        // محاولة العثور على سائق
+        $driver = Driver::find($otherId);
+        if ($driver) {
+            return [
+                'id' => $driver->id,
+                'name' => $driver->name,
+                'email' => $driver->email,
+                'avatar' => $driver->avatar,
+                'type' => 'driver',
+                'is_online' => $driver->is_online
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * تحديث حالة القراءة
+     */
+    public function markAsRead(Chat $chat)
+    {
+        try {
+            $chat->messages()
+                ->where('is_read', false)
+                ->update([
+                    'is_read' => true,
+                    'read_at' => now()
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم تحديد جميع الرسائل كمقروءة'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء تحديث حالة القراءة'
+            ], 500);
+        }
     }
 }
