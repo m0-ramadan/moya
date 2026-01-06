@@ -55,6 +55,7 @@ class ContractController extends Controller
                 'user_id' => $user->id,
                 'contract_number' => $this->generateContractNumber(),
                 'contract_type' => $data['contract_type'],
+                'phone' => $data['phone'] ?? null,
                 'company_name' => $data['company_name'] ?? null,
                 'applicant_name' => $data['applicant_name'] ?? null,
                 'duration_type' => $data['duration_type'],

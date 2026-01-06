@@ -86,27 +86,45 @@ class ChatController extends Controller
         ]);
     }
 
+
     public function sendMessage(Request $request, Chat $chat)
     {
         $this->authorize('send', $chat);
 
         $request->validate([
-            'message' => 'required|string',
-            'message_type' => 'in:text,image,location',
+            'message' => 'nullable|string|max:1000',
+            'message_type' => 'required|in:text,image,voice,location,file',
+            'file_url' => 'nullable|url',
+            'duration' => 'nullable|integer|min:1|max:600',
+            'file_size' => 'nullable|string',
+            'file_name' => 'nullable|string',
             'metadata' => 'nullable|array'
         ]);
 
-        $message = $chat->messages()->create([
+        $messageData = [
             'sender_id' => Auth::id(),
             'sender_type' => get_class(Auth::user()),
-            'message' => $request->message,
-            'message_type' => $request->message_type ?? 'text',
+            'message' => $request->input('message', $this->getDefaultMessage($request->message_type)),
+            'message_type' => $request->message_type,
             'metadata' => $request->metadata
-        ]);
+        ];
+
+        // Add file details for voice/image/file messages
+        if (in_array($request->message_type, ['voice', 'image', 'file'])) {
+            $messageData['file_url'] = $request->file_url;
+            $messageData['file_name'] = $request->file_name;
+            $messageData['file_size'] = $request->file_size;
+
+            if ($request->message_type === 'voice') {
+                $messageData['duration'] = $request->duration;
+            }
+        }
+
+        $message = $chat->messages()->create($messageData);
 
         // Update chat last message
         $chat->update([
-            'last_message' => Str::limit($request->message, 50),
+            'last_message' => $this->getLastMessagePreview($message),
             'last_message_at' => now()
         ]);
 
@@ -117,6 +135,28 @@ class ChatController extends Controller
             'status' => 'success',
             'message' => $message->load('sender')
         ]);
+    }
+
+    private function getDefaultMessage($messageType)
+    {
+        return match ($messageType) {
+            'voice' => '🎤 Voice message',
+            'image' => '📷 Photo',
+            'file' => '📄 File',
+            'location' => '📍 Location',
+            default => ''
+        };
+    }
+
+    private function getLastMessagePreview(Message $message)
+    {
+        return match ($message->message_type) {
+            'voice' => '🎤 Voice message',
+            'image' => '📷 Photo',
+            'file' => '📄 ' . $message->file_name,
+            'location' => '📍 Location shared',
+            default => Str::limit($message->message, 50)
+        };
     }
 
     public function markAsRead(Message $message)

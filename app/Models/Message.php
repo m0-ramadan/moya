@@ -16,6 +16,10 @@ class Message extends Model
         'sender_type',
         'message',
         'message_type',
+        'file_url',
+        'duration',
+        'file_size',
+        'file_name',
         'metadata',
         'is_read',
         'read_at'
@@ -24,8 +28,26 @@ class Message extends Model
     protected $casts = [
         'metadata' => 'array',
         'read_at' => 'datetime',
-        'is_read' => 'boolean'
+        'is_read' => 'boolean',
+        'duration' => 'integer'
     ];
+
+
+    public function isVoiceMessage()
+    {
+        return $this->message_type === 'voice';
+    }
+
+    public function isFileMessage()
+    {
+        return in_array($this->message_type, ['voice', 'image', 'file']);
+    }
+
+    public function getFileExtension()
+    {
+        if (!$this->file_name) return null;
+        return pathinfo($this->file_name, PATHINFO_EXTENSION);
+    }
 
     public function chat()
     {

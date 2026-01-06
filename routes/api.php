@@ -1,6 +1,7 @@
 <?php
 
 use Pusher\Pusher;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\ContactUsController;
 use App\Http\Controllers\Api\StaticPagesController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\VoiceMessageController;
 use App\Http\Controllers\Api\Website\HomeController;
 use App\Http\Controllers\Api\Website\PageController;
 use App\Http\Controllers\Api\SavedLocationController;
@@ -19,7 +21,6 @@ use App\Http\Controllers\Api\ArticleCommentController;
 use App\Http\Controllers\Api\ArticleCategoryController;
 use App\Http\Controllers\Api\ArticleInteractionController;
 use App\Http\Controllers\Api\Website\UserAddressController;
-use Illuminate\Http\Request;
 
 
 Route::prefix('v1')->group(function () {
@@ -91,6 +92,12 @@ Route::prefix('v1')->group(function () {
             Route::post('/{chat}/send', [ChatController::class, 'sendMessage']);
             Route::post('/messages/{message}/read', [ChatController::class, 'markAsRead']);
             Route::delete('/messages/{message}', [ChatController::class, 'deleteMessage']);
+            // Voice message routes
+            Route::prefix('voice-messages')->group(function () {
+                Route::post('/{chat}/upload', [VoiceMessageController::class, 'uploadVoiceMessage']);
+                Route::post('/{chat}/upload-chunked', [VoiceMessageController::class, 'uploadChunkedVoiceMessage']);
+                Route::delete('/{message}', [VoiceMessageController::class, 'deleteVoiceMessage']);
+            });
         });
 
         // Pusher authentication
