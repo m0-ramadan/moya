@@ -46,6 +46,7 @@ class ContractController extends Controller
             $data = $request->validated();
             $startDate = null;
             $endDate = null;
+            $renewalDate = null;
             // حساب تاريخ الانتهاء بناءً على نوع المدة
             if ($data['duration_type'] && $data['start_date']) {
                 $startDate = Carbon::parse($data['start_date']);
