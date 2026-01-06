@@ -46,4 +46,49 @@ class Chat extends Model
     {
         return $query->whereJsonContains('participants', $participantId);
     }
+
+
+    public function latestMessage()
+    {
+        return $this->hasOne(Message::class)->latest();
+    }
+
+    public function unreadMessages()
+    {
+        return $this->hasMany(Message::class)->where('is_read', false);
+    }
+
+    // علاقة للحصول على معلومات المشاركين
+    public function participantDetails()
+    {
+        return $this->hasManyThrough(
+            User::class,
+            Driver::class,
+            'id',
+            'id',
+            'participants',
+            'participants'
+        );
+    }
+
+    // دالة للحصول على تسمية النوع
+    public function getTypeLabelAttribute()
+    {
+        return match ($this->type) {
+            'user_user' => 'مستخدم - مستخدم',
+            'user_driver' => 'مستخدم - سائق',
+            'driver_driver' => 'سائق - سائق',
+            default => $this->type
+        };
+    }
+
+    // دالة للتحقق إذا كانت المحادثة نشطة (آخر رسالة قبل أقل من 10 دقائق)
+    public function getIsActiveAttribute()
+    {
+        if (!$this->last_message_at) {
+            return false;
+        }
+
+        return $this->last_message_at->diffInMinutes(now()) < 10;
+    }
 }

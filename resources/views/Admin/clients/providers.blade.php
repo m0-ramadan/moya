@@ -13,10 +13,10 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
 
-                <x-breadcrumb :items="[
+                {{-- <x-breadcrumb :items="[
                     'لوحة التحكم' => '/admin',
                     'حسابات التجار' => '',
-                ]" />
+                ]" /> --}}
 
             </div>
 

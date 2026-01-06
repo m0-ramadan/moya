@@ -38,7 +38,7 @@
                                         <td style="text-align: center;">{{ $admin->email }}</td>
                                         <td style="text-align: center;">
                                             @php
-                                                $roleName = $admin->roles->first()->name ?? 'لم يتم تسجيل دوره';
+                                                $roleName = $admin->roles?->first()->name ?? 'لم يتم تسجيل دوره';
                                             @endphp
                                             {{ $roleName }}
                                         </td>

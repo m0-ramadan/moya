@@ -1,383 +1,613 @@
 @extends('Admin.layout.master')
 
-@section('title')
-    الأدوار
-@endsection
+@section('title', 'إدارة الرتب')
 
 @section('css')
-    <!-- Plugins css start-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/datatables.css') }}">
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <!-- Plugins css Ends-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #696cff;
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-bg: #f8f9fa;
+            --border-color: #e9ecef;
+            --text-muted: #6c757d;
+            --dark-bg: #1e1e2d;
+            --dark-card: #2b3b4c;
+        }
+
         body {
-            direction: rtl;
-            text-align: right;
+            font-family: "Cairo", sans-serif !important;
+            background: var(--dark-bg);
+            color: #fff;
         }
 
-        .modal-header,
-        .modal-footer {
-            background-color: #f8f9fa;
+        .role-card {
+            background: var(--dark-card);
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
         }
 
-        .modal-title {
-            font-weight: bold;
+        .role-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 15px 15px 0 0;
+            margin-bottom: 25px;
         }
 
-        .form-control.is-invalid {
-            border-color: #dc3545;
+        .stats-card {
+            background: var(--dark-card);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border-top: 4px solid var(--primary-color);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .invalid-feedback {
-            display: none;
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
         }
 
-        .is-invalid~.invalid-feedback {
-            display: block;
+        .stats-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 15px;
         }
 
-        .btn-loading .spinner-border {
+        .icon-total {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .icon-admin {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+
+        .icon-editor {
+            background: rgba(12, 99, 228, 0.2);
+            color: #0c63e4;
+            border: 1px solid rgba(12, 99, 228, 0.3);
+        }
+
+        .icon-viewer {
+            background: rgba(32, 201, 151, 0.2);
+            color: #20c997;
+            border: 1px solid rgba(32, 201, 151, 0.3);
+        }
+
+        .stats-number {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .stats-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .role-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid transparent;
+        }
+
+        .role-item:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            background: rgba(105, 108, 255, 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .role-item.super-admin {
+            border-left-color: #dc3545;
+        }
+
+        .role-item.admin {
+            border-left-color: #ffc107;
+        }
+
+        .role-item.editor {
+            border-left-color: #0dcaf0;
+        }
+
+        .role-item.viewer {
+            border-left-color: #20c997;
+        }
+
+        .role-badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 13px;
             display: inline-block;
         }
 
-        .btn-loading:not(.disabled) .btn-text {
-            display: none;
+        .badge-super-admin {
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.2) 0%, rgba(253, 126, 20, 0.2) 100%);
+            color: #fd7e14;
+            border: 1px solid rgba(253, 126, 20, 0.3);
         }
 
-        .table th,
-        .table td {
-            text-align: right;
+        .badge-admin {
+            background: rgba(133, 100, 4, 0.2);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
         }
 
-        .d-flex.gap-1 {
-            justify-content: flex-end;
+        .badge-editor {
+            background: rgba(12, 84, 96, 0.2);
+            color: #0dcaf0;
+            border: 1px solid rgba(13, 202, 240, 0.3);
         }
 
-        .permissions-grid {
+        .badge-viewer {
+            background: linear-gradient(135deg, rgba(21, 87, 36, 0.2) 0%, rgba(32, 201, 151, 0.2) 100%);
+            color: #20c997;
+            border: 1px solid rgba(32, 201, 151, 0.3);
+        }
+
+        .role-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
             display: flex;
-            flex-wrap: wrap;
+            align-items: center;
             gap: 10px;
         }
 
-        .permissions-grid .form-check {
-            flex: 0 0 25%;
-            padding-right: 20px;
+        .detail-label {
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+            min-width: 100px;
+        }
+
+        .detail-value {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .permissions-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .permission-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 4px 12px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .permission-badge:hover {
+            background: rgba(105, 108, 255, 0.2);
+            color: #fff;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding-right: 40px;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .search-box input:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 0 0 0.25rem rgba(105, 108, 255, 0.25);
+        }
+
+        .search-box .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 60px;
+            color: rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .empty-state-text {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4a9a 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(105, 108, 255, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .role-details {
+                grid-template-columns: 1fr;
+            }
+
+            .permissions-list {
+                justify-content: center;
+            }
         }
     </style>
 @endsection
 
 @section('content')
-    <div class="col-sm-12">
-        <div class="card">
-            <div class="card-header">
-                <h5>إدارة الأدوار</h5>
-                <a href="{{ route('admin.roles.create') }}" class="btn btn-success">إضافة دور</a>
+    <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{{ route('admin.index') }}">الرئيسية</a>
+                </li>
+                <li class="breadcrumb-item active">الرتب</li>
+            </ol>
+        </nav>
+
+        <!-- الإحصائيات -->
+        <div class="row mb-4" bis_skin_checked="1">
+            <div class="col-lg-3 col-md-6 mb-4" bis_skin_checked="1">
+                <div class="stats-card" bis_skin_checked="1">
+                    <div class="stats-icon icon-total" bis_skin_checked="1">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="stats-number" bis_skin_checked="1">
+                        {{ number_format($stats['total']) }}
+                    </div>
+                    <div class="stats-label" bis_skin_checked="1">إجمالي الرتب</div>
+                </div>
             </div>
-            <div class="card-body">
-                @if (session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
-                @endif
-                <!-- Debug Permissions -->
-                {{-- <div>Debug Permissions: {{ count($permissions) }} صلاحيات متاحة. IDs:
-                    {{ implode(', ', $permissions->pluck('id')->toArray()) }}</div> --}}
-                <div class="table-responsive">
-                    <table class="display" id="basic-1">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>الاسم</th>
-                                <th>الحارس</th>
-                                <th>الصلاحيات</th>
-                                <th>الإجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($roles as $key => $role)
-                                <tr>
-                                    <td>{{ ++$key }}</td>
-                                    <td>{{ $role->name }}</td>
-                                    <td>{{ $role->guard_name ?? 'web' }}</td>
-                                    <td>
-                                        @foreach ($role->permissions as $permission)
-                                            <span class="badge badge-primary">{{ $permission->name }} (ID:
-                                                {{ $permission->id }})</span>
-                                        @endforeach
-                                    </td>
-                                    <td class="d-flex gap-1">
-                                        <a href="{{ route('admin.roles.edit', $role->id) }}" class="btn btn-success btn-sm"
-                                            title="تعديل">
-                                            <i class="fa fa-edit text-white"></i>
-                                        </a>
-                                        <form method="POST" action="{{ route('admin.roles.destroy', $role->id) }}"
-                                            class="delete-form">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm" title="حذف">
-                                                <i class="fa fa-trash-o"></i>
-                                            </button>
-                                        </form>
 
-                                    </td>
-                                </tr>
+            <div class="col-lg-3 col-md-6 mb-4" bis_skin_checked="1">
+                <div class="stats-card" bis_skin_checked="1">
+                    <div class="stats-icon icon-admin" bis_skin_checked="1">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div class="stats-number" bis_skin_checked="1">
+                        {{ number_format($stats['super_admins']) }}
+                    </div>
+                    <div class="stats-label" bis_skin_checked="1">مشرفين رئيسيين</div>
+                </div>
+            </div>
 
-                                <!-- Edit Role Modal -->
-                                <div class="modal fade" id="editRoleModal{{ $role->id }}" tabindex="-1"
-                                    aria-labelledby="editRoleModalLabel{{ $role->id }}" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="editRoleModalLabel{{ $role->id }}">تعديل
-                                                    الدور</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                            </div>
-                                            <form method="POST" action="{{ route('admin.roles.update', $role->id) }}"
-                                                class="role-form">
-                                                @csrf
-                                                @method('PUT')
-                                                <div class="modal-body">
-                                                    <div class="mb-3">
-                                                        <label for="name{{ $role->id }}" class="form-label">اسم
-                                                            الدور</label>
-                                                        <input type="text" class="form-control"
-                                                            id="name{{ $role->id }}" name="name"
-                                                            value="{{ $role->name }}" required>
-                                                        @error('name')
-                                                            <div class="invalid-feedback">{{ $message }}</div>
-                                                        @enderror
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label">الصلاحيات</label>
-                                                        <div class="permissions-grid">
-                                                            @foreach ($permissions as $permission)
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input" type="checkbox"
-                                                                        name="permissions[]"
-                                                                        id="permission{{ $permission->id }}_{{ $role->id }}"
-                                                                        value="{{ $permission->id }}"
-                                                                        {{ $role->permissions->contains($permission->id) ? 'checked' : '' }}>
-                                                                    <label class="form-check-label"
-                                                                        for="permission{{ $permission->id }}_{{ $role->id }}">
-                                                                        {{ $permission->name }} (ID:
-                                                                        {{ $permission->id }})
-                                                                    </label>
-                                                                </div>
-                                                            @endforeach
-                                                        </div>
-                                                        @error('permissions')
-                                                            <div class="invalid-feedback">{{ $message }}</div>
-                                                        @enderror
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary"
-                                                        data-bs-dismiss="modal">إغلاق</button>
-                                                    <button type="submit" class="btn btn-primary btn-loading">
-                                                        <span class="spinner-border spinner-border-sm" role="status"
-                                                            aria-hidden="true" style="display: none;"></span>
-                                                        <span class="btn-text">تحديث الدور</span>
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </tbody>
-                    </table>
+            <div class="col-lg-3 col-md-6 mb-4" bis_skin_checked="1">
+                <div class="stats-card" bis_skin_checked="1">
+                    <div class="stats-icon icon-editor" bis_skin_checked="1">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="stats-number" bis_skin_checked="1">
+                        {{ number_format($stats['admins']) }}
+                    </div>
+                    <div class="stats-label" bis_skin_checked="1">مديرين</div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4" bis_skin_checked="1">
+                <div class="stats-card" bis_skin_checked="1">
+                    <div class="stats-icon icon-viewer" bis_skin_checked="1">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="stats-number" bis_skin_checked="1">
+                        {{ number_format($stats['editors']) }}
+                    </div>
+                    <div class="stats-label" bis_skin_checked="1">محررين</div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Create Role Modal -->
-    <div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createRoleModalLabel">إضافة دور</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form method="POST" action="{{ route('admin.roles.store') }}" class="role-form">
-                    @csrf
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">اسم الدور</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
-                            @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+        <!-- البحث -->
+        <div class="row mb-4" bis_skin_checked="1">
+            <div class="col-12" bis_skin_checked="1">
+                <div class="role-card" bis_skin_checked="1">
+                    <div class="d-flex justify-content-between align-items-center mb-4" bis_skin_checked="1">
+                        <div bis_skin_checked="1">
+                            <h5 class="mb-1">إدارة الرتب</h5>
+                            <small class="opacity-75">عرض وتعديل صلاحيات المستخدمين</small>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">الصلاحيات</label>
-                            <div class="permissions-grid">
-                                @foreach ($permissions as $permission)
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions[]"
-                                            id="permission{{ $permission->id }}" value="{{ $permission->id }}">
-                                        <label class="form-check-label" for="permission{{ $permission->id }}">
-                                            {{ $permission->name }} (ID: {{ $permission->id }})
-                                        </label>
-                                    </div>
-                                @endforeach
+                        <div class="d-flex gap-3" bis_skin_checked="1">
+                            <div class="search-box" bis_skin_checked="1">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" class="form-control" placeholder="بحث عن رتبة..." id="searchInput"
+                                    value="{{ request('search') }}">
                             </div>
-                            @error('permissions')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                            <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>إضافة رتبة جديدة
+                            </a>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
-                        <button type="submit" class="btn btn-primary btn-loading">
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
-                                style="display: none;"></span>
-                            <span class="btn-text">إنشاء الدور</span>
-                        </button>
+
+                    <div class="card-body" bis_skin_checked="1">
+                        @if ($roles->isEmpty())
+                            <div class="empty-state" bis_skin_checked="1">
+                                <div class="empty-state-icon" bis_skin_checked="1">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <h5 class="empty-state-text">لا توجد رتب</h5>
+                                <p class="text-muted">لم يتم إنشاء أي رتب حتى الآن</p>
+                                <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>إضافة أول رتبة
+                                </a>
+                            </div>
+                        @else
+                            @foreach ($roles as $role)
+                                <div class="role-item {{ $role->name }}" bis_skin_checked="1">
+                                    <div class="d-flex justify-content-between align-items-start mb-3" bis_skin_checked="1">
+                                        <div bis_skin_checked="1">
+                                            <h6 class="mb-2">{{ $role->display_name ?: $role->name }}</h6>
+                                            <div class="d-flex align-items-center gap-3" bis_skin_checked="1">
+                                                <span class="role-badge badge-{{ $role->name }}">
+                                                    {{ $role->name }}
+                                                </span>
+                                                @if ($role->is_default)
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-star me-1"></i>افتراضي
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="text-muted" bis_skin_checked="1">
+                                            <small>
+                                                <i class="far fa-clock me-1"></i>
+                                                {{ $role->created_at->translatedFormat('d M Y') }}
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <div class="role-details" bis_skin_checked="1">
+                                        <div class="detail-item" bis_skin_checked="1">
+                                            <span class="detail-label">الوصف:</span>
+                                            <span class="detail-value">
+                                                {{ $role->description ?? 'لا يوجد وصف' }}
+                                            </span>
+                                        </div>
+
+                                        <div class="detail-item" bis_skin_checked="1">
+                                            <span class="detail-label">عدد الصلاحيات:</span>
+                                            <span class="detail-value">
+                                                {{ $role->permissions_count }} صلاحية
+                                            </span>
+                                        </div>
+
+                                        <div class="detail-item" bis_skin_checked="1">
+                                            <span class="detail-label">عدد المستخدمين:</span>
+                                            <span class="detail-value">
+                                                {{ $role->users_count }} مستخدم
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    @if ($role->permissions->count() > 0)
+                                        <div class="mb-3" bis_skin_checked="1">
+                                            <small class="text-muted d-block mb-2">الصلاحيات الممنوحة:</small>
+                                            <div class="permissions-list" bis_skin_checked="1">
+                                                @foreach ($role->permissions->take(8) as $permission)
+                                                    <span class="permission-badge">
+                                                        <i class="fas fa-key me-1"></i>
+                                                        {{ $permission->display_name }}
+                                                    </span>
+                                                @endforeach
+                                                @if ($role->permissions->count() > 8)
+                                                    <span class="permission-badge">
+                                                        +{{ $role->permissions->count() - 8 }} أخرى
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    <div class="d-flex gap-2" bis_skin_checked="1">
+                                        <a href="{{ route('admin.roles.show', $role) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye me-1"></i>عرض التفاصيل
+                                        </a>
+                                        <a href="{{ route('admin.roles.edit', $role) }}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit me-1"></i>تعديل
+                                        </a>
+                                        @if (!$role->is_default && $role->name !== 'super_admin')
+                                            <button type="button" class="btn btn-sm btn-danger delete-btn"
+                                                data-id="{{ $role->id }}"
+                                                data-name="{{ $role->display_name ?: $role->name }}">
+                                                <i class="fas fa-trash me-1"></i>حذف
+                                            </button>
+                                        @endif
+                                        <a href="{{ route('admin.roles.permissions', $role) }}"
+                                            class="btn btn-sm btn-secondary">
+                                            <i class="fas fa-key me-1"></i>إدارة الصلاحيات
+                                        </a>
+                                    </div>
+                                </div>
+                            @endforeach
+
+                            @if ($roles->hasPages())
+                                <div class="mt-4">
+                                    <nav>
+                                        <ul class="pagination justify-content-center">
+                                            {{-- Previous Page Link --}}
+                                            @if ($roles->onFirstPage())
+                                                <li class="page-item disabled" aria-disabled="true">
+                                                    <span class="page-link waves-effect" aria-hidden="true">‹</span>
+                                                </li>
+                                            @else
+                                                <li class="page-item">
+                                                    <a class="page-link waves-effect"
+                                                        href="{{ $roles->previousPageUrl() }}" rel="prev">‹</a>
+                                                </li>
+                                            @endif
+
+                                            {{-- Pagination Elements --}}
+                                            @foreach ($roles->links()->elements[0] as $page => $url)
+                                                @if ($page == $roles->currentPage())
+                                                    <li class="page-item active" aria-current="page">
+                                                        <span class="page-link waves-effect">{{ $page }}</span>
+                                                    </li>
+                                                @else
+                                                    <li class="page-item">
+                                                        <a class="page-link waves-effect"
+                                                            href="{{ $url }}">{{ $page }}</a>
+                                                    </li>
+                                                @endif
+                                            @endforeach
+
+                                            {{-- Next Page Link --}}
+                                            @if ($roles->hasMorePages())
+                                                <li class="page-item">
+                                                    <a class="page-link waves-effect" href="{{ $roles->nextPageUrl() }}"
+                                                        rel="next">›</a>
+                                                </li>
+                                            @else
+                                                <li class="page-item disabled" aria-disabled="true">
+                                                    <span class="page-link waves-effect" aria-hidden="true">›</span>
+                                                </li>
+                                            @endif
+                                        </ul>
+                                    </nav>
+                                </div>
+                            @endif
+                        @endif
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
 @endsection
 
 @section('js')
-    <!-- Plugins JS start-->
-    <script src="{{ asset('assets/js/datatable/datatables/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ asset('assets/js/datatable/datatables/datatable.custom.js') }}"></script>
-    <script src="{{ asset('assets/js/tooltip-init.js') }}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Plugins JS Ends-->
     <script>
-        // Initialize DataTables with Arabic translation
         $(document).ready(function() {
-            // Destroy existing DataTable instance if it exists
-            if ($.fn.DataTable.isDataTable('#basic-1')) {
-                $('#basic-1').DataTable().destroy();
-            }
-
-            // Initialize DataTable
-            $('#basic-1').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Arabic.json'
-                }
+            // البحث مع تأخير
+            let searchTimeout;
+            $('#searchInput').on('keyup', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    const searchValue = $(this).val();
+                    const url = new URL(window.location.href);
+                    if (searchValue) {
+                        url.searchParams.set('search', searchValue);
+                    } else {
+                        url.searchParams.delete('search');
+                    }
+                    url.searchParams.set('page', '1');
+                    window.location.href = url.toString();
+                }, 500);
             });
-        });
 
-        // Initialize Bootstrap modals
-        var createModal = new bootstrap.Modal(document.getElementById('createRoleModal'));
-        @foreach ($roles as $role)
-            var editModal{{ $role->id }} = new bootstrap.Modal(document.getElementById(
-                'editRoleModal{{ $role->id }}'));
-        @endforeach
+            // حذف الرتبة
+            $('.delete-btn').on('click', function() {
+                const roleId = $(this).data('id');
+                const roleName = $(this).data('name');
 
-        // Handle form submissions with AJAX
-        document.querySelectorAll('.role-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const submitButton = form.querySelector('.btn-loading');
-                submitButton.disabled = true;
-                submitButton.querySelector('.spinner-border').style.display = 'inline-block';
-                submitButton.querySelector('.btn-text').style.display = 'none';
-
-                // Log form data for debugging
-                const formData = new FormData(form);
-                const formDataObj = Object.fromEntries(formData.entries());
-                console.log('Form Data:', formDataObj);
-                console.log('Permissions Array:', formData.getAll('permissions[]'));
-
-                // Client-side validation
-                if (!formData.get('name').trim()) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'خطأ',
-                        text: 'اسم الدور مطلوب.',
-                    });
-                    submitButton.disabled = false;
-                    submitButton.querySelector('.spinner-border').style.display = 'none';
-                    submitButton.querySelector('.btn-text').style.display = 'inline-block';
-                    return;
-                }
-
-                fetch(form.action, {
-                        method: form.method,
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Accept': 'application/json'
-                        },
-                        body: formData
-                    })
-                    .then(response => {
-                        console.log('Response Status:', response.status);
-                        console.log('Response Headers:', [...response.headers.entries()]);
-                        return response.json();
-                    })
-                    .then(data => {
-                        submitButton.disabled = false;
-                        submitButton.querySelector('.spinner-border').style.display = 'none';
-                        submitButton.querySelector('.btn-text').style.display = 'inline-block';
-
-                        if (data.success) {
-                            console.log('Success Response:', data);
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'نجاح',
-                                text: data.message,
-                                timer: 2000,
-                                showConfirmButton: false
-                            }).then(() => {
-                                createModal.hide();
-                                @foreach ($roles as $role)
-                                    editModal{{ $role->id }}.hide();
-                                @endforeach
-                                form.reset();
-                                window.location.reload();
-                            });
-                        } else {
-                            console.error('Error Response:', data);
-                            let errorMessage = data.message || 'حدث خطأ ما!';
-                            if (data.errors) {
-                                errorMessage = Object.values(data.errors).flat().join('<br>');
-                            }
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'خطأ',
-                                html: errorMessage,
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        submitButton.disabled = false;
-                        submitButton.querySelector('.spinner-border').style.display = 'none';
-                        submitButton.querySelector('.btn-text').style.display = 'inline-block';
-                        console.error('Fetch Error:', error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'خطأ',
-                            html: 'حدث خطأ أثناء معالجة طلبك: ' + error.message,
-                        });
-                    });
-            });
-        });
-
-        // Handle delete confirmation with SweetAlert
-        document.querySelectorAll('.delete-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
                 Swal.fire({
                     title: 'هل أنت متأكد؟',
-                    text: 'لن تتمكن من التراجع عن هذا!',
+                    text: `سيتم حذف الرتبة "${roleName}" نهائياً`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
                     cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'نعم، احذفه!',
-                    cancelButtonText: 'إلغاء'
+                    confirmButtonText: 'نعم، احذف',
+                    cancelButtonText: 'إلغاء',
+                    reverseButtons: true
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        form.submit();
+                        $.ajax({
+                            url: "{{ route('admin.roles.destroy', '') }}/" + roleId,
+                            type: 'POST',
+                            data: {
+                                _token: "{{ csrf_token() }}",
+                                _method: 'DELETE'
+                            },
+                            success: function(response) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'تم الحذف',
+                                    text: response.success,
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            },
+                            error: function(xhr) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'خطأ',
+                                    text: xhr.responseJSON?.message ||
+                                        'حدث خطأ أثناء الحذف',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+                            }
+                        });
                     }
                 });
             });
+
+            // رسائل التنبيه من الجلسة
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'نجاح',
+                    text: "{{ session('success') }}",
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            @endif
+
+            @if (session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطأ',
+                    text: "{{ session('error') }}",
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            @endif
         });
     </script>
 @endsection

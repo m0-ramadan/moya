@@ -1,285 +1,457 @@
 @extends('Admin.layout.master')
 
-@section('title')
-    الصلاحيات
-@endsection
+@section('title', 'إدارة الصلاحيات')
 
 @section('css')
-    <!-- Plugins css start-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/datatables.css') }}">
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <!-- Plugins css Ends-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #696cff;
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --dark-bg: #1e1e2d;
+            --dark-card: #2b3b4c;
+        }
+
         body {
-            direction: rtl;
-            text-align: right;
+            font-family: "Cairo", sans-serif !important;
+            background: var(--dark-bg);
+            color: #fff;
         }
 
-        .modal-header,
-        .modal-footer {
-            background-color: #f8f9fa;
+        .permission-card {
+            background: var(--dark-card);
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .modal-title {
-            font-weight: bold;
+        .permission-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 15px 15px 0 0;
+            margin-bottom: 25px;
         }
 
-        .form-control.is-invalid {
-            border-color: #dc3545;
+        .module-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
         }
 
-        .invalid-feedback {
-            display: none;
+        .module-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+            background: rgba(105, 108, 255, 0.05);
         }
 
-        .is-invalid~.invalid-feedback {
-            display: block;
+        .module-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .btn-loading .spinner-border {
+        .module-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .module-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .permission-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .permission-item:hover {
+            background: rgba(105, 108, 255, 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .permission-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .permission-name {
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .permission-description {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+
+        .permission-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .permission-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
             display: inline-block;
         }
 
-        .btn-loading:not(.disabled) .btn-text {
-            display: none;
+        .badge-create {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.3);
         }
 
-        .table th,
-        .table td {
-            text-align: right;
+        .badge-read {
+            background: rgba(12, 99, 228, 0.2);
+            color: #0c63e4;
+            border: 1px solid rgba(12, 99, 228, 0.3);
         }
 
-        .d-flex.gap-1 {
-            justify-content: flex-end;
+        .badge-update {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .badge-delete {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+
+        .badge-manage {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .module-stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding-right: 40px;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .search-box input:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 0 0 0.25rem rgba(105, 108, 255, 0.25);
+        }
+
+        .search-box .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 60px;
+            color: rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .empty-state-text {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4a9a 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(105, 108, 255, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .permission-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .permission-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
         }
     </style>
 @endsection
 
 @section('content')
-    <div class="col-sm-12">
-        <div class="card">
-            <div class="card-header">
-                <h5>إدارة الصلاحيات</h5>
-                {{-- <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createPermissionModal">إضافة
-                    صلاحية</button> --}}
-            </div>
-            <div class="card-body">
-                @if (session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
-                @endif
-                <div class="table-responsive">
-                    <table class="display" id="basic-1">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>الاسم</th>
-                                <th>الحارس</th>
-                                {{-- <th>الإجراءات</th> --}}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($permissions as $key => $permission)
-                                <tr>
-                                    <td>{{ ++$key }}</td>
-                                    <td>{{ $permission->name }}</td>
-                                    <td>{{ $permission->guard_name ?? 'web' }}</td>
-                                    {{-- <td class="d-flex gap-1">
-                                        <button class="btn btn-success btn-sm" data-bs-toggle="modal"
-                                            data-bs-target="#editPermissionModal{{ $permission->id }}" title="تعديل">
-                                            <i class="fa fa-edit text-white"></i>
-                                        </button>
-                                        <form method="POST"
-                                            action="{{ route('admin.permissions.destroy', $permission->id) }}"
-                                            class="delete-form">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm" title="حذف">
-                                                <i class="fa fa-trash-o"></i>
-                                            </button>
-                                        </form>
-                                        <a class="btn btn-info btn-sm"
-                                            href="{{ route('admin.permissions.show', $permission->id) }}" title="عرض">
-                                            <i class="fa fa-eye text-white"></i>
-                                        </a>
-                                    </td>
-                                </tr> --}}
+    <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{{ route('admin.index') }}">الرئيسية</a>
+                </li>
+                <li class="breadcrumb-item active">الصلاحيات</li>
+            </ol>
+        </nav>
 
-                                <!-- Edit Permission Modal -->
-                                <div class="modal fade" id="editPermissionModal{{ $permission->id }}" tabindex="-1"
-                                    aria-labelledby="editPermissionModalLabel{{ $permission->id }}" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="editPermissionModalLabel{{ $permission->id }}">
-                                                    تعديل الصلاحية</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
+        <!-- البحث والإحصاءات -->
+        <div class="row mb-4" bis_skin_checked="1">
+            <div class="col-12" bis_skin_checked="1">
+                <div class="permission-card" bis_skin_checked="1">
+                    <div class="permission-header" bis_skin_checked="1">
+                        <div class="d-flex justify-content-between align-items-center" bis_skin_checked="1">
+                            <div bis_skin_checked="1">
+                                <h5 class="mb-1">إدارة الصلاحيات</h5>
+                                <small class="opacity-75">عرض وتعديل جميع الصلاحيات في النظام</small>
+                            </div>
+                            <div class="d-flex gap-3 align-items-center" bis_skin_checked="1">
+                                <div class="search-box" bis_skin_checked="1">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input type="text" class="form-control" placeholder="بحث عن صلاحية..."
+                                        id="searchInput" value="{{ request('search') }}">
+                                </div>
+                                <a href="{{ route('admin.permissions.create') }}" class="btn btn-light">
+                                    <i class="fas fa-plus me-2"></i>إضافة صلاحية جديدة
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body" bis_skin_checked="1">
+                        @if ($permissionsByModule->isEmpty())
+                            <div class="empty-state" bis_skin_checked="1">
+                                <div class="empty-state-icon" bis_skin_checked="1">
+                                    <i class="fas fa-key"></i>
+                                </div>
+                                <h5 class="empty-state-text">لا توجد صلاحيات</h5>
+                                <p class="text-muted">لم يتم إنشاء أي صلاحيات حتى الآن</p>
+                                <a href="{{ route('admin.permissions.create') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>إضافة صلاحية أولى
+                                </a>
+                            </div>
+                        @else
+                            @foreach ($permissionsByModule as $module => $permissions)
+                                <div class="module-card" bis_skin_checked="1">
+                                    <div class="module-header" bis_skin_checked="1">
+                                        <div class="module-title" bis_skin_checked="1">
+                                            <div class="module-icon" bis_skin_checked="1">
+                                                <i class="fas fa-{{ module_icon($module) }}"></i>
                                             </div>
-                                            <form method="POST"
-                                                action="{{ route('admin.permissions.update', $permission->id) }}"
-                                                class="permission-form">
-                                                @csrf
-                                                @method('PUT')
-                                                <div class="modal-body">
-                                                    <div class="mb-3">
-                                                        <label for="name{{ $permission->id }}" class="form-label">اسم
-                                                            الصلاحية</label>
-                                                        <input type="text" class="form-control"
-                                                            id="name{{ $permission->id }}" name="name"
-                                                            value="{{ $permission->name }}" required>
-                                                        @error('name')
-                                                            <div class="invalid-feedback">{{ $message }}</div>
-                                                        @enderror
+                                            <span>{{ module_display_name($module) }}</span>
+                                        </div>
+                                        <div class="module-stats" bis_skin_checked="1">
+                                            <span class="stat-item">
+                                                <i class="fas fa-key"></i>
+                                                {{ $permissions->count() }} صلاحية
+                                            </span>
+                                            <span class="stat-item">
+                                                <i class="fas fa-users"></i>
+                                                {{ $permissions->sum('roles_count') }} رتبة
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="row" bis_skin_checked="1">
+                                        @foreach ($permissions as $permission)
+                                            @php
+                                                // استخدم الـ helper functions الصحيحة
+                                                $permissionType = permission_type($permission->name);
+                                                $permissionTypeLabel = permission_type_label($permission->name);
+                                                $badgeClass = permission_badge_class($permission->name);
+                                            @endphp
+                                            <div class="col-lg-6 mb-3" bis_skin_checked="1">
+                                                <div class="permission-item" bis_skin_checked="1">
+                                                    <div class="permission-info" bis_skin_checked="1">
+                                                        <div bis_skin_checked="1">
+                                                            <div class="permission-name" bis_skin_checked="1">
+                                                                {{ $permission->display_name }}
+                                                                <span class="permission-badge {{ $badgeClass }}">
+                                                                    {{ $permissionTypeLabel }}
+                                                                </span>
+                                                            </div>
+                                                            <div class="permission-description" bis_skin_checked="1">
+                                                                {{ $permission->description ?? 'لا يوجد وصف' }}
+                                                            </div>
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-hashtag me-1"></i>
+                                                                {{ $permission->name }}
+                                                            </small>
+                                                        </div>
+                                                        <div class="permission-actions" bis_skin_checked="1">
+                                                            <a href="{{ route('admin.permissions.edit', $permission) }}"
+                                                                class="btn btn-sm btn-warning">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-danger delete-permission"
+                                                                data-id="{{ $permission->id }}"
+                                                                data-name="{{ $permission->display_name }}">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary"
-                                                        data-bs-dismiss="modal">إغلاق</button>
-                                                    <button type="submit" class="btn btn-primary btn-loading">
-                                                        <span class="spinner-border spinner-border-sm" role="status"
-                                                            aria-hidden="true" style="display: none;"></span>
-                                                        <span class="btn-text">تحديث الصلاحية</span>
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 </div>
                             @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Create Permission Modal -->
-    <div class="modal fade" id="createPermissionModal" tabindex="-1" aria-labelledby="createPermissionModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createPermissionModalLabel">إضافة صلاحية</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form method="POST" action="{{ route('admin.permissions.store') }}" class="permission-form">
-                    @csrf
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">اسم الصلاحية</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
-                            @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        @endif
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
-                        <button type="submit" class="btn btn-primary btn-loading">
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
-                                style="display: none;"></span>
-                            <span class="btn-text">إنشاء الصلاحية</span>
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
 @endsection
 
 @section('js')
-    <!-- Plugins JS start-->
-    <script src="{{ asset('assets/js/datatable/datatables/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ asset('assets/js/datatable/datatables/datatable.custom.js') }}"></script>
-    <script src="{{ asset('assets/js/tooltip-init.js') }}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Plugins JS Ends-->
     <script>
-        // Initialize Bootstrap modals
-        var createModal = new bootstrap.Modal(document.getElementById('createPermissionModal'));
-        @foreach ($permissions as $permission)
-            var editModal{{ $permission->id }} = new bootstrap.Modal(document.getElementById(
-                'editPermissionModal{{ $permission->id }}'));
-        @endforeach
-
-        // Handle form submissions with AJAX
-        document.querySelectorAll('.permission-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const submitButton = form.querySelector('.btn-loading');
-                submitButton.disabled = true;
-                submitButton.querySelector('.spinner-border').style.display = 'inline-block';
-                submitButton.querySelector('.btn-text').style.display = 'none';
-
-                const formData = new FormData(form);
-                fetch(form.action, {
-                        method: form.method,
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Accept': 'application/json'
-                        },
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        submitButton.disabled = false;
-                        submitButton.querySelector('.spinner-border').style.display = 'none';
-                        submitButton.querySelector('.btn-text').style.display = 'inline-block';
-
-                        if (data.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'نجاح',
-                                text: data.message,
-                                timer: 2000,
-                                showConfirmButton: false
-                            }).then(() => {
-                                createModal.hide();
-                                @foreach ($permissions as $permission)
-                                    editModal{{ $permission->id }}.hide();
-                                @endforeach
-                                window.location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'خطأ',
-                                text: data.message || 'حدث خطأ ما!',
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        submitButton.disabled = false;
-                        submitButton.querySelector('.spinner-border').style.display = 'none';
-                        submitButton.querySelector('.btn-text').style.display = 'inline-block';
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'خطأ',
-                            text: 'حدث خطأ أثناء معالجة طلبك.',
-                        });
-                    });
+        $(document).ready(function() {
+            // البحث مع تأخير
+            let searchTimeout;
+            $('#searchInput').on('keyup', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    const searchValue = $(this).val();
+                    const url = new URL(window.location.href);
+                    if (searchValue) {
+                        url.searchParams.set('search', searchValue);
+                    } else {
+                        url.searchParams.delete('search');
+                    }
+                    window.location.href = url.toString();
+                }, 500);
             });
-        });
 
-        // Handle delete confirmation with SweetAlert
-        document.querySelectorAll('.delete-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
+            // حذف الصلاحية
+            $('.delete-permission').on('click', function() {
+                const permissionId = $(this).data('id');
+                const permissionName = $(this).data('name');
+
                 Swal.fire({
                     title: 'هل أنت متأكد؟',
-                    text: 'لن تتمكن من التراجع عن هذا!',
+                    text: `سيتم حذف الصلاحية "${permissionName}" نهائياً`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
                     cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'نعم، احذفه!',
-                    cancelButtonText: 'إلغاء'
+                    confirmButtonText: 'نعم، احذف',
+                    cancelButtonText: 'إلغاء',
+                    reverseButtons: true
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        form.submit();
+                        $.ajax({
+                            url: "{{ route('admin.permissions.destroy', '') }}/" +
+                                permissionId,
+                            type: 'POST',
+                            data: {
+                                _token: "{{ csrf_token() }}",
+                                _method: 'DELETE'
+                            },
+                            success: function(response) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'تم الحذف',
+                                    text: response.success,
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            },
+                            error: function(xhr) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'خطأ',
+                                    text: xhr.responseJSON?.message ||
+                                        'حدث خطأ أثناء الحذف',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+                            }
+                        });
                     }
                 });
             });
+
+            // رسائل التنبيه من الجلسة
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'نجاح',
+                    text: "{{ session('success') }}",
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            @endif
+
+            @if (session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطأ',
+                    text: "{{ session('error') }}",
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            @endif
         });
     </script>
 @endsection

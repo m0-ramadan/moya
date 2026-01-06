@@ -1,131 +1,127 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('Admin.auth.layouts.master')
 
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="viho admin is super flexible, powerful, clean &amp; modern responsive bootstrap 4 admin template with unlimited possibilities.">
-    <meta name="keywords"
-        content="admin template, viho admin template, dashboard template, flat admin template, responsive admin template, web app">
-    <meta name="author" content="pixelstrap">
-    <link rel="icon" href="{{ asset('/assets/images/favicon.png') }}" type="image/x-icon">
-    <link rel="shortcut icon" href="{{ asset('/assets/images/favicon.png') }}" type="image/x-icon">
-    <title>Login</title>
-    <!-- Google font-->
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&amp;display=swap"
-        rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&amp;display=swap"
-        rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900&amp;display=swap"
-        rel="stylesheet">
-    <!-- Font Awesome-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/fontawesome.css') }}">
-    <!-- ico-font-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/icofont.css') }}">
-    <!-- Themify icon-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/themify.css') }}">
-    <!-- Flag icon-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/flag-icon.css') }}">
-    <!-- Feather icon-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/feather-icon.css') }}">
-    <!-- Plugins css start-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/animate.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/chartist.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/date-picker.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/prism.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/vector-map.css') }}">
-    <!-- Plugins css Ends-->
-    <!-- Bootstrap css-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/bootstrap.css') }}">
-    <!-- App css-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/style.css') }}">
-    <link id="color" rel="stylesheet" href="{{ asset('/assets/css/color-1.css') }}" media="screen">
-    <!-- Responsive css-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/responsive.css') }}">
-</head>
+@section('styles')
+    <!-- إضافة دعم RTL للـ Bootstrap إذا لم يكن موجوداً بالفعل -->
+    <link rel="stylesheet" href="{{ asset('dashboard/assets/css/bootstrap-rtl.min.css') }}">
+@endsection
 
-<body>
-    <!-- Loader starts-->
-    <div class="loader-wrapper">
-        <div class="theme-loader">
-            <div class="loader-p"></div>
-        </div>
-    </div>
-    <!-- Loader ends-->
-    <!-- page-wrapper Start-->
-    <section>
-        @if (session('status'))
-            <div class="alert alert-success" role="alert">
-                {{ session('status') }}
-            </div>
-        @endif
-        <div class="container-fluid p-0">
-            <div class="row">
-                @if ($errors->any())
-                    @foreach ($errors->all() as $error)
-                        <div class="container">
-                            <div class="user signinBx">
-                                <div class="alert alert-danger text-center">{{ $error }}</div>
-                            </div>
-                        </div>
-                    @endforeach
-                @endif
-                <div class="col-12">
-                    <div class="login-card">
-                        <form class="theme-form login-form" action="{{ route('admin.login') }}" method="post">
-                            @csrf
-                            <h4>Login</h4>
-                            <h6>Welcome back! Log in to your account.</h6>
-                            <div class="form-group">
-                                <label>Email Address</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="icon-email"></i></span>
-                                    <input class="form-control" type="email" name="email" required=""
-                                        placeholder="Test@gmail.com">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Password</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="icon-lock"></i></span>
-                                    <input class="form-control" type="password" name="password" required=""
-                                        placeholder="*********">
-                                    <div class="show-hide"><span class="show"></span></div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <a href="{{ route('admin.password.request') }}" class="text-sm text-primary">Forgot
-                                    Password?</a>
-                            </div>
-                            <div class="form-group">
-                                <button class="btn btn-primary btn-block" type="submit">Sign in</button>
-                            </div>
-                        </form>
-                    </div>
+@section('content')
+    <div class="authentication-wrapper authentication-cover authentication-bg" dir="rtl">
+        <div class="authentication-inner row">
+            <!-- الجانب الأيسر (الصورة التوضيحية) - يظهر فقط على الشاشات الكبيرة -->
+            <div class="d-none d-lg-flex col-lg-7 align-items-center p-0" style="max-height: 950px;">
+                <div class="auth-cover-bg auth-cover-bg-color d-flex justify-content-center align-items-center w-100 h-100">
+                    <img src="{{ asset('dashboard/assets/img/illustrations/auth-login-illustration-light.png') }}"
+                        alt="غلاف تسجيل الدخول" class="img-fluid auth-illustration">
+
+                    <img src="{{ asset('dashboard/assets/img/illustrations/bg-shape-image-light.png') }}" alt="خلفية النظام"
+                        class="platform-bg">
                 </div>
             </div>
-        </div>
-    </section>
-    <!-- page-wrapper end-->
-    <!-- latest jquery-->
-    <script src="{{ asset('/assets/js/jquery-3.5.1.min.js') }}"></script>
-    <!-- feather icon js-->
-    <script src="{{ asset('/assets/js/icons/feather-icon/feather.min.js') }}"></script>
-    <script src="{{ asset('/assets/js/icons/feather-icon/feather-icon.js') }}"></script>
-    <!-- Sidebar jquery-->
-    <script src="{{ asset('/assets/js/sidebar-menu.js') }}"></script>
-    <script src="{{ asset('/assets/js/config.js') }}"></script>
-    <!-- Bootstrap js-->
-    <script src="{{ asset('/assets/js/bootstrap/popper.min.js') }}"></script>
-    <script src="{{ asset('/assets/js/bootstrap/bootstrap.min.js') }}"></script>
-    <!-- Theme js-->
-    <script src="{{ asset('/assets/js/script.js') }}"></script>
-</body>
+            <!-- /الجانب الأيسر -->
 
-</html>
+            <!-- نموذج تسجيل الدخول (الجانب الأيمن في RTL) -->
+            <div class="d-flex col-12 col-lg-5 align-items-center p-4 p-sm-5">
+                <div class="w-px-400 mx-auto">
+
+                    <!-- الشعار -->
+                    <div class="app-brand mb-5 d-flex justify-content-center align-items-center">
+                        <a href="{{ url('/') }}" class="app-brand-link">
+                            <img height="100" width="100" src="{{ asset('dashboard/assets/img/tala.png') }}"
+                                alt="شعار {{ env('APP_NAME') }}">
+                        </a>
+                    </div>
+
+
+                    <h3 class="mb-2 text-center">مرحباً بك في {{ env('APP_NAME') }} 👋</h3>
+                    <p class="mb-4 text-center text-muted">
+                        مرحباً بك في لوحة تحكم تطبيق {{ env('APP_NAME') }}
+                    </p>
+
+                    <form id="formAuthentication" class="mb-3" method="POST" action="{{ route('admin.login') }}"
+                        novalidate>
+                        @csrf
+
+                        <!-- البريد الإلكتروني -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label">البريد الإلكتروني</label>
+                            <input type="email" class="form-control text-start" dir="ltr" id="email"
+                                name="email" value="{{ old('email') }}" placeholder="name@example.com" autofocus
+                                required>
+                            @error('email')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- كلمة المرور -->
+                        <div class="mb-3 form-password-toggle">
+                            <div class="d-flex justify-content-between mb-2">
+                                <label class="form-label" for="password">كلمة المرور</label>
+                                <a href="{{ route('admin.password.request') }}">
+                                    <small>نسيت كلمة المرور؟</small>
+                                </a>
+                            </div>
+
+                            <div class="input-group input-group-merge">
+                                <input type="password" id="password" class="form-control text-start" dir="ltr"
+                                    name="password" placeholder="············" aria-describedby="password" required>
+                                <span class="input-group-text cursor-pointer">
+                                    <i class="ti ti-eye-off"></i>
+                                </span>
+                            </div>
+                            @error('password')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- تذكرني -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="remember" id="remember-me">
+                                <label class="form-check-label" for="remember-me">
+                                    تذكرني
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- زر تسجيل الدخول -->
+                        <button type="submit" class="btn btn-primary d-grid w-100 mb-3">
+                            تسجيل الدخول
+                        </button>
+                    </form>
+
+                    <!-- التذييل -->
+                    <div class="text-center">
+                        <small class="text-muted">
+                            تم التطوير بواسطة
+                            <a href="https://nofalseo.com" target="_blank" class="text-primary fw-medium">
+                                {{ env('APP_NAME') }}
+                            </a>
+                        </small>
+                    </div>
+
+                </div>
+            </div>
+            <!-- /نموذج تسجيل الدخول -->
+
+        </div>
+    </div>
+@endsection
+
+@section('scripts')
+    <!-- تفعيل زر إظهار/إخفاء كلمة المرور (إذا كان لديك ملف JS للـ template) -->
+    <script>
+        document.querySelectorAll('.form-password-toggle .input-group-text').forEach(el => {
+            el.addEventListener('click', function() {
+                const input = this.closest('.input-group').querySelector('input');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    this.querySelector('i').classList.replace('ti-eye-off', 'ti-eye');
+                } else {
+                    input.type = 'password';
+                    this.querySelector('i').classList.replace('ti-eye', 'ti-eye-off');
+                }
+            });
+        });
+    </script>
+@endsection

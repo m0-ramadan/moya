@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use Carbon\Carbon;
 use App\Models\Admin;
 use App\Models\Branchs;
+use App\Models\Visitor;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Log;
@@ -25,17 +27,66 @@ class AdminController extends Controller
     public function home()
     {
         $admins = Admin::all();
-        return view('Admin.index', compact('admins'));
+
+        return view('Admin.index', compact('admins', 'topCustomers'));
     }
     public function index()
     {
-        $admins = Admin::all();
-        return view('Admin.admin.index', compact('admins'));
+        // ---------------------------------------
+        // زيارات آخر 10 أيام
+        // ---------------------------------------
+
+        $visits = Visitor::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->where('created_at', '>=', Carbon::now()->subDays(10))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('count', 'date');
+        $topCustomers = \App\Models\Order::select('user_id')->selectRaw('COUNT(*) as orders_count')->with(['user:id,name'])->groupBy('user_id')->orderByDesc('orders_count')->take(10)->get();
+
+        $visitsLabels = [];
+        $visitsData = [];
+
+        for ($i = 9; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i)->format('Y-m-d');
+            $visitsLabels[] = Carbon::now()->subDays($i)->format('d M');
+            $visitsData[] = $visits[$date] ?? 0;
+        }
+
+        // ---------------------------------------
+        // الدول الأكثر زيارة (Top Countries)
+        // ---------------------------------------
+
+        $countriesData = Visitor::selectRaw('country, COUNT(*) as count')
+            ->whereNotNull('country')
+            ->where('country', '!=', '')
+            ->groupBy('country')
+            ->orderByDesc('count')
+            ->limit(6)
+            ->pluck('count', 'country')
+            ->toArray();
+        // dd( $countriesData);
+        // ---------------------------------------
+        // حالة الطلبات (Orders Status)
+        // ---------------------------------------
+
+        $ordersStatus = []; // You can uncomment and use your orders logic when ready
+
+        // ---------------------------------------
+        // إرجاع البيانات للصفحة
+        // ---------------------------------------
+
+        return view('Admin.index', compact(
+            'visitsLabels',
+            'visitsData',
+            'countriesData',
+            'ordersStatus',
+            'topCustomers'
+        ));
     }
 
     public function create()
     {
-        $branches = Branchs::all();
+        //  $branches = Branchs::all();
         $roles = Role::all();
 
         return view('Admin.admin.create', compact('branches', 'roles'));
@@ -83,7 +134,7 @@ class AdminController extends Controller
     }
     public function edit(Admin $admin)
     {
-        $branches = Branchs::all();
+        // $branches = Branchs::all();
         $roles = Role::all();
 
         return view('Admin.admin.edit', compact('admin', 'branches', 'roles'));

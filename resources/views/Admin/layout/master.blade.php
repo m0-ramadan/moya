@@ -1,57 +1,74 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ar" class="light-style layout-navbar-fixed layout-menu-fixed layout-compact" dir="rtl"
+    data-theme="theme-default" data-assets-path="{{ asset('dashboard/assets') }}/"
+    data-template="vertical-menu-template-no-customizer">
 
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
 
-    <!--<meta name="keywords" content="admin template, viho admin template, dashboard template, flat admin template, responsive admin template, web app">-->
-    <meta name="author" content="pixelstrap">
-    <link rel="icon" href="{{ asset('assets/images/favicon.png') }}" type="image/x-icon">
-    <link rel="shortcut icon" href="{{ asset('assets/images/favicon.png') }}" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .modal {
-            position: fixed !important;
-            top: 0px !important;
-            left: 0 !important;
-        }
-    </style>
-    <title>@yield('title')</title>
-    @include('Admin.layout.head')
+    <title>
+        @yield('title')
+    </title>
+
+    <meta name="description" content="" />
+
+    @include('Admin.layout.css')
+
+
 </head>
+@yield('css')
 
 <body>
-    <!-- Loader starts-->
-    <div class="loader-wrapper">
-        <div class="theme-loader">
-            <div class="loader-p"></div>
-        </div>
-    </div>
-
-
-    <!-- Loader ends-->
-    <!-- page-wrapper Start       -->
-    <div class="page-wrapper compact-wrapper" id="pageWrapper">
-        <!-- Page Header Start-->
-        @include('Admin.layout.header')
-        <!-- Page Header Ends                              -->
-        <!-- Page Body Start-->
-        <div class="page-body-wrapper sidebar-icon">
-            <!-- Page Sidebar Start-->
+    <!-- Layout wrapper -->
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+            <!-- Menu -->
             @include('Admin.layout.sidebar')
-            <!-- Page Sidebar Ends-->
-            <div class="page-body">
-                <!-- Container-fluid starts-->
-                <div class="container-fluid dashboard-default-sec">
-                    <div class="row">
-                        @yield('content')
-                    </div>
+            <!-- / Menu -->
+
+            <!-- Layout container -->
+            <div class="layout-page">
+                <!-- Navbar -->
+                @include('Admin.layout.nav')
+                <!-- / Navbar -->
+
+                <!-- Content wrapper -->
+                <div class="content-wrapper">
+                    <!-- Content -->
+                    @yield('content')
+
+                    <!-- / Content -->
+
+                    <!-- Footer -->
+                    @include('Admin.layout.footer')
+                    <!-- / Footer -->
+
+                    <div class="content-backdrop fade"></div>
                 </div>
-                <!-- Container-fluid Ends-->
+                <!-- Content wrapper -->
             </div>
-            @include('Admin.layout.footer')
+            <!-- / Layout page -->
+        </div>
+
+        <!-- Overlay -->
+        {{-- <div class="layout-overlay layout-menu-toggle"></div> --}}
+
+        <!-- Drag Target Area To SlideIn Menu On Small Screens -->
+        <div class="drag-target"></div>
+    </div>
+    <!-- / Layout wrapper -->
+    <form id="form_action_delete" method="POST" class="d-none">
+        @csrf
+        <input type="hidden" name="_method" value="DELETE">
+    </form>
+    <form id="form_action_post" method="POST" class="d-none">
+        @csrf
+    </form>
+    <!-- Core JS -->
+    @include('Admin.layout.js')
+    @yield('js')
 </body>
 
 </html>

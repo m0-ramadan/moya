@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use App\Models\Admin;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Mail\Website\OtpMail;
+use App\Models\OtpVerification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -16,6 +18,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Auth\Events\PasswordReset;
 use App\Http\Requests\Admin\AdminLoginRequest;
+use App\Http\Requests\Admin\Auth\SendOtpRequest;
 
 class AdminAuthController extends Controller
 {
@@ -24,10 +27,10 @@ class AdminAuthController extends Controller
     // No middleware applied here to allow access to login and password reset pages
   }
 
-  public function register()
-  {
-    return $this->adminAuthInterface->register();
-  }
+  // public function register()
+  // {
+  //   return $this->adminAuthInterface->register();
+  // }
 
   public function loginPage()
   {
@@ -54,7 +57,7 @@ class AdminAuthController extends Controller
     Auth::logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
-    return redirect('/admin/login');
+    return redirect()->route('admin.login.page');
   }
 
   public function showForgotPasswordForm()
@@ -69,31 +72,34 @@ class AdminAuthController extends Controller
 
 
 
-  public function sendResetLinkEmail(Request $request)
+
+  public function sendResetOtp(SendOtpRequest $request)
   {
-    $request->validate(['email' => 'required|email|exists:admins,email']);
+    try {
 
-    $token = Str::random(64);
+      $email = $request->email;
 
-    DB::table('password_resets')->updateOrInsert(
-      ['email' => $request->email],
-      [
-        'email' => $request->email,
-        'token' => $token,
-        'created_at' => Carbon::now()
-      ]
-    );
 
-    $resetLink = url("/admin/reset-password/{$token}?email=" . urlencode($request->email));
+      OtpVerification::where('email', $email)->delete();
 
-    // ابعت ايميل باللينك
-    Mail::send('Email.admin_reset_password', ['resetLink' => $resetLink], function ($message) use ($request) {
-      $message->to($request->email);
-      $message->subject('إعادة تعيين كلمة المرور');
-    });
+      $otp = (string) random_int(100000, 999999);
 
-    return back()->with('status', 'تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني ✅');
+      OtpVerification::create([
+        'email'      => $email,
+        'otp'        => Hash::make($otp),
+        'expires_at' => Carbon::now()->addMinutes(5),
+      ]);
+
+      Mail::to($email)->send(new OtpMail($otp));
+
+      return back()->with('status', 'تم إرسال رمز التحقق (OTP) إلى بريدك الإلكتروني بنجاح ✔');
+    } catch (\Exception $e) {
+      return back()->withErrors([
+        'email' => 'حدث خطأ أثناء إرسال OTP: ' . $e->getMessage()
+      ]);
+    }
   }
+
 
   public function resetPassword(Request $request)
   {
@@ -114,7 +120,7 @@ class AdminAuthController extends Controller
     }
 
     // تحديث الباسورد
-    $admin = \App\Models\Admin::where('email', $request->email)->first();
+    $admin = Admin::where('email', $request->email)->first();
     $admin->password = $request->password;
     $admin->save();
     // امسح التوكن بعد الاستخدام
