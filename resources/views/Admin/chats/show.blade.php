@@ -833,7 +833,7 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $.ajax({
-                            url: "{{ route('admin.chats.destroy', $chat->id) }}",
+                            url: "{{ route('admin.adminChats.destroy', $chat->id) }}",
                             type: 'POST',
                             data: {
                                 _token: "{{ csrf_token() }}",
@@ -1010,21 +1010,21 @@
             const messageHtml = `
                 <div class="message-wrapper ${message.sender_type === 'admin' ? 'admin' : 'received'}">
                     ${message.sender_type !== 'admin' ? `
-                                <img src="${message.sender.avatar || 'https://via.placeholder.com/40'}" 
-                                     class="message-avatar" 
-                                     alt="${message.sender.name}"
-                                     title="${message.sender.name}">
-                            ` : ''}
+                                    <img src="${message.sender.avatar || 'https://via.placeholder.com/40'}" 
+                                         class="message-avatar" 
+                                         alt="${message.sender.name}"
+                                         title="${message.sender.name}">
+                                ` : ''}
                     
                     <div class="message-content">
                         ${message.sender_type !== 'admin' ? `
-                                    <div class="message-sender">
-                                        ${message.sender.name}
-                                        <small class="text-muted ms-2">
-                                            (${message.sender_type === 'App\\Models\\User' ? 'مستخدم' : 'سائق'})
-                                        </small>
-                                    </div>
-                                ` : ''}
+                                        <div class="message-sender">
+                                            ${message.sender.name}
+                                            <small class="text-muted ms-2">
+                                                (${message.sender_type === 'App\\Models\\User' ? 'مستخدم' : 'سائق'})
+                                            </small>
+                                        </div>
+                                    ` : ''}
                         
                         <div class="message-bubble">
                             ${getMessageContent(message)}

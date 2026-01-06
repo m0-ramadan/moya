@@ -690,7 +690,7 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $.ajax({
-                            url: "{{ route('admin.chats.destroy', '') }}/" + chatId,
+                            url: "{{ route('admin.adminChats.destroy', '') }}/" + chatId,
                             type: 'POST',
                             data: {
                                 _token: "{{ csrf_token() }}",

@@ -399,7 +399,7 @@
                 }
 
                 $.ajax({
-                    url: "{{ route('admin.chats.search-participants') }}",
+                    url: "{{ route('admin.adminChats.search-participants') }}",
                     type: 'GET',
                     data: {
                         search: searchTerm,
@@ -481,7 +481,7 @@
 
                 // جلب معلومات المشارك
                 $.ajax({
-                    url: "{{ route('admin.chats.get-participant-info') }}",
+                    url: "{{ route('admin.adminChats.get-participant-info') }}",
                     type: 'GET',
                     data: {
                         id: id,
@@ -570,7 +570,7 @@
                 formData.append('_token', '{{ csrf_token() }}');
 
                 $.ajax({
-                    url: "{{ route('admin.chats.store') }}",
+                    url: "{{ route('admin.adminChats.store') }}",
                     type: 'POST',
                     data: formData,
                     processData: false,

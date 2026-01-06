@@ -258,7 +258,7 @@
         </nav>
 
         <!-- زر إنشاء محادثة جديدة -->
-        <a href="{{ route('admin.chats.create') }}" class="new-chat-btn" title="إنشاء محادثة جديدة">
+        <a href="{{ route('admin.adminChats.create') }}" class="new-chat-btn" title="إنشاء محادثة جديدة">
             <i class="fas fa-plus"></i>
         </a>
 
@@ -314,7 +314,7 @@
                                 </div>
                                 <h5 class="empty-state-text">لا توجد محادثات</h5>
                                 <p class="text-muted">ابدأ محادثة جديدة مع مستخدم أو سائق</p>
-                                <a href="{{ route('admin.chats.create') }}" class="btn btn-primary">
+                                <a href="{{ route('admin.adminChats.create') }}" class="btn btn-primary">
                                     <i class="fas fa-plus me-2"></i>إنشاء محادثة جديدة
                                 </a>
                             </div>
@@ -437,7 +437,7 @@
 
             // فتح المحادثة
             window.openChat = function(chatId) {
-                window.location.href = "{{ route('admin.chats.show', '') }}/" + chatId;
+                window.location.href = "{{ route('admin.adminChats.show', '') }}/" + chatId;
             };
 
             // رسائل التنبيه من الجلسة

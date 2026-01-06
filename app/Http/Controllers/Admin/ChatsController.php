@@ -479,14 +479,14 @@ class ChatsController extends Controller
     public function create()
     {
         // جلب جميع المستخدمين والسائقين
-        $users = User::select('id', 'name', 'email', 'phone', 'avatar')
+        $users = User::select('id', 'name', 'phone_number', 'avatar')
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
 
-        $drivers = Driver::select('id', 'name', 'email', 'phone', 'avatar', 'is_online')
+        $drivers = Driver::select('id', 'full_name', 'phone')
             ->where('status', 'active')
-            ->orderBy('name')
+            ->orderBy('full_name')
             ->get();
 
         return view('Admin.chats.create', compact('users', 'drivers'));

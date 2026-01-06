@@ -293,10 +293,11 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         Route::post('/{chat}/mark-read', [ChatsController::class, 'markRead'])->name('mark-read');
         Route::get('/export', [ChatsController::class, 'export'])->name('export');
         Route::post('/{chat}/send', [ChatsController::class, 'sendMessage'])->name('send-message');
+    });
 
+    Route::prefix('admin-chats')->name('adminChats.')->group(function () {
         // محادثاتي المباشرة (Admin Chats)
-        Route::get('/admin-chats', [ChatsController::class, 'adminChats'])->name('adminChats');
-
+        Route::get('/', [ChatsController::class, 'adminChats'])->name('index');
         // إنشاء محادثات جديدة
         Route::get('/create', [ChatsController::class, 'create'])->name('create');
         Route::post('/', [ChatsController::class, 'store'])->name('store');
@@ -309,6 +310,7 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         Route::get('/{chat}', [ChatsController::class, 'show'])->name('show');
         Route::delete('/{chat}', [ChatsController::class, 'destroy'])->name('destroy');
     });
+
 
     Route::get('order/statistics', [OrderController::class, 'statistics'])->name('orders.statistics');
 });

@@ -104,7 +104,7 @@
                </a>
            </li>
            <li class="menu-item">
-               <a href="{{ route('admin.chats.adminChats') }}" class="menu-link">
+               <a href="{{ route('admin.adminChats.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-message-circle"></i>
                    <div>محادثاتي</div>
                </a>
