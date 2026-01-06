@@ -15,17 +15,17 @@ class CreateContractRequest extends FormRequest
     {
         return [
             'contract_type' => 'required|in:individual,company',
-            'company_name' => 'required_if:contract_type,company',
+            'company_name' => 'nullable|max:255',
             'applicant_name' => 'required|string|max:255',
-            'duration_type' => 'required|in:monthly,quarterly,semi_annual,annual',
-            'total_orders_limit' => 'required|integer|min:1',
-            'total_amount' => 'required|numeric|min:0',
-            'start_date' => 'required|date',
-            'delivery_locations' => 'required|array|min:1',
-            'delivery_locations.*.saved_location_id' => 'required|exists:saved_locations,id',
+            'duration_type' => 'nullable|in:monthly,quarterly,semi_annual,annual',
+            'total_orders_limit' => 'nullable|integer|min:1',
+            'total_amount' => 'nullable|numeric|min:0',
+            'start_date' => 'nullable|date',
+            'delivery_locations' => 'nullable|array|min:1',
+            'delivery_locations.*.saved_location_id' => 'nullable|exists:saved_locations,id',
             'delivery_locations.*.priority' => 'integer|min:1',
             'notes' => 'nullable|string',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:20',
         ];
     }
 
