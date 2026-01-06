@@ -44,11 +44,15 @@ class ContractController extends Controller
 
             $user = $request->user();
             $data = $request->validated();
-
+            $startDate = null;
+            $endDate = null;
             // حساب تاريخ الانتهاء بناءً على نوع المدة
-            $startDate = Carbon::parse($data['start_date']);
-            $endDate = $this->calculateEndDate($startDate, $data['duration_type']);
-            $renewalDate = $endDate->copy()->subDays(7); // تجديد قبل 7 أيام من الانتهاء
+            if ($data['duration_type'] && $data['start_date']) {
+                $startDate = Carbon::parse($data['start_date']);
+                $endDate = $this->calculateEndDate($startDate, $data['duration_type']);
+                $renewalDate = $endDate->copy()->subDays(7); // تجديد قبل 7 أيام من الانتهاء
+            }
+
 
             // إنشاء العقد
             $contract = Contract::create([
