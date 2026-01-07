@@ -28,12 +28,16 @@ class MessageSent implements ShouldBroadcast
 
     public function broadcastOn()
     {
-        return new PresenceChannel('chat.' . $this->chat->chat_uuid);
+        // استخدم Channel بدلاً من PresenceChannel
+        return new Channel('chat.' . $this->chat->chat_uuid);
+
+        // أو إذا كنت تريد presence channel:
+        // return new PresenceChannel('presence-chat.' . $this->chat->chat_uuid);
     }
 
     public function broadcastAs()
     {
-        // return 'message.sent';
+        // تأكد أن الاسم مطابق لما يتوقعه Flutter
         return 'MessageSent';
     }
 

@@ -4,12 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Chat;
 use App\Models\Message;
-use App\Events\MessageSent;
 use App\Events\MessageRead;
+use App\Events\MessageSent;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class ChatController extends Controller
 {
@@ -87,6 +88,57 @@ class ChatController extends Controller
     }
 
 
+    // public function sendMessage(Request $request, Chat $chat)
+    // {
+    //     $this->authorize('send', $chat);
+
+    //     $request->validate([
+    //         'message' => 'nullable|string|max:1000',
+    //         'message_type' => 'required|in:text,image,voice,location,file',
+    //         'file_url' => 'nullable|url',
+    //         'duration' => 'nullable|integer|min:1|max:600',
+    //         'file_size' => 'nullable|string',
+    //         'file_name' => 'nullable|string',
+    //         'metadata' => 'nullable|array'
+    //     ]);
+
+    //     $messageData = [
+    //         'sender_id' => Auth::id(),
+    //         'sender_type' => get_class(Auth::user()),
+    //         'message' => $request->input('message', $this->getDefaultMessage($request->message_type)),
+    //         'message_type' => $request->message_type,
+    //         'metadata' => $request->metadata
+    //     ];
+
+    //     // Add file details for voice/image/file messages
+    //     if (in_array($request->message_type, ['voice', 'image', 'file'])) {
+    //         $messageData['file_url'] = $request->file_url;
+    //         $messageData['file_name'] = $request->file_name;
+    //         $messageData['file_size'] = $request->file_size;
+
+    //         if ($request->message_type === 'voice') {
+    //             $messageData['duration'] = $request->duration;
+    //         }
+    //     }
+
+    //     $message = $chat->messages()->create($messageData);
+
+    //     // Update chat last message
+    //     $chat->update([
+    //         'last_message' => $this->getLastMessagePreview($message),
+    //         'last_message_at' => now()
+    //     ]);
+
+    //     // Broadcast event
+    //     broadcast(new MessageSent($message))->toOthers();
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => $message->load('sender')
+    //     ]);
+    // }
+
+
     public function sendMessage(Request $request, Chat $chat)
     {
         $this->authorize('send', $chat);
@@ -128,15 +180,29 @@ class ChatController extends Controller
             'last_message_at' => now()
         ]);
 
+        // Log before broadcasting
+        Log::info('Attempting to broadcast message', [
+            'message_id' => $message->id,
+            'chat_uuid' => $chat->chat_uuid,
+            'channel' => 'chat.' . $chat->chat_uuid,
+            'event' => 'MessageSent'
+        ]);
+
         // Broadcast event
         broadcast(new MessageSent($message))->toOthers();
 
+        Log::info('Broadcast event fired', [
+            'message_id' => $message->id,
+            'chat_uuid' => $chat->chat_uuid
+        ]);
+
         return response()->json([
             'status' => 'success',
-            'message' => $message->load('sender')
+            'message' => $message->load('sender'),
+            'broadcast_channel' => 'chat.' . $chat->chat_uuid, // إرجاع اسم القناة للتdebug
+            'broadcast_event' => 'MessageSent'
         ]);
     }
-
     private function getDefaultMessage($messageType)
     {
         return match ($messageType) {
