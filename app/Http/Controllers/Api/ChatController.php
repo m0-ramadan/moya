@@ -144,7 +144,7 @@ class ChatController extends Controller
         $this->authorize('send', $chat);
 
         $request->validate([
-            'message' => 'nullable|string|max:1000',
+            'message' => 'nullable',
             'message_type' => 'required|in:text,image,voice,location,file',
             'file_url' => 'nullable|url',
             'duration' => 'nullable|integer|min:1|max:600',
