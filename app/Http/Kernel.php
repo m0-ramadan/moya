@@ -39,7 +39,7 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-             \App\Http\Middleware\LogVisitor::class,
+            \App\Http\Middleware\LogVisitor::class,
         ],
 
         'api' => [
@@ -72,7 +72,7 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'api.key' => \App\Http\Middleware\ApiKeyMiddleware::class,
         'api.cors' => \App\Http\Middleware\Cors::class,
-
+        'driver' => \App\Http\Middleware\CheckDriver::class,
         'permission' => PermissionMiddleware::class,
         'role' => RoleMiddleware::class, // Optional
     ];

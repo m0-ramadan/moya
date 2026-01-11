@@ -2,11 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Order;
+use App\Models\Payment;
+use App\Models\Contract;
+use App\Models\OtpHistory;
+use App\Models\DeviceToken;
+use App\Traits\CustomNotifiable;
+use App\Models\Wallet\UserWallet;
+use Laravel\Sanctum\HasApiTokens;
+use App\Models\Wallet\LedgerEntry;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable as LaravelNotifiable;
-use Laravel\Sanctum\HasApiTokens;
-use App\Traits\CustomNotifiable;
-use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
@@ -160,5 +167,90 @@ class User extends Authenticatable
     public function activeDeviceTokens()
     {
         return $this->hasMany(DeviceToken::class)->where('is_active', true);
+    }
+
+
+
+    /**
+     * Boot the model
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($user) {
+            if ($user->type === 'user') {
+                $user->createUserWallet();
+            }
+        });
+    }
+
+    /**
+     * Get formatted phone number
+     */
+    // public function getFormattedPhoneAttribute(): string
+    // {
+    //     return $this->country_code . $this->phone_number;
+    // }
+
+    /**
+     * Get user's wallet
+     */
+    public function userWallet()
+    {
+        return $this->hasOne(UserWallet::class);
+    }
+
+    /**
+     * Create user wallet
+     */
+    public function createUserWallet()
+    {
+        if (!$this->userWallet) {
+            return UserWallet::create([
+                'user_id' => $this->id,
+                'balance' => 0,
+                'held_balance' => 0,
+                'currency' => config('wallet.default_currency', 'SAR'),
+                'status' => 'active'
+            ]);
+        }
+
+        return $this->userWallet;
+    }
+
+    /**
+     * Get wallet
+     */
+    public function wallet()
+    {
+        return $this->userWallet;
+    }
+
+    /**
+     * Check if user can transact
+     */
+    public function canTransact(float $amount, string $type = 'withdrawal'): bool
+    {
+        if ($this->status !== 'active') {
+            return false;
+        }
+
+        $wallet = $this->wallet();
+
+        if (!$wallet || $wallet->status !== 'active') {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get ledger entries
+     */
+    public function ledgerEntries()
+    {
+        return LedgerEntry::where('owner_type', 'user')
+            ->where('owner_id', $this->id);
     }
 }

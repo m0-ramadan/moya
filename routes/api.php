@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\SliderController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\ServiceController;
@@ -20,8 +21,11 @@ use App\Http\Controllers\Api\SavedLocationController;
 use App\Http\Controllers\Api\ArticleCommentController;
 use App\Http\Controllers\Api\ArticleCategoryController;
 use App\Http\Controllers\Api\ArticleInteractionController;
+use App\Http\Controllers\Api\Driver\DriverOrderController;
 use App\Http\Controllers\Api\Website\UserAddressController;
-
+use App\Http\Controllers\Api\Payment\PaymentCallbackController;
+use App\Http\Controllers\Api\User\WalletController as UserWalletController;
+use App\Http\Controllers\Api\Driver\WalletController as DriverWalletController;
 
 Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
@@ -45,6 +49,25 @@ Route::prefix('v1')->group(function () {
             Route::get('/', [OrderController::class, 'index']);
             Route::get('/statuses', [OrderController::class, 'statuses']);
             Route::get('/{id}', [OrderController::class, 'show']);
+            Route::get('/{id}/status', [OrderController::class, 'checkOrderStatus']);
+            Route::post('/{orderId}/rate', [RatingController::class, 'rateDriver']);
+            Route::get('/{orderId}/offers', [RatingController::class, 'getOrderOffers']);
+            Route::get('/{orderId}/tracking', [DriverOrderController::class, 'getLiveTracking']);
+
+            // للسائقين
+            Route::middleware(['driver'])->group(function () {
+                Route::post('/{orderId}/accept', [OrderController::class, 'acceptOrder']);
+                Route::post('/offers/{offerId}/cancel', [OrderController::class, 'cancelOffer']);
+                Route::prefix('driver')->group(function () {
+                    Route::post('/{orderId}/update-status', [DriverOrderController::class, 'updateStatus']);
+                    Route::post('/{orderId}/update-location', [DriverOrderController::class, 'updateLocation']);
+                    Route::get('/{orderId}/path', [DriverOrderController::class, 'getDriverPath']);
+                    Route::post('/{orderId}/rate-user', [RatingController::class, 'rateUser']);
+                });
+            });
+
+            // للمستخدمين
+            Route::post('/{orderId}/confirm-driver', [OrderController::class, 'confirmDriver']);
         });
 
         Route::patch('/user/settings/notifications', [AuthController::class, 'updateNotifications']);
@@ -92,6 +115,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/{chat}/send', [ChatController::class, 'sendMessage']);
             Route::post('/messages/{message}/read', [ChatController::class, 'markAsRead']);
             Route::delete('/messages/{message}', [ChatController::class, 'deleteMessage']);
+            // Chunk upload routes
+            Route::post('/{chat}/upload-chunk', [ChatController::class, 'uploadChunk']);
+            Route::get('/upload-status', [ChatController::class, 'checkUploadStatus']);
             // Voice message routes
             Route::prefix('voice-messages')->group(function () {
                 Route::post('/{chat}/upload', [VoiceMessageController::class, 'uploadVoiceMessage']);
@@ -185,4 +211,24 @@ Route::prefix('v1')->group(function () {
         Route::post('/register-device', [NotificationController::class, 'registerDeviceToken']);
         Route::post('/remove-device', [NotificationController::class, 'removeDeviceToken']);
     });
+
+    // User wallet routes
+    Route::middleware(['auth:sanctum'])->prefix('user/wallet')->group(function () {
+        Route::get('/', [UserWalletController::class, 'getBalance']);
+        Route::get('/transactions', [UserWalletController::class, 'getTransactions']);
+        Route::post('/deposit', [UserWalletController::class, 'initiateDeposit']);
+        Route::post('/withdraw', [UserWalletController::class, 'withdraw']);
+        Route::post('/transfer', [UserWalletController::class, 'transfer']);
+    });
+
+
+    // Driver wallet routes
+    Route::middleware(['auth:sanctum', 'driver.only'])->prefix('driver/wallet')->group(function () {
+        Route::get('/', [DriverWalletController::class, 'getBalance']);
+        Route::get('/earnings', [DriverWalletController::class, 'getEarnings']);
+        Route::post('/cashout', [DriverWalletController::class, 'cashOut']);
+    });
+
+    // Payment callback
+    Route::middleware(['ip.whitelist:paymob'])->post('/payment/callback', [PaymentCallbackController::class, 'handle']);
 });

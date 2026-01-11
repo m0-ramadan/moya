@@ -12,6 +12,7 @@ class OrderOffer extends Model
         'driver_id',
         'price',
         'status',
+        'delivery_duration_minutes',
     ];
 
     public function order()

@@ -65,4 +65,25 @@ class Order extends Model
         return $this->hasOne(OrderOffer::class)
             ->where('status', 'accepted');
     }
+
+    // في Order Model إضافة هذه العلاقات
+    public function driverLocations()
+    {
+        return $this->hasMany(DriverLocation::class);
+    }
+
+    public function latestDriverLocation()
+    {
+        return $this->hasOne(DriverLocation::class)->latest();
+    }
+
+    public function ratings()
+    {
+        return $this->hasMany(OrderRating::class);
+    }
+
+    public function userRating()
+    {
+        return $this->hasOne(OrderRating::class)->where('rated_by', 'user');
+    }
 }

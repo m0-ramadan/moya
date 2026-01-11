@@ -2,36 +2,58 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Wallet\LedgerEntry;
+use App\Models\Wallet\DriverWallet;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 // Driver.php
 class Driver extends Model
 {
-    protected $fillable = [
-        'user_id',
-        'full_name',
-        'phone_number',
-        'id_number',
-        'license_number',
-        'issue_date',
-        'expiry_date',
-        'is_active',
-        'average_rating',
-        'total_ratings',
-        'total_orders',
-        'national_id',
-        'date_of_birth',
-        'first_name',
-        'father_name',
-        'grandfather_name',
-        'family_name',
-        'blood_type',
-        'status',
-        'photo',
-        'allow_notifications',
-    ];
 
+    protected $fillable = [
+
+        'user_id',
+
+        // الجنسية
+        'citizenship',
+        'country_id',
+
+        // بيانات شخصية
+        'date_of_birth',
+        'national_id',
+        'iqama_number',
+        'iqama_expiry_date',
+
+        // صور
+        'personal_photo',
+        'id_image_front',
+        'id_image_back',
+
+        // رخصة القيادة
+        'license_number',
+        'license_expiry_date',
+        'license_image_front',
+        'license_image_back',
+
+        // المركبة
+        'vehicle_size',
+        'is_vehicle_owner',
+        'vehicle_plate_number',
+        'vehicle_registration_number',
+        'vehicle_residency_number',
+        'vehicle_model',
+        'vehicle_year',
+        'vehicle_color',
+
+        // رخصة السير
+        'vehicle_registration_image',
+
+        // التحقق
+        'is_verified',
+        'verified_at',
+        'rejection_reason',
+    ];
 
     public function user()
     {
@@ -56,5 +78,104 @@ class Driver extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Boot the model
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($driver) {
+            $driver->createDriverWallet();
+        });
+    }
+
+    /**
+     * Get driver's wallet
+     */
+    public function driverWallet()
+    {
+        return $this->hasOne(DriverWallet::class);
+    }
+
+    /**
+     * Create driver wallet
+     */
+    public function createDriverWallet()
+    {
+        if (!$this->driverWallet) {
+            return DriverWallet::create([
+                'driver_id' => $this->id,
+                'balance' => 0,
+                'held_balance' => 0,
+                'currency' => config('wallet.default_currency', 'SAR'),
+                'status' => 'active'
+            ]);
+        }
+
+        return $this->driverWallet;
+    }
+
+    /**
+     * Get wallet
+     */
+    public function wallet()
+    {
+        return $this->driverWallet;
+    }
+
+    /**
+     * Check if driver can transact
+     */
+    public function canTransact(float $amount, string $type = 'withdrawal'): bool
+    {
+        if (!$this->is_active || $this->status !== 'active') {
+            return false;
+        }
+
+        $wallet = $this->wallet();
+
+        if (!$wallet || $wallet->status !== 'active') {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get full name
+     */
+    public function getFullNameAttribute(): string
+    {
+        return $this->first_name . ' ' . $this->father_name . ' ' . $this->grandfather_name . ' ' . $this->family_name;
+    }
+
+    /**
+     * Get ledger entries
+     */
+    public function ledgerEntries()
+    {
+        return LedgerEntry::where('owner_type', 'driver')
+            ->where('owner_id', $this->id);
+    }
+
+
+    /* ================= Helpers ================= */
+
+    public function isApproved(): bool
+    {
+        return $this->is_verified === true;
+    }
+
+    public function isSaudi(): bool
+    {
+        return $this->citizenship === 'saudi';
+    }
+
+    public function isResident(): bool
+    {
+        return $this->citizenship === 'resident';
     }
 }

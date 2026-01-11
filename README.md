@@ -11,17 +11,20 @@
 ## 🎯 المشكلة والحل
 
 ### المشكلة
-- صعوبة إيجاد موردي مياه موثوقين
-- عدم وضوح الأسعار والتكاليف
-- عدم القدرة على تتبع الطلبات
-- عملية الطلب التقليدية تستغرق وقتًا طويلاً
+
+-   صعوبة إيجاد موردي مياه موثوقين
+-   عدم وضوح الأسعار والتكاليف
+-   عدم القدرة على تتبع الطلبات
+-   عملية الطلب التقليدية تستغرق وقتًا طويلاً
 
 ### الحل
+
 منصة رقمية متكاملة توفر:
-- ✅ طلب فوري للمياه بأنواعها
-- ✅ تسعير تنافسي من عدة سائقين
-- ✅ دفع آمن وإلكتروني
-- ✅ تتبع مباشر للطلب حتى التوصيل
+
+-   ✅ طلب فوري للمياه بأنواعها
+-   ✅ تسعير تنافسي من عدة سائقين
+-   ✅ دفع آمن وإلكتروني
+-   ✅ تتبع مباشر للطلب حتى التوصيل
 
 ---
 
@@ -34,22 +37,25 @@
 **الخطوات:**
 
 1. **اختيار حجم الصهريج**
-   - 3 طن
-   - 6 طن
-   - 9 طن
+
+    - 3 طن
+    - 6 طن
+    - 9 طن
 
 2. **تحديد نوع المياه**
-   - مياه صالحة للشرب (محلاة)
-   - مياه غير صالحة (للاستخدام الزراعي/الصناعي)
+
+    - مياه صالحة للشرب (محلاة)
+    - مياه غير صالحة (للاستخدام الزراعي/الصناعي)
 
 3. **تحديد الموقع**
-   - استخدام GPS للموقع الحالي
-   - أو إدخال العنوان يدويًا
-   - تحديد نقطة التوصيل بدقة على الخريطة
+
+    - استخدام GPS للموقع الحالي
+    - أو إدخال العنوان يدويًا
+    - تحديد نقطة التوصيل بدقة على الخريطة
 
 4. **تحديد الكمية**
-   - عدد الصهاريج المطلوبة
-   - إمكانية طلب أكثر من صهريج في نفس الطلب
+    - عدد الصهاريج المطلوبة
+    - إمكانية طلب أكثر من صهريج في نفس الطلب
 
 ### 2️⃣ مرحلة استقبال الطلب (السائقين)
 
@@ -57,13 +63,13 @@
 
 **ما يحصل:**
 
-- 📱 **إشعار فوري** يصل لجميع السائقين المتاحين
-- 📍 **عرض تفاصيل الطلب:**
-  - نوع المياه المطلوب
-  - حجم الصهريج
-  - الكمية
-  - الموقع الدقيق
-  - المسافة من موقع السائق
+-   📱 **إشعار فوري** يصل لجميع السائقين المتاحين
+-   📍 **عرض تفاصيل الطلب:**
+    -   نوع المياه المطلوب
+    -   حجم الصهريج
+    -   الكمية
+    -   الموقع الدقيق
+    -   المسافة من موقع السائق
 
 ### 3️⃣ مرحلة التسعير (السائقين)
 
@@ -72,11 +78,12 @@
 **كيفية تحديد السعر:**
 
 السائق يأخذ في الاعتبار:
-- 🛣️ المسافة من موقعه الحالي إلى العميل
-- ⛽ تكلفة الوقود
-- ⏰ وقت التوصيل المتوقع
-- 💧 نوع المياه (صالحة أو غير صالحة)
-- 📦 حجم وكمية الطلب
+
+-   🛣️ المسافة من موقعه الحالي إلى العميل
+-   ⛽ تكلفة الوقود
+-   ⏰ وقت التوصيل المتوقع
+-   💧 نوع المياه (صالحة أو غير صالحة)
+-   📦 حجم وكمية الطلب
 
 **ثم يرسل عرض سعره للعميل**
 
@@ -86,17 +93,18 @@
 
 **العميل يستقبل:**
 
-| السائق | السعر | التقييم | وقت الوصول | الإجراء |
-|--------|-------|---------|------------|---------|
-| أحمد محمد | 150 ريال | ⭐⭐⭐⭐⭐ (4.8) | 30 دقيقة | ✅ قبول |
-| خالد علي | 140 ريال | ⭐⭐⭐⭐ (4.5) | 45 دقيقة | ✅ قبول |
-| محمد سعيد | 160 ريال | ⭐⭐⭐⭐⭐ (4.9) | 25 دقيقة | ✅ قبول |
+| السائق    | السعر    | التقييم          | وقت الوصول | الإجراء |
+| --------- | -------- | ---------------- | ---------- | ------- |
+| أحمد محمد | 150 ريال | ⭐⭐⭐⭐⭐ (4.8) | 30 دقيقة   | ✅ قبول |
+| خالد علي  | 140 ريال | ⭐⭐⭐⭐ (4.5)   | 45 دقيقة   | ✅ قبول |
+| محمد سعيد | 160 ريال | ⭐⭐⭐⭐⭐ (4.9) | 25 دقيقة   | ✅ قبول |
 
 **العميل يختار السائق المناسب بناءً على:**
-- 💰 السعر
-- ⭐ التقييمات
-- ⏱️ وقت الوصول
-- 📊 عدد الرحلات السابقة
+
+-   💰 السعر
+-   ⭐ التقييمات
+-   ⏱️ وقت الوصول
+-   📊 عدد الرحلات السابقة
 
 ### 5️⃣ مرحلة الدفع
 
@@ -110,9 +118,10 @@
 4. ✈️ السائق يبدأ رحلة التوصيل
 
 **طرق الدفع المتاحة:**
-- 💳 البطاقات الائتمانية (Visa, Mastercard, Mada)
-- 📱 Apple Pay / STC Pay / Urpay
-- 🏦 التحويل البنكي
+
+-   💳 البطاقات الائتمانية (Visa, Mastercard, Mada)
+-   📱 Apple Pay / STC Pay / Urpay
+-   🏦 التحويل البنكي
 
 ### 6️⃣ مرحلة التتبع والتوصيل
 
@@ -120,13 +129,14 @@
 
 **ما يحدث:**
 
-- 🗺️ **تتبع مباشر لموقع السائق** على الخريطة
-- 📍 **تحديثات لحظية** عن موقع الصهريج
-- ⏰ **وقت الوصول المتوقع** يتحدث تلقائيًا
-- 📞 **إمكانية التواصل** المباشر مع السائق
-- 🔔 **إشعارات** عند اقتراب السائق
+-   🗺️ **تتبع مباشر لموقع السائق** على الخريطة
+-   📍 **تحديثات لحظية** عن موقع الصهريج
+-   ⏰ **وقت الوصول المتوقع** يتحدث تلقائيًا
+-   📞 **إمكانية التواصل** المباشر مع السائق
+-   🔔 **إشعارات** عند اقتراب السائق
 
 **عند الوصول:**
+
 1. ✅ السائق يؤكد بدء التفريغ
 2. 💧 يتم تفريغ المياه
 3. ✅ العميل يؤكد استلام الطلب
@@ -138,15 +148,17 @@
 ## 👥 المستخدمون
 
 ### 🧑‍💼 العملاء
-- أصحاب المنازل
-- الشركات والمصانع
-- المزارع
-- المشاريع الإنشائية
+
+-   أصحاب المنازل
+-   الشركات والمصانع
+-   المزارع
+-   المشاريع الإنشائية
 
 ### 🚛 السائقون
-- أصحاب صهاريج المياه
-- شركات نقل المياه
-- سائقون مستقلون
+
+-   أصحاب صهاريج المياه
+-   شركات نقل المياه
+-   سائقون مستقلون
 
 ---
 
@@ -155,44 +167,53 @@
 ### للعملاء 👨‍💼
 
 ✨ **سهولة الطلب**
-- واجهة بسيطة وسهلة الاستخدام
-- طلب في أقل من دقيقتين
+
+-   واجهة بسيطة وسهلة الاستخدام
+-   طلب في أقل من دقيقتين
 
 💰 **أفضل الأسعار**
-- مقارنة عروض أسعار متعددة
-- اختيار الأنسب للميزانية
+
+-   مقارنة عروض أسعار متعددة
+-   اختيار الأنسب للميزانية
 
 🔍 **الشفافية الكاملة**
-- معرفة السعر قبل التأكيد
-- تقييمات حقيقية من عملاء سابقين
+
+-   معرفة السعر قبل التأكيد
+-   تقييمات حقيقية من عملاء سابقين
 
 📍 **التتبع المباشر**
-- معرفة موقع الصهريج لحظيًا
-- وقت وصول دقيق
+
+-   معرفة موقع الصهريج لحظيًا
+-   وقت وصول دقيق
 
 ### للسائقين 🚛
 
 📊 **إدارة الطلبات**
-- استقبال الطلبات تلقائيًا
-- اختيار الطلبات المناسبة
+
+-   استقبال الطلبات تلقائيًا
+-   اختيار الطلبات المناسبة
 
 💵 **تحديد الأسعار**
-- حرية تسعير خدماتك
-- عروض تنافسية
+
+-   حرية تسعير خدماتك
+-   عروض تنافسية
 
 📈 **زيادة الدخل**
-- المزيد من الرحلات
-- تقليل وقت الانتظار
+
+-   المزيد من الرحلات
+-   تقليل وقت الانتظار
 
 🎯 **سهولة الملاحة**
-- خرائط مدمجة
-- توجيه GPS دقيق
+
+-   خرائط مدمجة
+-   توجيه GPS دقيق
 
 ---
 
 ## 🔧 التقنيات المستخدمة
 
 ### Frontend (واجهة المستخدم)
+
 ```
 - React.js / React Native
 - Redux للإدارة الحالة
@@ -201,6 +222,7 @@
 ```
 
 ### Backend (الخادم)
+
 ```
 - Node.js + Express
 - MongoDB / PostgreSQL
@@ -209,6 +231,7 @@
 ```
 
 ### الدفع والأمان
+
 ```
 - Stripe / HyperPay
 - SSL/TLS Encryption
@@ -216,6 +239,7 @@
 ```
 
 ### الخرائط والموقع
+
 ```
 - Google Maps API
 - Geolocation API
@@ -245,71 +269,77 @@
 ### للعملاء
 
 1. **التسجيل**
-   ```
-   - حمّل التطبيق من App Store أو Google Play
-   - أنشئ حساب جديد
-   - أضف معلومات الدفع
-   ```
+
+    ```
+    - حمّل التطبيق من App Store أو Google Play
+    - أنشئ حساب جديد
+    - أضف معلومات الدفع
+    ```
 
 2. **اطلب الآن**
-   ```
-   - اختر نوع وحجم المياه
-   - حدد موقعك
-   - انتظر العروض
-   - اختر وادفع
-   ```
+    ```
+    - اختر نوع وحجم المياه
+    - حدد موقعك
+    - انتظر العروض
+    - اختر وادفع
+    ```
 
 ### للسائقين
 
 1. **التسجيل كسائق**
-   ```
-   - قدّم طلب انضمام
-   - أرفق المستندات المطلوبة:
-     * رخصة القيادة
-     * رخصة السير
-     * رخصة نقل المياه
-   ```
+
+    ```
+    - قدّم طلب انضمام
+    - أرفق المستندات المطلوبة:
+      * رخصة القيادة
+      * رخصة السير
+      * رخصة نقل المياه
+    ```
 
 2. **ابدأ العمل**
-   ```
-   - فعّل حالة "متاح"
-   - استقبل الطلبات
-   - حدد أسعارك
-   - ابدأ التوصيل
-   ```
+    ```
+    - فعّل حالة "متاح"
+    - استقبل الطلبات
+    - حدد أسعارك
+    - ابدأ التوصيل
+    ```
 
 ---
 
 ## 📊 إحصائيات ومعلومات
 
 ### معدل الطلبات
-- ⏱️ متوسط وقت الاستجابة: **5 دقائق**
-- 🚛 متوسط وقت التوصيل: **35 دقيقة**
-- ⭐ متوسط التقييم: **4.7 من 5**
+
+-   ⏱️ متوسط وقت الاستجابة: **5 دقائق**
+-   🚛 متوسط وقت التوصيل: **35 دقيقة**
+-   ⭐ متوسط التقييم: **4.7 من 5**
 
 ### الأسعار التقريبية
-| الحجم | صالحة للشرب | غير صالحة |
-|-------|-------------|-----------|
-| 3 طن | 80-120 ريال | 60-90 ريال |
-| 6 طن | 140-180 ريال | 100-140 ريال |
-| 9 طن | 200-260 ريال | 150-200 ريال |
 
-*الأسعار تختلف حسب المسافة والمنطقة*
+| الحجم | صالحة للشرب  | غير صالحة    |
+| ----- | ------------ | ------------ |
+| 3 طن  | 80-120 ريال  | 60-90 ريال   |
+| 6 طن  | 140-180 ريال | 100-140 ريال |
+| 9 طن  | 200-260 ريال | 150-200 ريال |
+
+_الأسعار تختلف حسب المسافة والمنطقة_
 
 ---
 
 ## 🔐 الأمان والخصوصية
 
 ### لحماية بياناتك
-- 🔒 تشفير شامل للبيانات (SSL/TLS)
-- 🛡️ مصادقة ثنائية (2FA)
-- 💳 عدم تخزين بيانات البطاقات
-- 🔑 حماية كلمات المرور (Hashing)
+
+-   🔒 تشفير شامل للبيانات (SSL/TLS)
+-   🛡️ مصادقة ثنائية (2FA)
+-   💳 عدم تخزين بيانات البطاقات
+-   🔑 حماية كلمات المرور (Hashing)
 
 ### سياسة الخصوصية
-- لا نشارك بياناتك مع أطراف ثالثة
-- نستخدم البيانات فقط لتحسين الخدمة
-- يمكنك حذف حسابك في أي وقت
+
+-   لا نشارك بياناتك مع أطراف ثالثة
+-   نستخدم البيانات فقط لتحسين الخدمة
+-   يمكنك حذف حسابك في أي وقت
 
 ---
 
@@ -323,8 +353,9 @@
 🌐 **الموقع:** www.waterdelivery.sa
 
 ### أوقات العمل
-- 🕐 الدعم الفني: 24/7
-- 📞 خدمة العملاء: 8 صباحًا - 12 منتصف الليل
+
+-   🕐 الدعم الفني: 24/7
+-   📞 خدمة العملاء: 8 صباحًا - 12 منتصف الليل
 
 ---
 
@@ -332,17 +363,17 @@
 
 ### قريبًا
 
-- [ ] 📅 جدولة الطلبات المسبقة
-- [ ] 🔄 الطلبات المتكررة (اشتراكات)
-- [ ] 🎁 برنامج الولاء والمكافآت
-- [ ] 📊 تقارير استهلاك المياه
+-   [ ] 📅 جدولة الطلبات المسبقة
+-   [ ] 🔄 الطلبات المتكررة (اشتراكات)
+-   [ ] 🎁 برنامج الولاء والمكافآت
+-   [ ] 📊 تقارير استهلاك المياه
 
 ### المستقبل
 
-- [ ] 🤖 ذكاء اصطناعي للتنبؤ بالطلبات
-- [ ] 🌍 التوسع لدول الخليج
-- [ ] 💧 خدمات صيانة الخزانات
-- [ ] 🔬 اختبار جودة المياه
+-   [ ] 🤖 ذكاء اصطناعي للتنبؤ بالطلبات
+-   [ ] 🌍 التوسع لدول الخليج
+-   [ ] 💧 خدمات صيانة الخزانات
+-   [ ] 🔬 اختبار جودة المياه
 
 ---
 
@@ -372,10 +403,10 @@ npm run dev
 
 ## 📚 وثائق إضافية
 
-- [API Documentation](docs/api.md)
-- [دليل السائق](docs/driver-guide.md)
-- [دليل العميل](docs/customer-guide.md)
-- [الأسئلة الشائعة](docs/faq.md)
+-   [API Documentation](docs/api.md)
+-   [دليل السائق](docs/driver-guide.md)
+-   [دليل العميل](docs/customer-guide.md)
+-   [الأسئلة الشائعة](docs/faq.md)
 
 ---
 
@@ -388,5 +419,274 @@ npm run dev
 ### احفظ الماء 💧 استخدمه بحكمة
 
 [تحميل التطبيق](https://example.com) | [للسائقين](https://example.com/drivers) | [تواصل معنا](https://example.com/contact)
+
+## 📚 محفظة المستخدم والسواق
+
+app/
+├── Models/
+│ ├── User/
+│ │ ├── User.php
+│ │ └── UserProfile.php
+│ ├── Driver/
+│ │ ├── Driver.php
+│ │ └── DriverProfile.php
+│ ├── Wallet/
+│ │ ├── LedgerEntry.php
+│ │ ├── UserWallet.php
+│ │ ├── DriverWallet.php
+│ │ └── IdempotencyKey.php
+│ └── Payment/
+│ └── PaymentTransaction.php
+├── Services/
+│ ├── Wallet/
+│ │ ├── AbstractWalletService.php
+│ │ ├── UserWalletService.php
+│ │ ├── DriverWalletService.php
+│ │ ├── LedgerService.php
+│ │ ├── ExchangeRateService.php
+│ │ └── ReconciliationService.php
+│ ├── Payment/
+│ │ ├── PaymobService.php
+│ │ ├── PaymentGatewayInterface.php
+│ │ └── PaymentProcessor.php
+│ ├── Withdrawal/
+│ │ ├── WithdrawalService.php
+│ │ ├── WithdrawalValidator.php
+│ │ ├── PayoutGatewayInterface.php
+│ │ └── WithdrawalProcessor.php
+│ └── Security/
+│ ├── RateLimiter.php
+│ ├── FraudDetector.php
+│ └── IpWhitelist.php
+├── Events/
+│ └── WalletEvent.php
+├── Listeners/
+│ ├── SendTransactionNotification.php
+│ └── LogTransaction.php
+├── Http/
+│ ├── Controllers/
+│ │ ├── User/
+│ │ │ └── WalletController.php
+│ │ ├── Driver/
+│ │ │ └── WalletController.php
+│ │ └── Admin/
+│ │ └── WalletController.php
+│ └── Middleware/
+│ ├── WalletRateLimit.php
+│ └── WalletOwnerCheck.php
+├── Traits/
+│ └── HasWallet.php
+└── Console/
+└── Commands/
+├── ReconcileWallets.php
+├── ReleaseExpiredHolds.php
+└── ProcessScheduledPayouts.php
+
+## 📚 دردشة بين المستخدم و السواق والادمن او الدعم الفني
+
+app/
+├── Models/
+│ ├── Chat/
+│ │ ├── Chat.php
+│ │ ├── Message.php
+│ │ ├── ChatParticipant.php
+│ │ ├── ChatMessageStatus.php
+│ │ ├── MessageReaction.php
+│ │ ├── DeletedMessage.php
+│ │ └── ChatSettings.php
+│ ├── User.php
+│ ├── Driver.php
+│ ├── Admin.php
+│ └── Traits/
+│ ├── HasChats.php
+│ ├── CanSendMessages.php
+│ ├── CanReceiveMessages.php
+│ └── HasChatSettings.php
+├── Services/
+│ ├── Chat/
+│ │ ├── ChatService.php
+│ │ ├── MessageService.php
+│ │ ├── ChatServiceInterface.php
+│ │ ├── MessageServiceInterface.php
+│ │ ├── FileUploadService.php
+│ │ ├── ChunkUploadService.php
+│ │ ├── MediaCompressionService.php
+│ │ └── EncryptionService.php
+│ ├── Notification/
+│ │ ├── PushNotificationService.php
+│ │ ├── EmailNotificationService.php
+│ │ └── SMSNotificationService.php
+│ ├── RealTime/
+│ │ ├── PusherService.php
+│ │ ├── SocketIOService.php
+│ │ └── WebSocketService.php
+│ ├── Storage/
+│ │ ├── ChatMediaStorage.php
+│ │ ├── S3StorageService.php
+│ │ └── LocalStorageService.php
+│ ├── Security/
+│ │ ├── ChatEncryptionService.php
+│ │ ├── ChatPermissionService.php
+│ │ └── ChatRateLimiter.php
+│ └── Analytics/
+│ ├── ChatAnalyticsService.php
+│ └── MessageStatisticsService.php
+├── Repositories/
+│ ├── ChatRepository.php
+│ ├── MessageRepository.php
+│ ├── ChatParticipantRepository.php
+│ └── ChatSettingsRepository.php
+├── Jobs/
+│ ├── ProcessMessageDelivery.php
+│ ├── SendPushNotification.php
+│ ├── CleanupOldMessages.php
+│ ├── CompressMediaFiles.php
+│ ├── ExportChatHistory.php
+│ └── BackupChatData.php
+├── Events/
+│ ├── Chat/
+│ │ ├── MessageSent.php
+│ │ ├── MessageDelivered.php
+│ │ ├── MessageRead.php
+│ │ ├── MessageEdited.php
+│ │ ├── MessageDeleted.php
+│ │ ├── ChatCreated.php
+│ │ ├── ChatUpdated.php
+│ │ ├── ParticipantAdded.php
+│ │ ├── ParticipantRemoved.php
+│ │ └── TypingIndicator.php
+│ ├── User/
+│ │ ├── UserTyping.php
+│ │ ├── UserOnline.php
+│ │ ├── UserOffline.php
+│ │ └── UserActive.php
+│ └── System/
+│ ├── ChatBackupCompleted.php
+│ └── ChatCleanupCompleted.php
+├── Listeners/
+│ ├── Chat/
+│ │ ├── BroadcastMessage.php
+│ │ ├── UpdateChatLastMessage.php
+│ │ ├── UpdateUnreadCount.php
+│ │ ├── SendDeliveryReceipt.php
+│ │ ├── SendReadReceipt.php
+│ │ ├── LogMessageActivity.php
+│ │ └── ProcessMessageQueue.php
+│ ├── User/
+│ │ ├── UpdateUserPresence.php
+│ │ ├── SendPresenceNotification.php
+│ │ └── UpdateUserActivity.php
+│ └── Notification/
+│ ├── SendPushNotification.php
+│ ├── SendEmailNotification.php
+│ └── SendSMSNotification.php
+├── Http/
+│ ├── Controllers/
+│ │ ├── Api/
+│ │ │ ├── V1/
+│ │ │ │ ├── Chat/
+│ │ │ │ │ ├── ChatController.php
+│ │ │ │ │ ├── MessageController.php
+│ │ │ │ │ ├── ParticipantController.php
+│ │ │ │ │ ├── MediaController.php
+│ │ │ │ │ └── ReactionController.php
+│ │ │ │ └── Admin/
+│ │ │ │ ├── AdminChatController.php
+│ │ │ │ ├── ChatManagementController.php
+│ │ │ │ └── ChatAnalyticsController.php
+│ │ │ └── V2/
+│ │ └── Web/
+│ │ ├── ChatController.php
+│ │ └── AdminChatController.php
+│ ├── Resources/
+│ │ ├── Chat/
+│ │ │ ├── ChatResource.php
+│ │ │ ├── MessageResource.php
+│ │ │ ├── ChatParticipantResource.php
+│ │ │ ├── ChatListResource.php
+│ │ │ ├── MessageCollection.php
+│ │ │ └── ChatCollection.php
+│ │ └── Media/
+│ │ ├── MediaResource.php
+│ │ └── MediaCollection.php
+│ ├── Requests/
+│ │ ├── Chat/
+│ │ │ ├── CreateChatRequest.php
+│ │ │ ├── SendMessageRequest.php
+│ │ │ ├── UpdateMessageRequest.php
+│ │ │ ├── UploadMediaRequest.php
+│ │ │ ├── SearchMessagesRequest.php
+│ │ │ └── ExportChatRequest.php
+│ │ └── Admin/
+│ │ ├── AdminSendMessageRequest.php
+│ │ ├── ManageChatRequest.php
+│ │ └── FilterChatsRequest.php
+│ ├── Middleware/
+│ │ ├── ChatParticipant.php
+│ │ ├── ChatAdmin.php
+│ │ ├── MessageRateLimit.php
+│ │ ├── ChatEncryption.php
+│ │ └── ValidateChatAccess.php
+│ └── Livewire/
+│ ├── Chat/
+│ │ ├── ChatList.php
+│ │ ├── ChatWindow.php
+│ │ ├── MessageList.php
+│ │ ├── MessageInput.php
+│ │ └── TypingIndicator.php
+│ └── Admin/
+│ ├── AdminChatPanel.php
+│ └── ChatAnalyticsDashboard.php
+├── Console/
+│ └── Commands/
+│ ├── Chat/
+│ │ ├── CleanupOldMessages.php
+│ │ ├── BackupChats.php
+│ │ ├── ExportChatHistory.php
+│ │ ├── ReconcileMessageStatus.php
+│ │ └── GenerateChatReport.php
+│ ├── Media/
+│ │ ├── CompressChatMedia.php
+│ │ ├── CleanupTempFiles.php
+│ │ └── MigrateMediaStorage.php
+│ └── Analytics/
+│ ├── GenerateChatStatistics.php
+│ └── AnalyzeMessagePatterns.php
+├── Exceptions/
+│ ├── ChatNotFoundException.php
+│ ├── MessageNotFoundException.php
+│ ├── PermissionDeniedException.php
+│ ├── MediaUploadException.php
+│ ├── RateLimitExceededException.php
+│ └── ChatEncryptionException.php
+├── Helpers/
+│ ├── ChatHelper.php
+│ ├── MessageHelper.php
+│ ├── MediaHelper.php
+│ └── EncryptionHelper.php
+├── Config/
+│ ├── chat.php
+│ ├── pusher.php
+│ ├── media.php
+│ └── encryption.php
+└── Database/
+├── Migrations/
+│ ├── 2024_01_01_000001_create_chats_table.php
+│ ├── 2024_01_01_000002_create_messages_table.php
+│ ├── 2024_01_01_000003_create_chat_participants_table.php
+│ ├── 2024_01_01_000004_create_message_statuses_table.php
+│ ├── 2024_01_01_000005_create_message_reactions_table.php
+│ ├── 2024_01_01_000006_create_deleted_messages_table.php
+│ └── 2024_01_01_000007_create_chat_settings_table.php
+├── Seeders/
+│ └── ChatSettingsSeeder.php
+├── Factories/
+│ ├── ChatFactory.php
+│ ├── MessageFactory.php
+│ └── ChatParticipantFactory.php
+└── Observers/
+├── ChatObserver.php
+├── MessageObserver.php
+└── ChatParticipantObserver.php
 
 </div>
