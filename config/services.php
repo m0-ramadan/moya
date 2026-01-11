@@ -39,5 +39,7 @@ return [
         'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'),
     ],
 
-
+    'paymob' => [
+        'api_key' => env('PAYMOB_API_KEY'),
+    ],
 ];
