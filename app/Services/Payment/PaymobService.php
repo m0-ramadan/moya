@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 
 class PaymobService implements PaymentGatewayInterface
 {
+
     private string $apiKey;
     private string $integrationId;
     private string $iframeId;
