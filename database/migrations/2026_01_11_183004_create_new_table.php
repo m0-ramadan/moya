@@ -31,8 +31,8 @@ return new class extends Migration
             $table->foreignId('country_id')->nullable()->constrained()->nullOnDelete();
 
             // بيانات شخصية
-            $table->date('date_of_birth')->nullable();
-            $table->string('national_id')->nullable(); // سعودي
+            // $table->date('date_of_birth')->nullable();
+            // $table->string('national_id')->nullable(); // سعودي
             $table->string('iqama_number')->nullable(); // مقيم
             $table->date('iqama_expiry_date')->nullable();
 
@@ -44,7 +44,7 @@ return new class extends Migration
             $table->string('id_image_back')->nullable();
 
             // رخصة القيادة
-            $table->string('license_number')->nullable();
+            //$table->string('license_number')->nullable();
             $table->date('license_expiry_date')->nullable();
             $table->string('license_image_front')->nullable();
             $table->string('license_image_back')->nullable();
