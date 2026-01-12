@@ -23,7 +23,7 @@ return new class extends Migration
 
             // حالة السائق
             $table->enum('status', ['saudi', 'resident', 'gulf', 'visitor'])
-                  ->default('resident');
+                ->default('resident');
 
             // صورة + إشعارات
             $table->string('photo')->nullable();

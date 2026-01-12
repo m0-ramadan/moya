@@ -42,9 +42,9 @@ class Driver extends Model
         'vehicle_plate_number',
         'vehicle_registration_number',
         'vehicle_residency_number',
-        'vehicle_model',
-        'vehicle_year',
-        'vehicle_color',
+        //'vehicle_model',
+        // 'vehicle_year',
+        //  'vehicle_color',
 
         // رخصة السير
         'vehicle_registration_image',
@@ -53,6 +53,9 @@ class Driver extends Model
         'is_verified',
         'verified_at',
         'rejection_reason',
+
+        'status',
+        'is_active',
     ];
 
     public function user()
@@ -60,10 +63,10 @@ class Driver extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function vehicle()
-    {
-        return $this->hasOne(Vehicle::class);
-    }
+    // public function vehicle()
+    // {
+    //     return $this->hasOne(Vehicle::class);
+    // }
 
     public function ratings()
     {
@@ -83,14 +86,14 @@ class Driver extends Model
     /**
      * Boot the model
      */
-    protected static function boot()
-    {
-        parent::boot();
+    // protected static function boot()
+    // {
+    //     parent::boot();
 
-        static::created(function ($driver) {
-            $driver->createDriverWallet();
-        });
-    }
+    //     static::created(function ($driver) {
+    //         $driver->createDriverWallet();
+    //     });
+    // }
 
     /**
      * Get driver's wallet
@@ -103,20 +106,20 @@ class Driver extends Model
     /**
      * Create driver wallet
      */
-    public function createDriverWallet()
-    {
-        if (!$this->driverWallet) {
-            return DriverWallet::create([
-                'driver_id' => $this->id,
-                'balance' => 0,
-                'held_balance' => 0,
-                'currency' => config('wallet.default_currency', 'SAR'),
-                'status' => 'active'
-            ]);
-        }
+    // public function createDriverWallet()
+    // {
+    //     if (!$this->driverWallet) {
+    //         return DriverWallet::create([
+    //             'driver_id' => $this->id,
+    //             'balance' => 0,
+    //             'held_balance' => 0,
+    //             'currency' => config('wallet.default_currency', 'SAR'),
+    //             'status' => 'active'
+    //         ]);
+    //     }
 
-        return $this->driverWallet;
-    }
+    //     return $this->driverWallet;
+    // }
 
     /**
      * Get wallet
@@ -161,6 +164,38 @@ class Driver extends Model
             ->where('owner_id', $this->id);
     }
 
+    /**
+     * Boot the model
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // إزالة الحدث المكرر
+        static::created(function ($driver) {
+            $driver->createDriverWallet();
+        });
+    }
+
+    /**
+     * Create driver wallet
+     */
+    public function createDriverWallet()
+    {
+        if (!$this->driverWallet()->exists()) {
+            return DriverWallet::create([
+                'driver_id' => $this->id,
+                'balance' => 0,
+                'held_balance' => 0,
+                'currency' => config('wallet.default_currency', 'SAR'),
+                'status' => 'active',
+                'daily_limit' => 20000,
+                'monthly_limit' => 100000
+            ]);
+        }
+
+        return $this->driverWallet;
+    }
 
     /* ================= Helpers ================= */
 

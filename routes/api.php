@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\Website\PageController;
 use App\Http\Controllers\Api\SavedLocationController;
 use App\Http\Controllers\Api\ArticleCommentController;
 use App\Http\Controllers\Api\ArticleCategoryController;
+use App\Http\Controllers\Api\Driver\DriverAuthController;
 use App\Http\Controllers\Api\ArticleInteractionController;
 use App\Http\Controllers\Api\Driver\DriverOrderController;
 use App\Http\Controllers\Api\Website\UserAddressController;
@@ -231,4 +232,45 @@ Route::prefix('v1')->group(function () {
 
     // Payment callback
     Route::middleware(['ip.whitelist:paymob'])->post('/payment/callback', [PaymentCallbackController::class, 'handle']);
+
+
+
+    // إضافة Routes للسائقين
+    Route::prefix('driver')->group(function () {
+        // التوثيق
+        Route::prefix('auth')->group(function () {
+            Route::post('/send-otp', [DriverAuthController::class, 'sendOtp']);
+            Route::post('/verify-otp', [DriverAuthController::class, 'verifyOtp']);
+            Route::post('/register', [DriverAuthController::class, 'register']);
+            Route::post('/complete-profile', [DriverAuthController::class, 'completeProfile']);
+            Route::post('/logout', [DriverAuthController::class, 'logout']);
+
+            // Routes تتطلب مصادقة
+            Route::middleware('auth:sanctum')->group(function () {
+                Route::get('/profile', [DriverAuthController::class, 'profile']);
+                Route::get('/check-registration', [DriverAuthController::class, 'checkRegistration']);
+            });
+        });
+
+        // الحصول على الدول
+        Route::get('/countries', [DriverAuthController::class, 'countries']);
+
+        // // Dashboard للسائق (تتطلب مصادقة وتأكيد السائق)
+        Route::middleware(['auth:sanctum', 'driver.only'])->group(function () {
+            Route::get('/dashboard', [DriverDashboardController::class, 'index']);
+            Route::get('/stats', [DriverDashboardController::class, 'stats']);
+            Route::get('/recent-orders', [DriverDashboardController::class, 'recentOrders']);
+            Route::get('/earnings', [DriverDashboardController::class, 'earnings']);
+        });
+    });
+
+    // تحديث Middleware للسائقين
+    Route::middleware(['auth:sanctum', 'driver.only'])->prefix('driver')->group(function () {
+        Route::post('/orders/{orderId}/accept', [OrderController::class, 'acceptOrder']);
+        Route::post('/orders/{orderId}/update-status', [DriverOrderController::class, 'updateStatus']);
+        Route::post('/orders/{orderId}/update-location', [DriverOrderController::class, 'updateLocation']);
+        Route::get('/orders/{orderId}/path', [DriverOrderController::class, 'getDriverPath']);
+        Route::post('/orders/{orderId}/rate-user', [RatingController::class, 'rateUser']);
+        Route::post('/offers/{offerId}/cancel', [OrderController::class, 'cancelOffer']);
+    });
 });

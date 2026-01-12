@@ -13,9 +13,15 @@ return new class extends Migration
     {
         Schema::create('drivers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete(); // ارتباط باليوزر
+
+            // يجب أن يكون user_id مرجعاً لجدول users
+            $table->foreignId('user_id')
+                ->unique()  // كل user لديه سائق واحد فقط
+                ->constrained()
+                ->cascadeOnDelete();
+
             $table->string('full_name')->nullable();
-            $table->string('phone')->unique();
+            $table->string('phone')->nullable();
             $table->string('id_number')->nullable();           // رقم الهوية
             $table->string('license_number')->nullable();      // رخصة القيادة
             $table->date('license_expiry')->nullable();
@@ -23,6 +29,11 @@ return new class extends Migration
             $table->decimal('average_rating', 3, 2)->default(4.00);
             $table->integer('total_ratings')->default(0);
             $table->integer('total_orders')->default(0);
+
+            // يمكن إضافة الحقول الأخرى التي تحتاجها
+            //   $table->string('national_id')->nullable();
+            // $table->date('date_of_birth')->nullable();
+
             $table->timestamps();
         });
     }

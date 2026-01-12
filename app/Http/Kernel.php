@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\DriverOnly;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Spatie\Permission\Middleware\PermissionMiddleware;
@@ -74,6 +75,7 @@ class Kernel extends HttpKernel
         'api.cors' => \App\Http\Middleware\Cors::class,
         'driver' => \App\Http\Middleware\CheckDriver::class,
         'permission' => PermissionMiddleware::class,
+        'driver.only' => DriverOnly::class,
         'role' => RoleMiddleware::class, // Optional
     ];
 }
