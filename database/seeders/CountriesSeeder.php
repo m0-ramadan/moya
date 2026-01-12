@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 class CountriesSeeder extends Seeder
 {
+
     public function run()
     {
         $countries = [
