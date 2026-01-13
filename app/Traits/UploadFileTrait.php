@@ -81,7 +81,7 @@ trait UploadFileTrait
 
     protected function uploadProfilePhoto(
         UploadedFile $file,
-        int $driverId
+        $driverId
     ): string {
         $folder = "drivers/photos/{$driverId}";
         $filename = 'profile_' . time();

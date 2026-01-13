@@ -193,7 +193,7 @@ class DriverAuthController extends Controller
             // رفع الصور المحدثة
             if ($request->hasFile('photo')) {
                 $this->deleteOldFile($driver->photo);
-                $data['photo'] = $this->uploadProfilePhoto($request->file('photo'), $driver->id);
+                $data['photo'] = $this->uploadProfilePhoto($request->file('photo'),  $driver->id);
             }
 
             if ($request->hasFile('id_image')) {
