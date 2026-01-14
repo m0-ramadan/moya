@@ -133,7 +133,7 @@ class DriverAuthController extends Controller
             DB::beginTransaction();
 
             // رفع الصور
-            $uploadedFiles = $this->uploadDriverDocuments($request);
+            $uploadedFiles = $this->uploadDriverDocuments($request, $user->id);
 
             // إنشاء سجل السائق
             $driverData = array_merge(
@@ -193,7 +193,7 @@ class DriverAuthController extends Controller
             // رفع الصور المحدثة
             if ($request->hasFile('photo')) {
                 $this->deleteOldFile($driver->photo);
-                $data['photo'] = $this->uploadProfilePhoto($request->file('photo'),  $driver->id);
+                $data['photo'] = $this->uploadProfilePhoto($request->file('photo'),  intval($driver->id));
             }
 
             if ($request->hasFile('id_image')) {
@@ -304,40 +304,40 @@ class DriverAuthController extends Controller
     /**
      * رفع وثائق السائق
      */
-    private function uploadDriverDocuments($request)
+    private function uploadDriverDocuments($request, $userId)
     {
         $uploads = [];
 
         // رفع الصورة الشخصية
         if ($request->hasFile('photo')) {
-            $uploads['photo'] = $this->uploadProfilePhoto($request->file('photo'), 'temp');
+            $uploads['photo'] = $this->uploadProfilePhoto($request->file('photo'), $userId);
         }
 
         // رفع صورة الهوية (الوجه الأمامي)
         if ($request->hasFile('id_image')) {
-            $uploads['id_image'] = $this->uploadIdImage($request->file('id_image'), 'temp', 'front');
+            $uploads['id_image'] = $this->uploadIdImage($request->file('id_image'), $userId, 'front');
         }
 
         // رفع صورة الهوية (الوجه الخلفي)
         if ($request->hasFile('id_image_back')) {
-            $uploads['id_image_back'] = $this->uploadIdImage($request->file('id_image_back'), 'temp', 'back');
+            $uploads['id_image_back'] = $this->uploadIdImage($request->file('id_image_back'), $userId, 'back');
         }
 
         // رفع رخصة القيادة (الوجه الأمامي)
         if ($request->hasFile('license_image')) {
-            $uploads['license_image'] = $this->uploadLicenseImage($request->file('license_image'), 'temp', 'front');
+            $uploads['license_image'] = $this->uploadLicenseImage($request->file('license_image'), $userId, 'front');
         }
 
         // رفع رخصة القيادة (الوجه الخلفي)
         if ($request->hasFile('license_image_back')) {
-            $uploads['license_image_back'] = $this->uploadLicenseImage($request->file('license_image_back'), 'temp', 'back');
+            $uploads['license_image_back'] = $this->uploadLicenseImage($request->file('license_image_back'), $userId, 'back');
         }
 
         // رفع رخصة السيارة
         if ($request->hasFile('vehicle_registration_image')) {
             $uploads['vehicle_registration_image'] = $this->uploadVehicleRegistrationImage(
                 $request->file('vehicle_registration_image'),
-                'temp'
+                $userId
             );
         }
 
