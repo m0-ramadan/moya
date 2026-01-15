@@ -243,7 +243,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/verify-otp', [DriverAuthController::class, 'verifyOtp']);
             Route::post('/register', [DriverAuthController::class, 'register']);
             Route::post('/complete-profile', [DriverAuthController::class, 'completeProfile']);
-            Route::post('/logout', [DriverAuthController::class, 'logout']);
+            Route::post('/logout', [DriverAuthController::class, 'logout'])->middleware('auth:sanctum');
 
             // Routes تتطلب مصادقة
             Route::middleware('auth:sanctum')->group(function () {

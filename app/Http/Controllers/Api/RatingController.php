@@ -155,12 +155,7 @@ class RatingController extends Controller
         $order = Order::where('user_id', $user->id)
             ->findOrFail($orderId);
 
-        $offers = \App\Models\OrderOffer::with([
-            'driver:id,full_name,average_rating,total_orders',
-            'driver.user:id,phone',
-            'driver.vehicle:id,driver_id,type,plate_number,model',
-        ])
-            ->where('order_id', $orderId)
+        $offers = \App\Models\OrderOffer::where('order_id', $orderId)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -191,7 +186,7 @@ class RatingController extends Controller
 
         return $this->successResponse([
             'order_id' => $order->id,
-            'order_status' => $order->status->name,
+            'order_status' => $order->status?->name,
             'total_offers' => $offers->count(),
             'active_offers' => $offers->where('status', 'pending')->count(),
             'accepted_offer' => $offers->where('status', 'accepted')->first(),

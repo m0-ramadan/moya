@@ -122,8 +122,9 @@ class OrderController extends Controller
             'price' => 'required|numeric|min:0',
             'delivery_duration_minutes' => 'required|integer|min:1',
         ]);
+        $user = auth()->user();
 
-        $driver = auth()->user()->driver;
+        $driver = Driver::where('user_id', $user->id)->first();
 
         if (!$driver) {
             return $this->errorResponse('يجب أن تكون سائقاً', 403);
@@ -356,7 +357,7 @@ class OrderController extends Controller
         $response = [
             'order_id' => $order->id,
             'status_id' => $order->order_status_id,
-            'status_name' => $order->status->name,
+            'status_name' => $order->status?->name,
             'remaining_offers' => $order->offers->count(),
             'expires_in' => null,
         ];

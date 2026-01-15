@@ -271,7 +271,7 @@ class DriverAuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()?->delete();
+        auth()->user()->currentAccessToken()?->delete();
 
         return $this->successResponse(null, 'تم تسجيل الخروج بنجاح');
     }

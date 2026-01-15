@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Driver;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -14,12 +15,11 @@ class CheckDriver
         }
 
         $user = auth()->user();
-
-        if (!$user->driver) {
+        if (!Driver::where('user_id', $user->id)->exists()) {
             return response()->json(['message' => 'يجب أن تكون سائقاً للوصول لهذه الصفحة'], 403);
         }
 
-        if (!$user->driver->is_active) {
+        if (!Driver::where('user_id', $user->id)->first()->is_active) {
             return response()->json(['message' => 'حساب السائق غير نشط'], 403);
         }
 
