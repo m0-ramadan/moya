@@ -25,33 +25,33 @@ class DriverResource extends JsonResource
             ],
 
             /* ================= Personal ================= */
-            'citizenship' => $this->citizenship,
-            'country_id' => $this->country_id,
-            'date_of_birth' => $this->date_of_birth,
+            'citizenship' => $this->citizenship ?? null,
+            'country_id' => $this->country_id ?? null,
+            'date_of_birth' => $this->date_of_birth ?? null,
 
             /* ================= Identity ================= */
-            'national_id' => $this->national_id,
-            'iqama_number' => $this->iqama_number,
-            'iqama_expiry_date' => $this->iqama_expiry_date,
+            'national_id' => $this->national_id ?? null,
+            'iqama_number' => $this->iqama_number ?? null,
+            'iqama_expiry_date' => $this->iqama_expiry_date ?? null,
 
             /* ================= Images ================= */
-            'personal_photo' => $this->image($this->personal_photo),
-            'id_image_front' => $this->image($this->id_image_front),
-            'id_image_back' => $this->image($this->id_image_back),
+            'personal_photo' => $this->personal_photo ? $this->image($this->personal_photo) : null,
+            'id_image_front' => $this->id_image_front ? $this->image($this->id_image_front) : null,
+            'id_image_back' => $this->id_image_back ? $this->image($this->id_image_back) : null,
 
             /* ================= License ================= */
-            'license_number' => $this->license_number,
-            'license_expiry_date' => $this->license_expiry_date,
-            'license_image_front' => $this->image($this->license_image_front),
-            'license_image_back' => $this->image($this->license_image_back),
+            'license_number' => $this->license_number ?? null,
+            'license_expiry_date' => $this->license_expiry_date ?? null,
+            'license_image_front' => $this->license_image_front ? $this->image($this->license_image_front) : null,
+            'license_image_back' => $this->license_image_back ? $this->image($this->license_image_back) : null,
 
             /* ================= Vehicle ================= */
-            'vehicle_size' => $this->vehicle_size,
+            'vehicle_size' => $this->vehicle_size ?? null,
             'is_vehicle_owner' => (bool) $this->is_vehicle_owner,
-            'vehicle_plate_number' => $this->vehicle_plate_number,
-            'vehicle_registration_number' => $this->vehicle_registration_number,
-            'vehicle_residency_number' => $this->vehicle_residency_number,
-            'vehicle_registration_image' => $this->image($this->vehicle_registration_image),
+            'vehicle_plate_number' => $this->vehicle_plate_number ?? null,
+            'vehicle_registration_number' => $this->vehicle_registration_number ?? null,
+            'vehicle_residency_number' => $this->vehicle_residency_number ?? null,
+            'vehicle_registration_image' => $this->vehicle_registration_image ? $this->image($this->vehicle_registration_image) : null,
 
             /* ================= Status ================= */
             'status' => $this->status,

@@ -241,7 +241,7 @@ class DriverAuthController extends Controller
     public function profile(Request $request)
     {
         $user = $request->user();
-        $driver = $user->driver()->with(['country', 'vehicle'])->first();
+        $driver = $user->driver()->first();
 
         if (!$driver) {
             return $this->errorResponse('لم يتم العثور على بيانات السائق', 404);
