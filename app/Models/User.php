@@ -253,4 +253,8 @@ class User extends Authenticatable
         return LedgerEntry::where('owner_type', 'user')
             ->where('owner_id', $this->id);
     }
+    public function driver()
+    {
+        return $this->hasOne(Driver::class);
+    }
 }
