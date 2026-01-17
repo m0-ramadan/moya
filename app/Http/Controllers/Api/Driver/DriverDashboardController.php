@@ -9,8 +9,10 @@ use Illuminate\Http\Request;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Driver\DriverRatingResource;
 use App\Http\Resources\Driver\OrderResource;
 use App\Http\Resources\Driver\EarningResource;
+use App\Models\DriverRating;
 
 class DriverDashboardController extends Controller
 {
@@ -309,6 +311,43 @@ class DriverDashboardController extends Controller
             'insights' => $this->getInsights($driver, $start, $end),
         ], 'تم جلب التقارير بنجاح');
     }
+
+
+    /*
+    الحصول على تقييمات السائق
+    */
+    public function getReviews()
+    {
+        $driver = auth()->user()->driver;
+
+        if (!$driver) {
+            return $this->errorResponse('هذا المستخدم ليس سائقًا', 403);
+        }
+
+        // جلب كل التقييمات للسائق
+        $reviews = $driver->ratings()->get();
+
+        // حساب الإحصائيات لكل نجمة
+        $starStats = [];
+        for ($i = 1; $i <= 5; $i++) {
+            $starStats["{$i}_star"] = $reviews->where('rating', '>=', $i)
+                ->where('rating', '<', $i + 1)
+                ->count();
+        }
+
+        // متوسط التقييم الكلي
+        $averageRating = $reviews->avg('rating') ? round($reviews->avg('rating'), 2) : 0;
+
+        return $this->successResponse([
+            'statistics' => [
+                'average_rating' => $averageRating,
+                'total_reviews' => $reviews->count(),
+                'stars_distribution' => $starStats
+            ],
+            'reviews' => $reviews
+        ], 'تم جلب التقييمات والإحصائيات بنجاح');
+    }
+
 
     // ========== الدوال المساعدة ==========
 
@@ -814,5 +853,8 @@ class DriverDashboardController extends Controller
         return $daysPassed > 0 ? round(($earningsSoFar / $daysPassed) * 7, 2) : 0;
     }
 
-    // ... المزيد من دوال الحسابات حسب الحاجة
+    private function fetchReviews(Driver $driver)
+    {
+        return DriverRatingResource::collection(DriverRating::where('driver_id', $driver->id)->get());
+    }
 }

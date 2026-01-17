@@ -4,16 +4,17 @@ namespace App\Http\Controllers\Api\Driver;
 
 use Carbon\Carbon;
 use App\Models\Order;
-use App\Models\DriverLocation;
-use App\Events\DriverLocationUpdated;
-use App\Events\OrderStatusUpdated;
 use Illuminate\Http\Request;
-use App\Traits\ApiResponseTrait;
-use App\Http\Controllers\Controller;
-use App\Services\GoogleMapsService;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use App\Jobs\RequestRatingJob;
+use App\Models\DriverLocation;
+use App\Traits\ApiResponseTrait;
+use App\Events\OrderStatusUpdated;
+use Illuminate\Support\Facades\DB;
+use App\Services\GoogleMapsService;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use App\Events\DriverLocationUpdated;
+use App\Http\Resources\Driver\OrderResource;
 
 class DriverOrderController extends Controller
 {
@@ -28,6 +29,182 @@ class DriverOrderController extends Controller
         $this->middleware('driver');
     }
 
+    /**
+     * جلب الطلبات المنتظرة المتاحة للسائق
+     */
+    public function getPendingOrders(Request $request)
+    {
+        $driver = auth()->user()->driver;
+
+        if (!$driver) {
+            return $this->errorResponse('يجب أن تكون سائقاً', 403);
+        }
+
+        // التحقق من أن السائق ليس لديه طلبات نشطة
+        $activeOrders = Order::where('driver_id', $driver->id)
+            ->whereIn('order_status_id', [1, 2, 3, 4])
+            ->exists();
+
+        if ($activeOrders) {
+            return $this->errorResponse('لديك طلب نشط بالفعل. يجب إنهاء الطلب الحالي أولاً.', 400);
+        }
+
+        // فلترة الطلبات المنتظرة المتاحة
+        $query = Order::with([
+            'service',
+            'waterType',
+            'location',
+            'status',
+            'user',
+            'offers' => function ($query) use ($driver) {
+                $query->where('driver_id', $driver->id);
+            }
+        ])
+            ->where('order_status_id', 1) // معلق فقط
+            ->whereNull('driver_id') // ليس له سائق بعد
+            ->whereDoesntHave('offers', function ($query) use ($driver) {
+                $query->where('driver_id', $driver->id)
+                    ->whereIn('status', ['pending', 'accepted']);
+            });
+
+        // فلترة حسب الموقع (اختياري)
+        if ($request->has(['latitude', 'longitude'])) {
+            $latitude = $request->latitude;
+            $longitude = $request->longitude;
+
+            // الطلبات في نطاق 50 كيلومتر (يمكن تعديل المسافة)
+            $query->whereHas('location', function ($q) use ($latitude, $longitude) {
+                $q->whereRaw("
+                    (6371 * acos(
+                        cos(radians(?)) * cos(radians(latitude)) * 
+                        cos(radians(longitude) - radians(?)) + 
+                        sin(radians(?)) * sin(radians(latitude))
+                    )) <= ?
+                ", [$latitude, $longitude, $latitude, 50]); // 50 كم
+            });
+        }
+
+        // فلترة حسب نوع الخدمة
+        if ($request->filled('service_id')) {
+            $query->where('service_id', $request->service_id);
+        }
+
+        // فلترة حسب نوع المياه
+        if ($request->filled('water_type_id')) {
+            $query->where('water_type_id', $request->water_type_id);
+        }
+
+        // استبعاد الطلبات المنتهية الصلاحية
+        $expirationMinutes = config('orders.expiration_minutes', 5);
+        $expiryTime = Carbon::now()->subMinutes($expirationMinutes);
+
+        $query->where('created_at', '>=', $expiryTime);
+
+        // إضافة معلومات المسافة إذا كانت هناك إحداثيات
+        if ($request->has(['latitude', 'longitude'])) {
+            $orders = $query->get()->map(function ($order) use ($request) {
+                // حساب المسافة
+                $distanceInfo = $this->googleMapsService->calculateDistanceAndTime(
+                    $request->latitude,
+                    $request->longitude,
+                    $order->location->latitude,
+                    $order->location->longitude
+                );
+
+                $order->distance_info = $distanceInfo;
+                $order->estimated_distance_km = $distanceInfo ?
+                    round($distanceInfo['distance']['value'] / 1000, 2) : null;
+                $order->estimated_duration_minutes = $distanceInfo ?
+                    round($distanceInfo['duration']['value'] / 60, 0) : null;
+
+                return $order;
+            });
+
+            // ترتيب حسب المسافة
+            $orders = $orders->sortBy('estimated_distance_km');
+        } else {
+            $orders = $query->get();
+        }
+
+        // Pagination
+        $perPage = $request->get('per_page', 15);
+        $page = $request->get('page', 1);
+
+        $paginatedOrders = $this->paginateCollection($orders, $perPage, $page);
+
+        return $this->successResponse([
+            'orders' => OrderResource::collection($paginatedOrders),
+            'pagination' => [
+                'current_page' => $paginatedOrders->currentPage(),
+                'per_page' => $paginatedOrders->perPage(),
+                'total' => $paginatedOrders->total(),
+                'last_page' => $paginatedOrders->lastPage(),
+            ],
+            'filters' => [
+                'service_id' => $request->service_id,
+                'water_type_id' => $request->water_type_id,
+                'has_location_filter' => $request->has(['latitude', 'longitude']),
+                'total_available' => $orders->count(),
+            ]
+        ], 'تم جلب الطلبات المنتظرة بنجاح');
+    }
+
+    private function paginateCollection($collection, $perPage, $page)
+    {
+        $offset = ($page - 1) * $perPage;
+        $paginated = $collection->slice($offset, $perPage);
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginated,
+            $collection->count(),
+            $perPage,
+            $page,
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+        );
+    }
+
+    /**
+     * عد الطلبات المتاحة للسائق
+     */
+    public function countPendingOrders(Request $request)
+    {
+        $driver = auth()->user()->driver;
+
+        if (!$driver) {
+            return $this->errorResponse('يجب أن تكون سائقاً', 403);
+        }
+
+        // التحقق من وجود طلبات نشطة
+        $hasActiveOrder = Order::where('driver_id', $driver->id)
+            ->whereIn('order_status_id', [1, 2, 3, 4])
+            ->exists();
+
+        if ($hasActiveOrder) {
+            return $this->successResponse([
+                'count' => 0,
+                'has_active_order' => true,
+                'message' => 'لديك طلب نشط بالفعل'
+            ]);
+        }
+
+        // عد الطلبات المتاحة
+        $expirationMinutes = config('orders.expiration_minutes', 5);
+        $expiryTime = Carbon::now()->subMinutes($expirationMinutes);
+
+        $count = Order::where('order_status_id', 1)
+            ->whereNull('driver_id')
+            ->where('created_at', '>=', $expiryTime)
+            ->whereDoesntHave('offers', function ($query) use ($driver) {
+                $query->where('driver_id', $driver->id);
+            })
+            ->count();
+
+        return $this->successResponse([
+            'count' => $count,
+            'has_active_order' => false,
+            'last_updated' => now()->toDateTimeString()
+        ]);
+    }
     /**
      * تحديث حالة الطلب
      */

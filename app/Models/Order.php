@@ -14,7 +14,6 @@ class Order extends Model
         'water_type_id',
         'saved_location_id',
         'order_status_id',
-        'price',
         'order_date',
         'contract_id',
     ];
@@ -22,7 +21,7 @@ class Order extends Model
     // المستخدم
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     // السواق

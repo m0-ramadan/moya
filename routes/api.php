@@ -25,7 +25,9 @@ use App\Http\Controllers\Api\Driver\DriverAuthController;
 use App\Http\Controllers\Api\ArticleInteractionController;
 use App\Http\Controllers\Api\Driver\DriverOrderController;
 use App\Http\Controllers\Api\Website\UserAddressController;
+use App\Http\Controllers\Api\Driver\DriverDashboardController;
 use App\Http\Controllers\Api\Payment\PaymentCallbackController;
+use App\Http\Controllers\Api\Driver\DriverCurrentOrderController;
 use App\Http\Controllers\Api\User\WalletController as UserWalletController;
 use App\Http\Controllers\Api\Driver\WalletController as DriverWalletController;
 
@@ -70,6 +72,20 @@ Route::prefix('v1')->group(function () {
                 Route::post('/{orderId}/accept', [OrderController::class, 'acceptOrder']);
                 Route::post('/offers/{offerId}/cancel', [OrderController::class, 'cancelOffer']);
                 Route::prefix('driver')->group(function () {
+                    Route::get('/available', [DriverOrderController::class, 'getPendingOrders']);
+                    Route::get('/available/count', [DriverOrderController::class, 'countPendingOrders']);
+
+                    Route::get('/active-order', [DriverCurrentOrderController::class, 'getActiveOrder']);
+                    // الطلب الحالي النشط
+                    Route::get('/active', [DriverCurrentOrderController::class, 'getActiveOrder']);
+                    // إذا أردت بديل بالـ ID
+                    Route::get('/current', [DriverCurrentOrderController::class, 'getCurrentOrder']);
+                    // جلب حالة الطلب الحالي (مختصرة)
+                    Route::get('/active/status', [DriverCurrentOrderController::class, 'getActiveOrderStatus']);
+                    // جلب آخر موقع للطلب الحالي
+                    Route::get('/active/last-location', [DriverCurrentOrderController::class, 'getLastLocation']);
+
+                    Route::get('/pending-orders', [DriverOrderController::class, 'getPendingOrders']);
                     Route::post('/{orderId}/update-status', [DriverOrderController::class, 'updateStatus']);
                     Route::post('/{orderId}/update-location', [DriverOrderController::class, 'updateLocation']);
                     Route::get('/{orderId}/path', [DriverOrderController::class, 'getDriverPath']);
@@ -251,12 +267,10 @@ Route::prefix('v1')->group(function () {
         Route::prefix('auth')->group(function () {
             Route::post('/send-otp', [DriverAuthController::class, 'sendOtp']);
             Route::post('/verify-otp', [DriverAuthController::class, 'verifyOtp']);
-            Route::post('/register', [DriverAuthController::class, 'register'])->middleware('auth:sanctum');
-            Route::post('/complete-profile', [DriverAuthController::class, 'completeProfile']);
-            Route::post('/logout', [DriverAuthController::class, 'logout'])->middleware('auth:sanctum');
-
-            // Routes تتطلب مصادقة
             Route::middleware('auth:sanctum')->group(function () {
+                Route::post('/register', [DriverAuthController::class, 'register']);
+                Route::post('/complete-profile', [DriverAuthController::class, 'completeProfile']);
+                Route::post('/logout', [DriverAuthController::class, 'logout']);
                 Route::get('/profile', [DriverAuthController::class, 'profile']);
                 Route::get('/check-registration', [DriverAuthController::class, 'checkRegistration']);
             });
@@ -264,23 +278,23 @@ Route::prefix('v1')->group(function () {
 
         // الحصول على الدول
         Route::get('/countries', [DriverAuthController::class, 'countries']);
-
-        // // Dashboard للسائق (تتطلب مصادقة وتأكيد السائق)
+        // Dashboard للسائق (تتطلب مصادقة وتأكيد السائق)
         Route::middleware(['auth:sanctum', 'driver.only'])->group(function () {
             Route::get('/dashboard', [DriverDashboardController::class, 'index']);
             Route::get('/stats', [DriverDashboardController::class, 'stats']);
             Route::get('/recent-orders', [DriverDashboardController::class, 'recentOrders']);
             Route::get('/earnings', [DriverDashboardController::class, 'earnings']);
+            Route::get('/reviews', [DriverDashboardController::class, 'getReviews']);
         });
     });
 
     // تحديث Middleware للسائقين
-    Route::middleware(['auth:sanctum', 'driver.only'])->prefix('driver')->group(function () {
-        Route::post('/orders/{orderId}/accept', [OrderController::class, 'acceptOrder']);
-        Route::post('/orders/{orderId}/update-status', [DriverOrderController::class, 'updateStatus']);
-        Route::post('/orders/{orderId}/update-location', [DriverOrderController::class, 'updateLocation']);
-        Route::get('/orders/{orderId}/path', [DriverOrderController::class, 'getDriverPath']);
-        Route::post('/orders/{orderId}/rate-user', [RatingController::class, 'rateUser']);
-        Route::post('/offers/{offerId}/cancel', [OrderController::class, 'cancelOffer']);
-    });
+    // Route::middleware(['auth:sanctum', 'driver.only'])->prefix('driver')->group(function () {
+    //   //  Route::post('/orders/{orderId}/accept', [OrderController::class, 'acceptOrder']);
+    //   //  Route::post('/orders/{orderId}/update-status', [DriverOrderController::class, 'updateStatus']);
+    //    // Route::post('/orders/{orderId}/update-location', [DriverOrderController::class, 'updateLocation']);
+    //    // Route::get('/orders/{orderId}/path', [DriverOrderController::class, 'getDriverPath']);
+    //   //  Route::post('/orders/{orderId}/rate-user', [RatingController::class, 'rateUser']);
+    //   //  Route::post('/offers/{offerId}/cancel', [OrderController::class, 'cancelOffer']);
+    // });
 });
