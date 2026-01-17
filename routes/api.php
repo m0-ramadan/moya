@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\SliderController;
 use App\Http\Controllers\Api\ArticleController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\ContactUsController;
@@ -54,6 +55,15 @@ Route::prefix('v1')->group(function () {
             Route::post('/{orderId}/rate', [RatingController::class, 'rateDriver']);
             Route::get('/{orderId}/offers', [RatingController::class, 'getOrderOffers']);
             Route::get('/{orderId}/tracking', [DriverOrderController::class, 'getLiveTracking']);
+
+            // طرق الدفع الجديدة
+            Route::post('/{orderId}/payment/initiate', [PaymentController::class, 'initiatePayment']);
+            Route::get('/{orderId}/payment/status', [PaymentController::class, 'checkPaymentStatus']);
+            Route::post('/{orderId}/payment/refund', [PaymentController::class, 'refundPayment']);
+            Route::get('/payment-methods', [PaymentController::class, 'getPaymentMethods']);
+
+            // تأكيد السائق (بعد الدفع)
+            Route::post('/{orderId}/confirm-driver', [OrderController::class, 'confirmDriver']);
 
             // للسائقين
             Route::middleware(['driver'])->group(function () {
@@ -241,7 +251,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('auth')->group(function () {
             Route::post('/send-otp', [DriverAuthController::class, 'sendOtp']);
             Route::post('/verify-otp', [DriverAuthController::class, 'verifyOtp']);
-            Route::post('/register', [DriverAuthController::class, 'register']);
+            Route::post('/register', [DriverAuthController::class, 'register'])->middleware('auth:sanctum');
             Route::post('/complete-profile', [DriverAuthController::class, 'completeProfile']);
             Route::post('/logout', [DriverAuthController::class, 'logout'])->middleware('auth:sanctum');
 

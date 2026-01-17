@@ -45,6 +45,12 @@ class OrderResource extends JsonResource
                 'phone' => $this->driver->phone,
             ] : null,
 
+            'user' => $this->user ? [
+                'id'    => $this->user->id,
+                'name'  => $this->user->name,
+                'phone' => $this->user->full_phone,
+            ] : null,
+
             'price' => optional($this->acceptedOffer)->price,
 
             'order_date' => $this->order_date,

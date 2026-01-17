@@ -103,7 +103,7 @@ class DriverAuthController extends Controller
     {
         try {
             // التحقق من أن المستخدم مسجل
-            $user = auth('sanctum')->user();
+            $user = auth()->user();
 
             if (!$user) {
                 return $this->errorResponse('يجب تسجيل الدخول أولاً', 401);
