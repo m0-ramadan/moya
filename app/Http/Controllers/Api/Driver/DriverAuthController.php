@@ -192,8 +192,8 @@ class DriverAuthController extends Controller
 
             // رفع الصور المحدثة
             if ($request->hasFile('photo')) {
-                $this->deleteOldFile($driver->photo);
-                $data['photo'] = $this->uploadProfilePhoto($request->file('photo'),  intval($driver->id));
+                $this->deleteOldFile($driver->personal_photo);
+                $data['personal_photo'] = $this->uploadProfilePhoto($request->file('photo'),  intval($driver->id));
             }
 
             if ($request->hasFile('id_image')) {
@@ -204,6 +204,12 @@ class DriverAuthController extends Controller
             if ($request->hasFile('id_image_back')) {
                 $this->deleteOldFile($driver->id_image_back);
                 $data['id_image_back'] = $this->uploadIdImage($request->file('id_image_back'), $driver->id, 'back');
+            }
+            if ($request->has('name') || $request->hasFile('photo')) {
+                $this->deleteOldFile($user->avatar);
+                $photo = $this->uploadProfilePhoto($request->file('photo'),  intval($driver->id));
+
+                $user->update(['name' => $request->name, 'avatar' => $photo]);
             }
 
             // تحديث بيانات السائق

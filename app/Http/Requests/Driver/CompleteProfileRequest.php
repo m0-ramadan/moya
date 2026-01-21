@@ -15,6 +15,7 @@ class CompleteProfileRequest extends FormRequest
     {
         return [
             // معلومات قابلة للتحديث
+            'name' => ['nullable', 'string', 'max:100'],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
             'id_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
             'id_image_back' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
