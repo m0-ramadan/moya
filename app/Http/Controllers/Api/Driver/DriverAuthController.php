@@ -209,20 +209,20 @@ class DriverAuthController extends Controller
             // تحديث بيانات السائق
             $driver->update($data);
 
-            // تحديث بيانات المركبة
-            if ($request->hasAny(['vehicle_plate_number', 'vehicle_model', 'vehicle_year'])) {
-                $vehicle = $driver->vehicle ?? new \App\Models\Vehicle();
-                $vehicle->driver_id = $driver->id;
-                $vehicle->fill($request->only([
-                    'vehicle_plate_number',
-                    'vehicle_model',
-                    'vehicle_year',
-                    'vehicle_color',
-                    'vehicle_type',
-                    'capacity_liters'
-                ]));
-                $vehicle->save();
-            }
+            // // تحديث بيانات المركبة
+            // if ($request->hasAny(['vehicle_plate_number', 'vehicle_model', 'vehicle_year'])) {
+            //   //  $vehicle = $driver->vehicle ?? new \App\Models\Vehicle();
+            //     $vehicle->driver_id = $driver->id;
+            //     $vehicle->fill($request->only([
+            //         'vehicle_plate_number',
+            //         'vehicle_model',
+            //         'vehicle_year',
+            //         'vehicle_color',
+            //         'vehicle_type',
+            //         'capacity_liters'
+            //     ]));
+            //     $vehicle->save();
+            // }
 
             DB::commit();
 

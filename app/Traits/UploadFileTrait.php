@@ -107,4 +107,24 @@ trait UploadFileTrait
     ): bool {
         return ($file->getSize() / (1024 * 1024)) <= $maxSizeInMB;
     }
+    protected function deleteOldFile(?string $path): void
+    {
+        if (!$path) {
+            return;
+        }
+
+        // لو جاي URL كامل (storage/xxx)
+        if (str_starts_with($path, asset('storage'))) {
+            $path = str_replace(asset('storage') . '/', '', $path);
+        }
+
+        // لو جاي /storage/xxx
+        if (str_starts_with($path, '/storage/')) {
+            $path = str_replace('/storage/', '', $path);
+        }
+
+        if (Storage::disk($this->disk)->exists($path)) {
+            Storage::disk($this->disk)->delete($path);
+        }
+    }
 }
