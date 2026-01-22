@@ -39,10 +39,17 @@ return [
         'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'),
     ],
 
-    'paymob' => [
-        'api_key' => env('PAYMOB_API_KEY'),
-        'integration_id' => env('PAYMOB_INTEGRATION_ID'),
-        'iframe_id' => env('PAYMOB_IFRAME_ID'),
-        'hmac_secret' => env('PAYMOB_HMAC_SECRET'),
-    ],
+'paymob' => [
+    'username' => env('PAYMOB_USERNAME'),
+    'password' => env('PAYMOB_PASSWORD'),
+    'api_key' => env('PAYMOB_API_KEY'),
+    'hmac_secret' => env('PAYMOB_HMAC_SECRET'),
+    'integration_id' => env('PAYMOB_INTEGRATION_ID'),
+    'iframe_id' => env('PAYMOB_IFRAME_ID', null),
+    'mode' => env('PAYMOB_MODE', 'test'),
+    'currency' => env('PAYMOB_CURRENCY', 'SAR'),
+    'base_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com'),
+    'auth_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com') . '/api/auth/tokens',
+    'payment_links_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com') . '/api/ecommerce/payment-links',
+],
 ];

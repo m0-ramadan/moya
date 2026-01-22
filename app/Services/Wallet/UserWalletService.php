@@ -2,13 +2,11 @@
 
 namespace App\Services\Wallet;
 
-use App\Models\User;
 use App\Events\WalletEvent;
-use Illuminate\Support\Str;
-use App\Models\Wallet\UserWallet;
-use App\Models\Wallet\LedgerEntry;
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
 use App\Models\Wallet\IdempotencyKey;
+use App\Models\Wallet\LedgerEntry;
+use App\Models\Wallet\UserWallet;
 use App\Services\Payment\PaymobService;
 use App\Services\Security\FraudDetector;
 
@@ -42,7 +40,7 @@ class UserWalletService extends AbstractWalletService
             'daily_limit' => $wallet->daily_limit,
             'total_deposits_today' => $wallet->total_deposits_today,
             'total_withdrawals_today' => $wallet->total_withdrawals_today,
-            'last_transaction_at' => $wallet->last_transaction_at
+            'last_transaction_at' => $wallet->last_transaction_at,
         ];
     }
 
@@ -75,20 +73,22 @@ class UserWalletService extends AbstractWalletService
             'metadata' => array_merge([
                 'user_ip' => request()->ip(),
                 'user_agent' => request()->userAgent(),
-                'payment_method' => $paymentMethod
+                'payment_method' => $paymentMethod,
             ], $data),
-            'expires_at' => now()->addHours(24)
+            'expires_at' => now()->addHours(24),
         ]);
 
         // Get payment URL
+        // في دالة initiateDeposit
         $paymentData = $this->paymobService->createPaymentOrder([
             'user' => $user,
             'amount' => $amount,
             'wallet_currency' => $wallet->currency,
-            'order_id' => $orderId
+            'order_id' => $orderId,
+            'callback_url' => route('paymob.webhook'), 
         ]);
 
-        if (!$paymentData['success']) {
+        if (! $paymentData['success']) {
             $pendingEntry->markFailed($paymentData['error']);
             throw new \Exception($paymentData['error']);
         }
@@ -100,7 +100,7 @@ class UserWalletService extends AbstractWalletService
             'entry_id' => $pendingEntry->id,
             'amount' => $amount,
             'currency' => $wallet->currency,
-            'expires_at' => $paymentData['expires_at'] ?? null
+            'expires_at' => $paymentData['expires_at'] ?? null,
         ];
     }
 
@@ -110,11 +110,11 @@ class UserWalletService extends AbstractWalletService
     public function confirmDeposit(string $paymentTransactionId, array $details = []): ?LedgerEntry
     {
         $requestData = array_merge($details, [
-            'payment_transaction_id' => $paymentTransactionId
+            'payment_transaction_id' => $paymentTransactionId,
         ]);
 
         return $this->processWithIdempotency(
-            'deposit_' . $paymentTransactionId,
+            'deposit_'.$paymentTransactionId,
             $requestData,
             function () use ($paymentTransactionId, $details) {
                 // Find pending deposit
@@ -137,8 +137,8 @@ class UserWalletService extends AbstractWalletService
                     'metadata' => array_merge($pendingEntry->metadata ?? [], [
                         'confirmed_at' => now(),
                         'exchange_rate' => $details['exchange_rate'] ?? 1,
-                        'currency_charged' => $details['currency_charged'] ?? $wallet->currency
-                    ])
+                        'currency_charged' => $details['currency_charged'] ?? $wallet->currency,
+                    ]),
                 ]);
 
                 // Create completed deposit entry
@@ -150,11 +150,11 @@ class UserWalletService extends AbstractWalletService
                     [
                         'payment_transaction_id' => $paymentTransactionId,
                         'order_id' => $details['order_id'],
-                        'exchange_rate' => $details['exchange_rate'] ?? 1
+                        'exchange_rate' => $details['exchange_rate'] ?? 1,
                     ],
                     [
                         'owner_type' => LedgerEntry::OWNER_TYPE_USER,
-                        'owner_id' => $pendingEntry->owner_id
+                        'owner_id' => $pendingEntry->owner_id,
                     ]
                 );
 
@@ -182,7 +182,7 @@ class UserWalletService extends AbstractWalletService
         $this->validateWithdrawal($wallet, $amount);
 
         return $this->processWithIdempotency(
-            'withdrawal_' . $user->id . '_' . md5($amount . now()->toISOString()),
+            'withdrawal_'.$user->id.'_'.md5($amount.now()->toISOString()),
             ['user_id' => $user->id, 'amount' => $amount, 'data' => $data],
             function () use ($wallet, $amount, $user, $data) {
                 $lockedWallet = $this->lockWallet($wallet);
@@ -194,11 +194,11 @@ class UserWalletService extends AbstractWalletService
                     $data['description'] ?? 'سحب رصيد',
                     [
                         'withdrawal_method' => $data['withdrawal_method'] ?? 'bank_transfer',
-                        'bank_account_id' => $data['bank_account_id'] ?? null
+                        'bank_account_id' => $data['bank_account_id'] ?? null,
                     ],
                     [
                         'owner_type' => LedgerEntry::OWNER_TYPE_USER,
-                        'owner_id' => $user->id
+                        'owner_id' => $user->id,
                     ]
                 );
 
@@ -229,12 +229,12 @@ class UserWalletService extends AbstractWalletService
         $transferId = $this->generateReference('TRF');
 
         return $this->processWithIdempotency(
-            'transfer_' . $transferId,
+            'transfer_'.$transferId,
             [
                 'from_user_id' => $fromUser->id,
                 'to_owner_type' => $toOwnerType,
                 'to_owner_id' => $toOwnerId,
-                'amount' => $amount
+                'amount' => $amount,
             ],
             function () use ($fromWallet, $toWallet, $amount, $transferId, $fromUser, $toOwnerType, $toOwnerId, $data) {
                 // Lock both wallets
@@ -255,11 +255,11 @@ class UserWalletService extends AbstractWalletService
                     [
                         'transfer_id' => $transferId,
                         'to_owner_type' => $toOwnerType,
-                        'to_owner_id' => $toOwnerId
+                        'to_owner_id' => $toOwnerId,
                     ],
                     [
                         'owner_type' => LedgerEntry::OWNER_TYPE_USER,
-                        'owner_id' => $fromUser->id
+                        'owner_id' => $fromUser->id,
                     ]
                 );
 
@@ -272,11 +272,11 @@ class UserWalletService extends AbstractWalletService
                     [
                         'transfer_id' => $transferId,
                         'from_owner_type' => LedgerEntry::OWNER_TYPE_USER,
-                        'from_owner_id' => $fromUser->id
+                        'from_owner_id' => $fromUser->id,
                     ],
                     [
                         'owner_type' => $toOwnerType,
-                        'owner_id' => $toOwnerId
+                        'owner_id' => $toOwnerId,
                     ]
                 );
 
@@ -294,7 +294,7 @@ class UserWalletService extends AbstractWalletService
                 return [
                     'debit_entry' => $debitEntry,
                     'credit_entry' => $creditEntry,
-                    'transfer_id' => $transferId
+                    'transfer_id' => $transferId,
                 ];
             },
             LedgerEntry::OWNER_TYPE_USER,
@@ -312,12 +312,12 @@ class UserWalletService extends AbstractWalletService
         return $this->hold(
             $wallet,
             $amount,
-            $data['description'] ?? 'حجز للطلب #' . $orderId,
+            $data['description'] ?? 'حجز للطلب #'.$orderId,
             $orderId,
             ['order_id' => $orderId],
             [
                 'owner_type' => LedgerEntry::OWNER_TYPE_USER,
-                'owner_id' => $user->id
+                'owner_id' => $user->id,
             ],
             $data['expires_in_hours'] ?? 24
         );
@@ -384,7 +384,7 @@ class UserWalletService extends AbstractWalletService
             throw new \Exception('رصيد غير كافي');
         }
 
-        if (!$wallet->canWithdrawToday($amount)) {
+        if (! $wallet->canWithdrawToday($amount)) {
             throw new \Exception('تجاوز الحد اليومي للسحب');
         }
 
@@ -396,7 +396,7 @@ class UserWalletService extends AbstractWalletService
 
     private function validateDepositFraud(UserWallet $wallet, float $amount, array $details): void
     {
-        if (!$this->fraudDetector->validateDeposit($wallet, $amount, $details)) {
+        if (! $this->fraudDetector->validateDeposit($wallet, $amount, $details)) {
             throw new \Exception('فشل في التحقق من الأمان');
         }
     }
@@ -405,11 +405,13 @@ class UserWalletService extends AbstractWalletService
     {
         if ($toOwner instanceof User) {
             $toWallet = $toOwner->userWallet ?? $toOwner->createUserWallet();
+
             return [$toWallet, LedgerEntry::OWNER_TYPE_USER, $toOwner->id];
         }
 
         if ($toOwner instanceof \App\Models\Driver) {
             $toWallet = $toOwner->driverWallet ?? $toOwner->createDriverWallet();
+
             return [$toWallet, LedgerEntry::OWNER_TYPE_DRIVER, $toOwner->id];
         }
 
@@ -418,20 +420,20 @@ class UserWalletService extends AbstractWalletService
 
     private function applyLedgerFilters($query, array $filters)
     {
-        if (!empty($filters['type'])) {
+        if (! empty($filters['type'])) {
             $query->where('type', $filters['type']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['start_date'])) {
+        if (! empty($filters['start_date'])) {
             $query->where('created_at', '>=', $filters['start_date']);
         }
 
-        if (!empty($filters['end_date'])) {
-            $query->where('created_at', '<=', $filters['end_date'] . ' 23:59:59');
+        if (! empty($filters['end_date'])) {
+            $query->where('created_at', '<=', $filters['end_date'].' 23:59:59');
         }
 
         return $query;

@@ -246,6 +246,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/deposit', [UserWalletController::class, 'initiateDeposit']);
         Route::post('/withdraw', [UserWalletController::class, 'withdraw']);
         Route::post('/transfer', [UserWalletController::class, 'transfer']);
+        
     });
 
 
@@ -287,8 +288,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/reviews', [DriverDashboardController::class, 'getReviews']);
         });
     });
-
-    // تحديث Middleware للسائقين
+// في routes/api.php
+Route::post('/paymob/webhook', [PaymentController::class, 'handleWebhook'])->name('paymob.webhook');
+   
+// تحديث Middleware للسائقين
     // Route::middleware(['auth:sanctum', 'driver.only'])->prefix('driver')->group(function () {
     //   //  Route::post('/orders/{orderId}/accept', [OrderController::class, 'acceptOrder']);
     //   //  Route::post('/orders/{orderId}/update-status', [DriverOrderController::class, 'updateStatus']);
