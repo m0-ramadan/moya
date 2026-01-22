@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Api;
 use getID3;
 use App\Models\Chat;
 use App\Models\Message;
+use App\Models\FileChunk;
 use App\Events\MessageRead;
 use App\Events\MessageSent;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Models\FileChunk;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +27,7 @@ class ChatController extends Controller
             $query->latest()->limit(1);
         }])
             ->forParticipant($userId)
-            ->orderBy('last_message_at', 'desc')
+            ->orderBy('last_message_at', 'asc')
             ->paginate(20);
 
         return response()->json([
@@ -38,10 +39,15 @@ class ChatController extends Controller
     public function getOrCreateChat(Request $request)
     {
         $request->validate([
-            'participant_id' => 'required|string',
+            'participant_id' => [
+                'required',
+                'integer',
+                Rule::exists('users', 'id')->orWhere(function ($query) {
+                    $query->from('admins');
+                })
+            ],
             'type' => 'required|in:user_user,user_driver,driver_driver'
         ]);
-
         $user = Auth::user();
         $participants = [$user->id, $request->participant_id];
         sort($participants);
