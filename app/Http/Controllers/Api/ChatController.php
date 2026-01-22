@@ -5,12 +5,11 @@ namespace App\Http\Controllers\Api;
 use getID3;
 use App\Models\Chat;
 use App\Models\Message;
-use App\Models\FileChunk;
 use App\Events\MessageRead;
 use App\Events\MessageSent;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use App\Models\FileChunk;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +26,7 @@ class ChatController extends Controller
             $query->latest()->limit(1);
         }])
             ->forParticipant($userId)
-            ->orderBy('last_message_at', 'asc')
+            ->orderBy('last_message_at', 'desc')
             ->paginate(20);
 
         return response()->json([
@@ -36,41 +35,45 @@ class ChatController extends Controller
         ]);
     }
 
-    public function getOrCreateChat(Request $request)
-    {
-        $request->validate([
-            'participant_id' => [
-                'required',
-                'integer',
-                Rule::exists('users', 'id')->orWhere(function ($query) {
-                    $query->from('admins');
-                })
-            ],
-            'type' => 'required|in:user_user,user_driver,driver_driver'
-        ]);
-        $user = Auth::user();
-        $participants = [$user->id, $request->participant_id];
-        sort($participants);
+public function getOrCreateChat(Request $request)
+{
+    $messages = [
+        'participant_id.required' => 'المرسل اليه مطلوب',
+        'participant_id.integer' => 'المرسل اليه لازم يكون رقم صحيح',
+        'participant_id.exists' => 'المرسل اليه غير موجود',
+        'type.required' => 'نوع الدردشة مطلوب',
+        'type.in' => 'نوع الدردشة غير مسموح'
+    ];
 
-        $chat = Chat::where('type', $request->type)
-            ->whereJsonContains('participants', $participants[0])
-            ->whereJsonContains('participants', $participants[1])
-            ->first();
+    $validated = $request->validate([
+        'participant_id' => 'required|integer|exists:users,id',
+        'type' => 'required|in:user_user,user_driver,driver_driver'
+    ], $messages);
 
-        if (!$chat) {
-            $chat = Chat::create([
-                'chat_uuid' => Str::uuid(),
-                'type' => $request->type,
-                'participants' => $participants,
-                'last_message_at' => now()
-            ]);
-        }
+    $user = Auth::user();
+    $participants = [$user->id, $request->participant_id];
+    sort($participants);
 
-        return response()->json([
-            'status' => 'success',
-            'chat' => $chat->load('messages.sender')
+    $chat = Chat::where('type', $request->type)
+        ->whereJsonContains('participants', $participants[0])
+        ->whereJsonContains('participants', $participants[1])
+        ->first();
+
+    if (!$chat) {
+        $chat = Chat::create([
+            'chat_uuid' => Str::uuid(),
+            'type' => $request->type,
+            'participants' => $participants,
+            'last_message_at' => now()
         ]);
     }
+
+    return response()->json([
+        'status' => 'success',
+        'chat' => $chat->load('messages.sender')
+    ]);
+}
+
 
     public function getMessages(Chat $chat)
     {
