@@ -312,7 +312,7 @@ Route::prefix('v1')->group(function () {
         });
     });
     // في routes/api.php
-    // Route::post('/paymob/webhook', [PaymentController::class, 'handleWebhook'])->name('paymob.webhook');
+    Route::post('/paymob/webhook', [PaymentController::class, 'handleWebhook'])->name('paymob.webhook');
     Route::get('/payment-methods', [PaymentOrdersController::class, 'getPaymentMethods']);
 
     // تحديث Middleware للسائقين
