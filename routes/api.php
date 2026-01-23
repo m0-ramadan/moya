@@ -65,7 +65,6 @@ Route::prefix('v1')->group(function () {
             // Route::post('/{orderId}/payment/initiate', [PaymentController::class, 'initiatePayment']);
             // Route::get('/{orderId}/payment/status', [PaymentController::class, 'checkPaymentStatus']);
             // Route::post('/{orderId}/payment/refund', [PaymentController::class, 'refundPayment']);
-            Route::get('/payment-methods', [PaymentOrdersController::class, 'getPaymentMethods']);
 
             // دفع الطلبات
             Route::prefix('payments')->middleware(['auth:sanctum'])->group(function () {
@@ -313,7 +312,8 @@ Route::prefix('v1')->group(function () {
         });
     });
     // في routes/api.php
-    Route::post('/paymob/webhook', [PaymentController::class, 'handleWebhook'])->name('paymob.webhook');
+    // Route::post('/paymob/webhook', [PaymentController::class, 'handleWebhook'])->name('paymob.webhook');
+    Route::get('/payment-methods', [PaymentOrdersController::class, 'getPaymentMethods']);
 
     // تحديث Middleware للسائقين
     // Route::middleware(['auth:sanctum', 'driver.only'])->prefix('driver')->group(function () {
