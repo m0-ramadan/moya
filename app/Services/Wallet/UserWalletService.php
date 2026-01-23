@@ -2,12 +2,13 @@
 
 namespace App\Services\Wallet;
 
-use App\Events\WalletEvent;
 use App\Models\User;
-use App\Models\Wallet\IdempotencyKey;
-use App\Models\Wallet\LedgerEntry;
+use App\Events\WalletEvent;
 use App\Models\Wallet\UserWallet;
-use App\Services\Payment\PaymobService;
+use App\Models\Wallet\LedgerEntry;
+use Illuminate\Support\Facades\Log;
+use App\Models\Wallet\IdempotencyKey;
+use App\Services\Payment\Wallet\PaymobService;
 use App\Services\Security\FraudDetector;
 
 class UserWalletService extends AbstractWalletService
@@ -85,9 +86,8 @@ class UserWalletService extends AbstractWalletService
             'amount' => $amount,
             'wallet_currency' => $wallet->currency,
             'order_id' => $orderId,
-            'callback_url' => route('paymob.webhook'), 
+            'callback_url' => route('paymob.webhook'),
         ]);
-
         if (! $paymentData['success']) {
             $pendingEntry->markFailed($paymentData['error']);
             throw new \Exception($paymentData['error']);
@@ -95,7 +95,7 @@ class UserWalletService extends AbstractWalletService
 
         return [
             'success' => true,
-            'payment_url' => $paymentData['iframe_url'],
+            'payment_url' => $paymentData['payment_url'],
             'order_id' => $orderId,
             'entry_id' => $pendingEntry->id,
             'amount' => $amount,
@@ -107,26 +107,58 @@ class UserWalletService extends AbstractWalletService
     /**
      * Confirm deposit
      */
+
     public function confirmDeposit(string $paymentTransactionId, array $details = []): ?LedgerEntry
     {
+        Log::debug('confirmDeposit called', [
+            'paymentTransactionId' => $paymentTransactionId,
+            'details' => $details,
+            'order_id' => $details['order_id'] ?? 'none',
+            'user_id' => $details['user_id'] ?? 'none'
+        ]);
+
         $requestData = array_merge($details, [
             'payment_transaction_id' => $paymentTransactionId,
         ]);
 
         return $this->processWithIdempotency(
-            'deposit_'.$paymentTransactionId,
+            'deposit_' . $paymentTransactionId,
             $requestData,
             function () use ($paymentTransactionId, $details) {
+                Log::debug('confirmDeposit - Inside process function', [
+                    'order_id' => $details['order_id'] ?? 'none'
+                ]);
+
                 // Find pending deposit
                 $pendingEntry = LedgerEntry::where('reference', $details['order_id'])
                     ->where('type', LedgerEntry::TYPE_DEPOSIT_PENDING)
                     ->where('status', LedgerEntry::STATUS_PENDING)
                     ->where('wallet_type', 'user')
                     ->lockForUpdate()
-                    ->firstOrFail();
+                    ->first();
+
+                if (!$pendingEntry) {
+                    Log::error('Pending entry not found', [
+                        'order_id' => $details['order_id'] ?? 'none',
+                        'user_id' => $details['user_id'] ?? 'none'
+                    ]);
+                    throw new \Exception('Pending transaction not found');
+                }
+
+                Log::debug('Found pending entry', [
+                    'pending_entry_id' => $pendingEntry->id,
+                    'amount' => $pendingEntry->amount,
+                    'user_id' => $pendingEntry->user_id,
+                    'wallet_id' => $pendingEntry->wallet_id
+                ]);
 
                 // Get wallet
                 $wallet = $this->lockWallet(UserWallet::findOrFail($pendingEntry->wallet_id));
+
+                Log::debug('Found wallet', [
+                    'wallet_id' => $wallet->id,
+                    'balance' => $wallet->balance
+                ]);
 
                 // Fraud check
                 $this->validateDepositFraud($wallet, $pendingEntry->amount, $details);
@@ -139,6 +171,10 @@ class UserWalletService extends AbstractWalletService
                         'exchange_rate' => $details['exchange_rate'] ?? 1,
                         'currency_charged' => $details['currency_charged'] ?? $wallet->currency,
                     ]),
+                ]);
+
+                Log::debug('Pending entry marked as completed', [
+                    'pending_entry_id' => $pendingEntry->id
                 ]);
 
                 // Create completed deposit entry
@@ -157,6 +193,17 @@ class UserWalletService extends AbstractWalletService
                         'owner_id' => $pendingEntry->owner_id,
                     ]
                 );
+
+                if (!$completedEntry) {
+                    Log::error('Credit method returned null');
+                    throw new \Exception('Failed to create completed deposit entry');
+                }
+
+                Log::debug('Completed entry created', [
+                    'completed_entry_id' => $completedEntry->id,
+                    'amount' => $completedEntry->amount,
+                    'reference' => $completedEntry->reference
+                ]);
 
                 // Update daily totals
                 $wallet->updateDailyTotals($pendingEntry->amount, 'deposit');
@@ -182,7 +229,7 @@ class UserWalletService extends AbstractWalletService
         $this->validateWithdrawal($wallet, $amount);
 
         return $this->processWithIdempotency(
-            'withdrawal_'.$user->id.'_'.md5($amount.now()->toISOString()),
+            'withdrawal_' . $user->id . '_' . md5($amount . now()->toISOString()),
             ['user_id' => $user->id, 'amount' => $amount, 'data' => $data],
             function () use ($wallet, $amount, $user, $data) {
                 $lockedWallet = $this->lockWallet($wallet);
@@ -229,7 +276,7 @@ class UserWalletService extends AbstractWalletService
         $transferId = $this->generateReference('TRF');
 
         return $this->processWithIdempotency(
-            'transfer_'.$transferId,
+            'transfer_' . $transferId,
             [
                 'from_user_id' => $fromUser->id,
                 'to_owner_type' => $toOwnerType,
@@ -312,7 +359,7 @@ class UserWalletService extends AbstractWalletService
         return $this->hold(
             $wallet,
             $amount,
-            $data['description'] ?? 'حجز للطلب #'.$orderId,
+            $data['description'] ?? 'حجز للطلب #' . $orderId,
             $orderId,
             ['order_id' => $orderId],
             [
@@ -396,7 +443,7 @@ class UserWalletService extends AbstractWalletService
 
     private function validateDepositFraud(UserWallet $wallet, float $amount, array $details): void
     {
-        if (! $this->fraudDetector->validateDeposit($wallet, $amount, $details)) {
+        if (! $this->fraudDetector->validateDeposit($wallet, $amount, 'paymob', $details)) {
             throw new \Exception('فشل في التحقق من الأمان');
         }
     }
@@ -433,9 +480,50 @@ class UserWalletService extends AbstractWalletService
         }
 
         if (! empty($filters['end_date'])) {
-            $query->where('created_at', '<=', $filters['end_date'].' 23:59:59');
+            $query->where('created_at', '<=', $filters['end_date'] . ' 23:59:59');
         }
 
         return $query;
+    }
+
+    /**
+     * Deposit amount to wallet (Helper method)
+     */
+    public function deposit(User $user, float $amount, array $data = []): LedgerEntry
+    {
+        $wallet = $user->userWallet ?? $user->createUserWallet();
+
+        return $this->processWithIdempotency(
+            'deposit_' . $user->id . '_' . md5($amount . now()->toISOString()),
+            ['user_id' => $user->id, 'amount' => $amount, 'data' => $data],
+            function () use ($wallet, $amount, $user, $data) {
+                $lockedWallet = $this->lockWallet($wallet);
+
+                $entry = $this->credit(
+                    $lockedWallet,
+                    $amount,
+                    LedgerEntry::TYPE_DEPOSIT,
+                    $data['description'] ?? 'إيداع رصيد',
+                    array_merge([
+                        'deposit_method' => $data['method'] ?? 'manual',
+                        'reference_number' => $data['reference'] ?? null,
+                    ], $data['metadata'] ?? []),
+                    [
+                        'owner_type' => LedgerEntry::OWNER_TYPE_USER,
+                        'owner_id' => $user->id,
+                    ]
+                );
+
+                // Update daily totals
+                $lockedWallet->updateDailyTotals($amount, 'deposit');
+
+                // Fire event
+                event(new WalletEvent($entry));
+
+                return $entry;
+            },
+            LedgerEntry::OWNER_TYPE_USER,
+            $user->id
+        );
     }
 }

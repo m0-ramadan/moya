@@ -41,76 +41,52 @@ class IdempotencyKey extends Model
     /**
      * Atomic processing lock with owner context
      */
-    public static function acquireLock(
-        string $key,
-        string $requestHash,
-        string $ownerType = null,
-        int $ownerId = null,
-        int $ttl = 3600
-    ): ?self {
-        return DB::transaction(function () use ($key, $requestHash, $ownerType, $ownerId, $ttl) {
-            // Try to find existing completed request
+    // إضافة هذه الدوال إذا لم تكن موجودة
+    public static function acquireLock(string $key, string $requestHash, int $ttl, string $ownerType)
+    {
+        try {
+            // Check if key already exists and is still valid
             $existing = self::where('key', $key)
-                ->where('status', self::STATUS_COMPLETED)
                 ->where('expires_at', '>', now())
-                ->when($ownerType, function ($query, $type) use ($ownerId) {
-                    $query->where('owner_type', $type)
-                        ->where('owner_id', $ownerId);
-                })
                 ->first();
 
             if ($existing) {
-                return $existing;
+                return null; // Already locked or processing
             }
 
-            // Check for processing request
-            $processing = self::where('key', $key)
-                ->where('status', self::STATUS_PROCESSING)
-                ->where('expires_at', '>', now())
-                ->when($ownerType, function ($query, $type) use ($ownerId) {
-                    $query->where('owner_type', $type)
-                        ->where('owner_id', $ownerId);
-                })
-                ->lockForUpdate()
-                ->first();
-
-            if ($processing) {
-                return null;
-            }
-
-            // Create new processing request
+            // Create new lock
             return self::create([
                 'key' => $key,
                 'request_hash' => $requestHash,
-                'status' => self::STATUS_PROCESSING,
-                'expires_at' => now()->addSeconds($ttl),
+                'status' => 'processing',
                 'owner_type' => $ownerType,
-                'owner_id' => $ownerId
+                'expires_at' => now()->addSeconds($ttl)
             ]);
-        });
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
-    /**
-     * Mark as completed with response
-     */
-    public function completeWithResponse(string $responseHash, string $resourceType = null, int $resourceId = null): void
+    public function completeWithResponse(string $responseHash, string $resourceType = null, $resourceId = null)
     {
-        $this->update([
-            'status' => self::STATUS_COMPLETED,
+        return $this->update([
             'response_hash' => $responseHash,
+            'status' => 'completed',
             'resource_type' => $resourceType,
             'resource_id' => $resourceId,
-            'processed_at' => now()
+            'expires_at' => now()->addDays(7) // Keep record for 7 days
         ]);
     }
 
-    /**
-     * Mark as failed
-     */
-    public function markFailed(): void
+    public function markFailed()
     {
-        $this->update(['status' => self::STATUS_FAILED]);
+        return $this->update([
+            'status' => 'failed',
+            'expires_at' => now()->addHours(1) // Shorter expiration for failures
+        ]);
     }
+
+
 
     /**
      * Check if key is valid

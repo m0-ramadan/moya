@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api\Payment;
 
 use App\Http\Controllers\Controller;
+use App\Traits\ApiResponseTrait;
 use App\Models\Wallet\UserWallet;
 use App\Models\Wallet\LedgerEntry;
 use App\Models\Wallet\IdempotencyKey;
 use App\Services\Wallet\UserWalletService;
 use App\Services\Payment\PaymobService;
-use App\Services\Security\IpWhitelist;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,18 +17,17 @@ use Illuminate\Support\Str;
 
 class PaymentCallbackController extends Controller
 {
+    use ApiResponseTrait;
+
     private UserWalletService $userWalletService;
     private PaymobService $paymobService;
-    private IpWhitelist $ipWhitelist;
 
     public function __construct(
         UserWalletService $userWalletService,
-        PaymobService $paymobService,
-        IpWhitelist $ipWhitelist
+        PaymobService $paymobService
     ) {
         $this->userWalletService = $userWalletService;
         $this->paymobService = $paymobService;
-        $this->ipWhitelist = $ipWhitelist;
     }
 
     /**
@@ -39,53 +38,19 @@ class PaymentCallbackController extends Controller
         // 1. Log the incoming request for debugging
         $this->logCallbackRequest($request);
 
-        // 2. Validate IP address (Paymob IPs only)
-        if (!$this->validateIpAddress($request)) {
-            return $this->errorResponse('Unauthorized IP address', 403);
+        // 2. Parse and validate callback data
+        $callbackData = $request->all();
+
+        // 3. Validate required fields
+        if (!$this->validateCallbackData($callbackData)) {
+            return $this->errorResponse('Invalid callback data', 400);
         }
 
-        // 3. Validate HMAC signature
-        if (!$this->validateHmacSignature($request)) {
-            return $this->errorResponse('Invalid HMAC signature', 400);
-        }
-
-        // 4. Parse and validate callback data
-        $callbackData = $this->parseCallbackData($request);
-        if (!$callbackData['valid']) {
-            return $this->errorResponse($callbackData['error'], 400);
-        }
-
-        // 5. Generate idempotency key
-        $idempotencyKey = $this->generateIdempotencyKey($callbackData);
-
-        // 6. Check if already processed
-        if ($this->isAlreadyProcessed($idempotencyKey)) {
-            Log::info('Callback already processed', [
-                'transaction_id' => $callbackData['transaction_id'],
-                'order_id' => $callbackData['order_id']
-            ]);
-
-            return $this->successResponse('Transaction already processed');
-        }
-
-        // 7. Process the callback based on type
+        // 4. Process the callback مباشرة بدون idempotency للتجربة
         try {
-            switch ($callbackData['type']) {
-                case 'transaction':
-                    return $this->handleTransactionCallback($callbackData, $idempotencyKey);
-
-                case 'tokenization':
-                    return $this->handleTokenizationCallback($callbackData, $idempotencyKey);
-
-                case 'refund':
-                    return $this->handleRefundCallback($callbackData, $idempotencyKey);
-
-                default:
-                    return $this->errorResponse('Unknown callback type', 400);
-            }
+            return $this->handleTransactionCallbackDirectly($callbackData);
         } catch (\Exception $e) {
             Log::error('Callback processing failed', [
-                'callback_data' => $callbackData,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -95,74 +60,55 @@ class PaymentCallbackController extends Controller
     }
 
     /**
-     * Handle transaction callback (payment success/failure)
+     * Handle transaction callback مباشرة
      */
-    private function handleTransactionCallback(array $callbackData, string $idempotencyKey)
+    private function handleTransactionCallbackDirectly(array $callbackData)
     {
-        // Acquire idempotency lock
-        $idempotencyRecord = $this->acquireIdempotencyLock($idempotencyKey, $callbackData);
-        if (!$idempotencyRecord) {
-            return $this->errorResponse('Callback already being processed', 409);
-        }
+        $transactionData = $callbackData['obj'];
 
         try {
             DB::beginTransaction();
 
-            // Validate transaction with Paymob
-            $transactionValid = $this->paymobService->validateTransaction($callbackData);
-            if (!$transactionValid) {
-                throw new \Exception('Transaction validation failed');
-            }
-
             // Check if transaction is successful
-            if ($callbackData['success'] === true) {
-                // Process successful payment
-                $result = $this->processSuccessfulPayment($callbackData);
+            $isSuccess = $this->isTransactionSuccessful($transactionData);
 
-                // Complete idempotency
-                $idempotencyRecord->completeWithResponse(
-                    md5(json_encode($result)),
-                    'LedgerEntry',
-                    $result['transaction']->id ?? null
-                );
+            Log::debug('Transaction success check', [
+                'success' => $isSuccess,
+                'transaction_id' => $transactionData['id'] ?? null,
+                'order_id' => $transactionData['order']['merchant_order_id'] ?? null
+            ]);
+
+            if ($isSuccess) {
+                $result = $this->processSuccessfulPaymentDirectly($transactionData, $callbackData);
 
                 DB::commit();
 
-                Log::info('Payment processed successfully', [
-                    'transaction_id' => $callbackData['transaction_id'],
-                    'amount' => $callbackData['amount'],
-                    'user_id' => $callbackData['user_id'] ?? null,
-                    'order_id' => $callbackData['order_id']
+                Log::info('Payment processed successfully DIRECTLY', [
+                    'transaction_id' => $transactionData['id'],
+                    'amount' => $transactionData['amount_cents'] / 100,
+                    'order_id' => $transactionData['order']['merchant_order_id']
                 ]);
 
-                return $this->successResponse('Payment processed successfully', $result);
+                return $this->successResponse($result, 'Payment processed successfully');
             } else {
-                // Process failed payment
-                $result = $this->processFailedPayment($callbackData);
-
-                // Complete idempotency
-                $idempotencyRecord->completeWithResponse(
-                    md5(json_encode($result)),
-                    'LedgerEntry',
-                    $result['transaction']->id ?? null
-                );
+                $result = $this->processFailedPaymentDirectly($transactionData, $callbackData);
 
                 DB::commit();
 
                 Log::warning('Payment failed', [
-                    'transaction_id' => $callbackData['transaction_id'],
-                    'error' => $callbackData['error'] ?? 'Unknown error'
+                    'transaction_id' => $transactionData['id'] ?? null,
+                    'order_id' => $transactionData['order']['merchant_order_id'] ?? null
                 ]);
 
                 return $this->errorResponse('Payment failed', 400, $result);
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $idempotencyRecord->markFailed();
 
             Log::error('Transaction callback processing failed', [
-                'transaction_id' => $callbackData['transaction_id'],
-                'error' => $e->getMessage()
+                'transaction_id' => $transactionData['id'] ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return $this->errorResponse('Processing failed: ' . $e->getMessage(), 500);
@@ -170,318 +116,341 @@ class PaymentCallbackController extends Controller
     }
 
     /**
-     * Handle tokenization callback (card token)
+     * Process successful payment مباشرة
      */
-    private function handleTokenizationCallback(array $callbackData, string $idempotencyKey)
+    private function processSuccessfulPaymentDirectly(array $transactionData, array $callbackData): array
     {
-        // Acquire idempotency lock
-        $idempotencyRecord = $this->acquireIdempotencyLock($idempotencyKey, $callbackData);
-        if (!$idempotencyRecord) {
-            return $this->errorResponse('Callback already being processed', 409);
-        }
+        $orderId = $transactionData['order']['merchant_order_id'];
 
-        try {
-            // Validate token with Paymob
-            $tokenValid = $this->paymobService->validateToken($callbackData['token']);
-            if (!$tokenValid) {
-                throw new \Exception('Token validation failed');
-            }
+        Log::debug('Processing successful payment DIRECTLY', ['order_id' => $orderId]);
 
-            // Store token securely
-            $storedToken = $this->storePaymentToken($callbackData);
-
-            // Complete idempotency
-            $idempotencyRecord->completeWithResponse(
-                md5(json_encode($storedToken)),
-                'PaymentToken',
-                $storedToken['id'] ?? null
-            );
-
-            Log::info('Tokenization successful', [
-                'user_id' => $callbackData['user_id'],
-                'token_mask' => $storedToken['masked_token'] ?? '****'
-            ]);
-
-            return $this->successResponse('Tokenization successful', $storedToken);
-        } catch (\Exception $e) {
-            $idempotencyRecord->markFailed();
-
-            Log::error('Tokenization callback failed', [
-                'error' => $e->getMessage(),
-                'callback_data' => $callbackData
-            ]);
-
-            return $this->errorResponse('Tokenization failed: ' . $e->getMessage(), 400);
-        }
-    }
-
-    /**
-     * Handle refund callback
-     */
-    private function handleRefundCallback(array $callbackData, string $idempotencyKey)
-    {
-        // Acquire idempotency lock
-        $idempotencyRecord = $this->acquireIdempotencyLock($idempotencyKey, $callbackData);
-        if (!$idempotencyRecord) {
-            return $this->errorResponse('Callback already being processed', 409);
-        }
-
-        try {
-            DB::beginTransaction();
-
-            // Validate refund with Paymob
-            $refundValid = $this->paymobService->validateRefund($callbackData);
-            if (!$refundValid) {
-                throw new \Exception('Refund validation failed');
-            }
-
-            // Process refund
-            $result = $this->processRefund($callbackData);
-
-            // Complete idempotency
-            $idempotencyRecord->completeWithResponse(
-                md5(json_encode($result)),
-                'LedgerEntry',
-                $result['transaction']->id ?? null
-            );
-
-            DB::commit();
-
-            Log::info('Refund processed successfully', [
-                'refund_id' => $callbackData['refund_id'],
-                'amount' => $callbackData['amount'],
-                'original_transaction_id' => $callbackData['original_transaction_id']
-            ]);
-
-            return $this->successResponse('Refund processed successfully', $result);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $idempotencyRecord->markFailed();
-
-            Log::error('Refund callback failed', [
-                'error' => $e->getMessage(),
-                'callback_data' => $callbackData
-            ]);
-
-            return $this->errorResponse('Refund failed: ' . $e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Process successful payment
-     */
-    private function processSuccessfulPayment(array $callbackData): array
-    {
         // Find the pending deposit transaction
-        $pendingTransaction = LedgerEntry::where('reference', $callbackData['order_id'])
+        $pendingTransaction = LedgerEntry::where('reference', $orderId)
             ->where('type', LedgerEntry::TYPE_DEPOSIT_PENDING)
             ->where('status', LedgerEntry::STATUS_PENDING)
             ->first();
 
         if (!$pendingTransaction) {
-            throw new \Exception('Pending transaction not found');
+            // ابحث بدون شرط النوع
+            $pendingTransaction = LedgerEntry::where('reference', $orderId)
+                ->where('status', LedgerEntry::STATUS_PENDING)
+                ->first();
         }
 
-        // Confirm deposit using UserWalletService
-        $completedTransaction = $this->userWalletService->confirmDeposit(
-            $callbackData['transaction_id'],
-            [
-                'order_id' => $callbackData['order_id'],
-                'amount' => $callbackData['amount'],
-                'currency' => $callbackData['currency'],
-                'payment_method' => $callbackData['payment_method'] ?? 'paymob',
-                'user_id' => $pendingTransaction->user_id,
-                'exchange_rate' => $callbackData['exchange_rate'] ?? 1,
-                'currency_charged' => $callbackData['currency_charged'] ?? 'SAR'
-            ]
-        );
-
-        if (!$completedTransaction) {
-            throw new \Exception('Deposit confirmation failed');
+        if (!$pendingTransaction) {
+            // ابحث بأي حالة
+            $pendingTransaction = LedgerEntry::where('reference', $orderId)->first();
         }
 
-        // Update transaction metadata
-        $completedTransaction->update([
-            'metadata' => array_merge($completedTransaction->metadata ?? [], [
-                'callback_data' => $callbackData,
-                'processed_at' => now()->toIso8601String(),
-                'payment_gateway' => 'paymob',
-                'payment_method_details' => $callbackData['payment_method_details'] ?? null
-            ])
+        if (!$pendingTransaction) {
+            Log::error('Transaction not found at all', [
+                'order_id' => $orderId,
+                'all_with_reference' => LedgerEntry::where('reference', $orderId)->count()
+            ]);
+            throw new \Exception('Transaction not found for order: ' . $orderId);
+        }
+
+        Log::debug('Found transaction', [
+            'transaction_id' => $pendingTransaction->id,
+            'user_id' => $pendingTransaction->user_id,
+            'wallet_id' => $pendingTransaction->wallet_id,
+            'amount' => $pendingTransaction->amount,
+            'status' => $pendingTransaction->status,
+            'type' => $pendingTransaction->type
         ]);
+
+        // إذا كانت المعاملة مكتملة بالفعل، لا تعيد معالجتها
+        if ($pendingTransaction->status === LedgerEntry::STATUS_COMPLETED) {
+            Log::info('Transaction already completed', [
+                'transaction_id' => $pendingTransaction->id,
+                'order_id' => $orderId
+            ]);
+
+            // إرجاع النتيجة بدون عمل أي شيء
+            $wallet = UserWallet::find($pendingTransaction->wallet_id);
+            return [
+                'success' => true,
+                'already_processed' => true,
+                'transaction' => $pendingTransaction,
+                'user_id' => $pendingTransaction->user_id,
+                'amount' => $pendingTransaction->amount,
+                'wallet_balance' => $wallet ? $wallet->balance : 0,
+                'reference' => $pendingTransaction->reference
+            ];
+        }
+
+        // Calculate amount (convert from cents)
+        $amountCents = $transactionData['amount_cents'];
+        $amount = $amountCents / 100; // 50000 سنت = 500 ريال
+        $currency = $transactionData['currency'] ?? 'SAR';
+        $transactionId = $transactionData['id'];
+
+        Log::debug('Amount calculation', [
+            'amount_cents' => $amountCents,
+            'amount' => $amount,
+            'pending_transaction_amount' => $pendingTransaction->amount
+        ]);
+
+        // Get wallet
+        $wallet = UserWallet::find($pendingTransaction->wallet_id);
+        if (!$wallet) {
+            Log::error('Wallet not found', [
+                'wallet_id' => $pendingTransaction->wallet_id,
+                'user_id' => $pendingTransaction->user_id
+            ]);
+            throw new \Exception('Wallet not found');
+        }
+
+        Log::debug('Wallet found', [
+            'wallet_id' => $wallet->id,
+            'balance_before' => $wallet->balance,
+            'available_balance_before' => $wallet->available_balance
+        ]);
+
+        // 1. Mark pending transaction as completed
+        $pendingTransaction->update([
+            'status' => LedgerEntry::STATUS_COMPLETED,
+            'payment_transaction_id' => $transactionId,
+            'metadata' => array_merge($pendingTransaction->metadata ?? [], [
+                'confirmed_at' => now()->toIso8601String(),
+                'callback_data' => $callbackData,
+                'transaction_data' => $transactionData,
+                'gateway' => 'paymob_ksa',
+                'currency_charged' => $currency,
+                'processed_by' => 'direct_callback'
+            ]),
+            'processed_at' => now()
+        ]);
+
+        Log::debug('Pending transaction marked as completed', [
+            'pending_transaction_id' => $pendingTransaction->id
+        ]);
+
+        // 2. Create completed deposit entry
+        $newBalance = $wallet->balance + $amount;
+        $newAvailableBalance = $wallet->available_balance + $amount;
+
+        $completedTransaction = LedgerEntry::create([
+            'wallet_type' => 'user',
+            'wallet_id' => $wallet->id,
+            'owner_type' => LedgerEntry::OWNER_TYPE_USER,
+            'owner_id' => $pendingTransaction->user_id,
+            'type' => LedgerEntry::TYPE_DEPOSIT,
+            'amount' => $amount,
+            'balance_before' => $wallet->balance,
+            'balance_after' => $newBalance,
+            'available_balance_before' => $wallet->available_balance,
+            'available_balance_after' => $newAvailableBalance,
+            'payment_method' => $this->getPaymentMethod($transactionData),
+            'payment_transaction_id' => $transactionId,
+            'description' => 'إيداع ناجح عبر Paymob KSA',
+            'status' => LedgerEntry::STATUS_COMPLETED,
+            'reference' => $orderId . '-COMPLETED-' . Str::random(6),
+            'metadata' => [
+                'order_id' => $orderId,
+                'gateway_transaction_id' => $transactionId,
+                'payment_details' => $transactionData,
+                'callback_data' => $callbackData,
+                'gateway' => 'paymob_ksa',
+                'currency_charged' => $currency,
+                'amount_cents' => $amountCents,
+                'related_pending_id' => $pendingTransaction->id,
+                'processed_by' => 'direct_callback'
+            ],
+            'processed_at' => now()
+        ]);
+
+        Log::debug('Completed transaction created', [
+            'completed_transaction_id' => $completedTransaction->id,
+            'new_balance' => $newBalance,
+            'new_available_balance' => $newAvailableBalance
+        ]);
+
+        // 3. Update wallet balance
+        $wallet->update([
+            'balance' => $newBalance,
+            'available_balance' => $newAvailableBalance,
+            'last_transaction_at' => now()
+        ]);
+
+        Log::debug('Wallet updated', [
+            'balance_after' => $wallet->balance,
+            'available_balance_after' => $wallet->available_balance
+        ]);
+
+        // 4. Optionally, update daily totals if you have this method
+        try {
+            if (method_exists($wallet, 'updateDailyTotals')) {
+                $wallet->updateDailyTotals($amount, 'deposit');
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to update daily totals', ['error' => $e->getMessage()]);
+        }
 
         return [
             'success' => true,
             'transaction' => $completedTransaction,
+            'pending_transaction' => $pendingTransaction,
             'user_id' => $pendingTransaction->user_id,
-            'amount' => $completedTransaction->amount,
-            'currency' => $completedTransaction->metadata['currency_charged'] ?? 'SAR',
-            'wallet_balance' => UserWallet::find($completedTransaction->wallet_id)->balance,
-            'reference' => $completedTransaction->reference
+            'amount' => $amount,
+            'amount_cents' => $amountCents,
+            'currency' => $currency,
+            'wallet_balance_before' => $wallet->balance - $amount,
+            'wallet_balance_after' => $wallet->balance,
+            'available_balance_before' => $wallet->available_balance - $amount,
+            'available_balance_after' => $wallet->available_balance,
+            'reference' => $completedTransaction->reference,
+            'gateway_transaction_id' => $transactionId,
+            'gateway_order_id' => $transactionData['order']['id'] ?? null
         ];
     }
 
     /**
-     * Process failed payment
+     * Process failed payment مباشرة
      */
-    private function processFailedPayment(array $callbackData): array
+    private function processFailedPaymentDirectly(array $transactionData, array $callbackData): array
     {
+        $orderId = $transactionData['order']['merchant_order_id'] ?? null;
+
+        if (!$orderId) {
+            throw new \Exception('Order ID not found in failed payment data');
+        }
+
         // Find the pending deposit transaction
-        $pendingTransaction = LedgerEntry::where('reference', $callbackData['order_id'])
+        $pendingTransaction = LedgerEntry::where('reference', $orderId)
             ->where('type', LedgerEntry::TYPE_DEPOSIT_PENDING)
             ->where('status', LedgerEntry::STATUS_PENDING)
             ->first();
 
         if (!$pendingTransaction) {
-            throw new \Exception('Pending transaction not found');
+            throw new \Exception('Pending transaction not found for order: ' . $orderId);
         }
 
-        // Mark transaction as failed
-        $pendingTransaction->markFailed($callbackData['error'] ?? 'Payment failed');
+        // Mark as failed
+        $pendingTransaction->markFailed($this->getErrorMessage($transactionData));
 
-        // Update metadata with error details
+        // Update metadata
         $pendingTransaction->update([
             'metadata' => array_merge($pendingTransaction->metadata ?? [], [
-                'callback_data' => $callbackData,
                 'failed_at' => now()->toIso8601String(),
-                'failure_reason' => $callbackData['error'] ?? 'Unknown error',
-                'payment_gateway_error' => $callbackData['gateway_error'] ?? null
+                'callback_data' => $callbackData,
+                'transaction_data' => $transactionData,
+                'gateway_transaction_id' => $transactionData['id'] ?? null
             ])
         ]);
-
-        // Send failure notification to user
-        $this->sendPaymentFailureNotification($pendingTransaction, $callbackData);
 
         return [
             'success' => false,
             'transaction' => $pendingTransaction,
             'user_id' => $pendingTransaction->user_id,
-            'error' => $callbackData['error'] ?? 'Payment failed',
+            'error' => $this->getErrorMessage($transactionData),
             'reference' => $pendingTransaction->reference
         ];
     }
 
     /**
-     * Process refund
+     * Validate callback data structure
      */
-    private function processRefund(array $callbackData): array
+    private function validateCallbackData(array $data): bool
     {
-        // Find original transaction
-        $originalTransaction = LedgerEntry::where('payment_transaction_id', $callbackData['original_transaction_id'])
-            ->where('type', LedgerEntry::TYPE_DEPOSIT)
-            ->where('status', LedgerEntry::STATUS_COMPLETED)
-            ->first();
-
-        if (!$originalTransaction) {
-            throw new \Exception('Original transaction not found');
+        if (!isset($data['type']) || strtoupper($data['type']) !== 'TRANSACTION') {
+            Log::error('Invalid callback type', ['type' => $data['type'] ?? 'none']);
+            return false;
         }
 
-        // Get user wallet
-        $userWallet = UserWallet::where('id', $originalTransaction->wallet_id)->first();
-        if (!$userWallet) {
-            throw new \Exception('User wallet not found');
+        if (!isset($data['obj']) || !is_array($data['obj'])) {
+            Log::error('Missing transaction object');
+            return false;
         }
 
-        // Check if wallet has sufficient balance
-        if ($userWallet->available_balance < $callbackData['amount']) {
-            throw new \Exception('Insufficient wallet balance for refund');
+        $obj = $data['obj'];
+
+        // تحقق من merchant_order_id أولاً
+        if (!isset($obj['order']['merchant_order_id'])) {
+            Log::error('Missing merchant_order_id', ['order_data' => $obj['order'] ?? []]);
+            return false;
         }
 
-        // Create refund transaction
-        $refundTransaction = LedgerEntry::create([
-            'wallet_type' => 'user',
-            'wallet_id' => $userWallet->id,
-            'user_id' => $originalTransaction->user_id,
-            'type' => LedgerEntry::TYPE_REFUND,
-            'amount' => $callbackData['amount'],
-            'balance_before' => $userWallet->balance,
-            'balance_after' => $userWallet->balance - $callbackData['amount'],
-            'available_balance_before' => $userWallet->available_balance,
-            'available_balance_after' => $userWallet->available_balance - $callbackData['amount'],
-            'payment_method' => $originalTransaction->payment_method,
-            'payment_transaction_id' => $callbackData['refund_id'],
-            'description' => 'استرداد مدفوعات - ' . ($callbackData['reason'] ?? 'طلب العميل'),
-            'status' => LedgerEntry::STATUS_COMPLETED,
-            'reference' => 'REF-' . now()->format('Ymd') . '-' . Str::random(6),
-            'related_transaction_id' => $originalTransaction->id,
-            'metadata' => [
-                'original_transaction_id' => $originalTransaction->id,
-                'refund_reason' => $callbackData['reason'] ?? 'طلب العميل',
-                'callback_data' => $callbackData,
-                'processed_at' => now()->toIso8601String()
-            ],
-            'processed_at' => now()
-        ]);
+        if (!isset($obj['id'], $obj['amount_cents'])) {
+            Log::error('Missing required transaction fields', [
+                'has_id' => isset($obj['id']),
+                'has_amount_cents' => isset($obj['amount_cents']),
+                'has_merchant_order_id' => isset($obj['order']['merchant_order_id'])
+            ]);
+            return false;
+        }
 
-        // Update wallet balance
-        $userWallet->update([
-            'balance' => DB::raw('balance - ' . $callbackData['amount']),
-            'last_transaction_at' => now()
-        ]);
-
-        return [
-            'success' => true,
-            'transaction' => $refundTransaction,
-            'original_transaction' => $originalTransaction,
-            'amount' => $callbackData['amount'],
-            'user_id' => $originalTransaction->user_id,
-            'wallet_balance' => $userWallet->balance
-        ];
+        return true;
     }
 
     /**
-     * Store payment token securely
+     * Check if transaction is successful
      */
-    private function storePaymentToken(array $callbackData): array
+    private function isTransactionSuccessful(array $transactionData): bool
     {
-        // This should be stored in a secure vault/tokenization service
-        // For this example, we'll store a masked version
+        $success = $transactionData['success'] ?? false;
+        $migsResult = $transactionData['data']['migs_result'] ?? null;
+        $txnResponseCode = $transactionData['data']['txn_response_code'] ?? null;
+        $acqResponseCode = $transactionData['data']['acq_response_code'] ?? null;
+        $isVoided = $transactionData['is_voided'] ?? false;
+        $isRefunded = $transactionData['is_refunded'] ?? false;
 
-        $tokenId = 'tok_' . Str::random(32);
-        $maskedToken = substr($callbackData['token'], 0, 4) . '****' . substr($callbackData['token'], -4);
-
-        DB::table('payment_tokens')->insert([
-            'user_id' => $callbackData['user_id'],
-            'token_id' => $tokenId,
-            'token_masked' => $maskedToken,
-            'payment_method' => $callbackData['payment_method'] ?? 'credit_card',
-            'card_brand' => $callbackData['card_brand'] ?? null,
-            'card_last_four' => $callbackData['card_last_four'] ?? null,
-            'card_expiry_month' => $callbackData['card_expiry_month'] ?? null,
-            'card_expiry_year' => $callbackData['card_expiry_year'] ?? null,
-            'is_default' => false,
-            'status' => 'active',
-            'created_at' => now(),
-            'updated_at' => now()
+        Log::debug('Transaction status details', [
+            'success' => $success,
+            'migs_result' => $migsResult,
+            'txn_response_code' => $txnResponseCode,
+            'acq_response_code' => $acqResponseCode,
+            'is_voided' => $isVoided,
+            'is_refunded' => $isRefunded
         ]);
 
-        return [
-            'id' => $tokenId,
-            'masked_token' => $maskedToken,
-            'user_id' => $callbackData['user_id'],
-            'payment_method' => $callbackData['payment_method'] ?? 'credit_card',
-            'card_last_four' => $callbackData['card_last_four'] ?? null
-        ];
+        return $success &&
+            $migsResult === 'SUCCESS' &&
+            $txnResponseCode === 'APPROVED' &&
+            $acqResponseCode === '00' &&
+            !$isVoided &&
+            !$isRefunded;
     }
 
     /**
-     * Send payment failure notification
+     * Get payment method
      */
-    private function sendPaymentFailureNotification(LedgerEntry $transaction, array $callbackData): void
+    private function getPaymentMethod(array $transactionData): string
     {
-        // This should be implemented with your notification service
-        // For example: email, SMS, push notification
+        $sourceType = $transactionData['source_data']['type'] ?? null;
 
-        Log::info('Payment failure notification sent', [
-            'transaction_id' => $transaction->id,
-            'user_id' => $transaction->user_id,
-            'amount' => $transaction->amount,
-            'error' => $callbackData['error'] ?? 'Unknown error'
-        ]);
+        if ($sourceType === 'card') {
+            return $transactionData['source_data']['sub_type'] ?? 'credit_card';
+        }
+
+        return $transactionData['payment_method'] ?? 'unknown';
     }
 
     /**
-     * Log callback request for debugging
+     * Get error message
+     */
+    private function getErrorMessage(array $transactionData): string
+    {
+        $message = $transactionData['data']['message'] ?? null;
+        if ($message && $message !== 'Approved') {
+            return $message;
+        }
+
+        $migsResult = $transactionData['data']['migs_result'] ?? null;
+        if ($migsResult && $migsResult !== 'SUCCESS') {
+            return 'Payment failed: ' . $migsResult;
+        }
+
+        $txnResponseCode = $transactionData['data']['txn_response_code'] ?? null;
+        if ($txnResponseCode && $txnResponseCode !== 'APPROVED') {
+            return 'Transaction declined: ' . $txnResponseCode;
+        }
+
+        return 'Payment failed';
+    }
+
+    /**
+     * Log callback request
      */
     private function logCallbackRequest(Request $request): void
     {
@@ -496,137 +465,17 @@ class PaymentCallbackController extends Controller
             'timestamp' => now()->toIso8601String()
         ];
 
-        Log::channel('payment_callback')->debug('Payment callback received', $logData);
+        Log::debug('Payment callback received', $logData);
     }
 
     /**
-     * Validate IP address
-     */
-    private function validateIpAddress(Request $request): bool
-    {
-        $clientIp = $request->ip();
-        $allowedIps = config('payment.paymob.allowed_ips', []);
-
-        // If no IPs configured, allow all (for testing)
-        if (empty($allowedIps)) {
-            Log::warning('No IP whitelist configured for Paymob callbacks');
-            return true;
-        }
-
-        return $this->ipWhitelist->isAllowed($clientIp, $allowedIps);
-    }
-
-    /**
-     * Validate HMAC signature
-     */
-    private function validateHmacSignature(Request $request): bool
-    {
-        $hmacSecret = config('payment.paymob.hmac_secret');
-
-        // If no HMAC secret configured, skip validation (for testing)
-        if (empty($hmacSecret)) {
-            Log::warning('No HMAC secret configured for Paymob callbacks');
-            return true;
-        }
-
-        // Get HMAC from header
-        $receivedHmac = $request->header('X-HMAC-Signature');
-        if (empty($receivedHmac)) {
-            return false;
-        }
-
-        // Generate HMAC from request body
-        $requestBody = $request->getContent();
-        $expectedHmac = hash_hmac('sha256', $requestBody, $hmacSecret);
-
-        return hash_equals($expectedHmac, $receivedHmac);
-    }
-
-    /**
-     * Parse callback data
-     */
-    private function parseCallbackData(Request $request): array
-    {
-        $data = $request->all();
-
-        // Define validation rules based on callback type
-        $validator = Validator::make($data, [
-            'type' => 'required|in:transaction,tokenization,refund',
-            'transaction_id' => 'required_if:type,transaction,refund',
-            'order_id' => 'required_if:type,transaction',
-            'amount' => 'required_if:type,transaction,refund|numeric|min:0',
-            'success' => 'required_if:type,transaction|boolean',
-            'currency' => 'required_if:type,transaction,refund|string|size:3',
-            'created_at' => 'required|date',
-            'hmac' => 'required|string'
-        ]);
-
-        if ($validator->fails()) {
-            return [
-                'valid' => false,
-                'error' => 'Invalid callback data: ' . $validator->errors()->first(),
-                'errors' => $validator->errors()->toArray()
-            ];
-        }
-
-        return array_merge($data, [
-            'valid' => true,
-            'received_at' => now()->toIso8601String(),
-            'ip_address' => $request->ip()
-        ]);
-    }
-
-    /**
-     * Generate idempotency key
-     */
-    private function generateIdempotencyKey(array $callbackData): string
-    {
-        $keyData = [
-            'transaction_id' => $callbackData['transaction_id'] ?? null,
-            'order_id' => $callbackData['order_id'] ?? null,
-            'type' => $callbackData['type'],
-            'timestamp' => $callbackData['created_at']
-        ];
-
-        return 'paymob_callback_' . md5(json_encode($keyData));
-    }
-
-    /**
-     * Check if callback already processed
-     */
-    private function isAlreadyProcessed(string $idempotencyKey): bool
-    {
-        $existing = IdempotencyKey::where('key', $idempotencyKey)
-            ->where('status', 'completed')
-            ->where('expires_at', '>', now())
-            ->first();
-
-        return $existing !== null;
-    }
-
-    /**
-     * Acquire idempotency lock
-     */
-    private function acquireIdempotencyLock(string $key, array $requestData): ?IdempotencyKey
-    {
-        $requestHash = md5(json_encode($requestData));
-
-        return IdempotencyKey::acquireLock(
-            $key,
-            $requestHash,
-            3600,
-            'user'
-        );
-    }
-
-    /**
-     * Get filtered headers (remove sensitive data)
+     * Get filtered headers
      */
     private function getFilteredHeaders(array $headers): array
     {
         $sensitiveHeaders = ['authorization', 'cookie', 'x-hmac-signature'];
-
         $filtered = [];
+
         foreach ($headers as $key => $value) {
             $lowerKey = strtolower($key);
             if (in_array($lowerKey, $sensitiveHeaders)) {
@@ -640,13 +489,13 @@ class PaymentCallbackController extends Controller
     }
 
     /**
-     * Get filtered body params (remove sensitive data)
+     * Get filtered body params
      */
     private function getFilteredBodyParams(array $params): array
     {
-        $sensitiveParams = ['card_number', 'card_cvv', 'card_expiry', 'token', 'hmac'];
-
+        $sensitiveParams = ['card_number', 'card_cvv', 'card_expiry', 'token', 'hmac', 'pan'];
         $filtered = [];
+
         foreach ($params as $key => $value) {
             $lowerKey = strtolower($key);
             if (in_array($lowerKey, $sensitiveParams)) {
@@ -659,31 +508,5 @@ class PaymentCallbackController extends Controller
         }
 
         return $filtered;
-    }
-
-    /**
-     * Success response
-     */
-    private function successResponse(string $message, array $data = []): \Illuminate\Http\JsonResponse
-    {
-        return response()->json([
-            'success' => true,
-            'message' => $message,
-            'data' => $data,
-            'timestamp' => now()->toIso8601String()
-        ]);
-    }
-
-    /**
-     * Error response
-     */
-    private function errorResponse(string $message, int $status = 400, array $data = []): \Illuminate\Http\JsonResponse
-    {
-        return response()->json([
-            'success' => false,
-            'error' => $message,
-            'data' => $data,
-            'timestamp' => now()->toIso8601String()
-        ], $status);
     }
 }

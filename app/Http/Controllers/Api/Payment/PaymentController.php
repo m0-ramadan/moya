@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Payment;
 
+use App\Models\User;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use App\Notifications\OrderPaid;
 use App\Services\PaymentService;
 use App\Traits\ApiResponseTrait;
 use App\Models\Wallet\UserWallet;
@@ -12,12 +14,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Services\Payment\PaymobService;
+use App\Notifications\PaymentSuccessful;
 use App\Http\Resources\WebsiteUser\OrderResource;
-use App\Models\User;
 
 class PaymentController extends Controller
 {
-     use ApiResponseTrait;
+    use ApiResponseTrait;
     protected $paymentService;
     protected $paymobService;
 
@@ -56,27 +58,26 @@ class PaymentController extends Controller
             switch ($type) {
                 case 'TRANSACTION':
                     return $this->handleTransaction($obj, $payload);
-                    
+
                 case 'TOKEN':
                     Log::info('Paymob Token Webhook', $obj);
                     return response()->json(['success' => true]);
-                    
+
                 case 'DISPUTE':
                     Log::warning('Paymob Dispute Webhook', $obj);
                     return $this->handleDispute($obj);
-                    
+
                 default:
                     Log::info('Unknown Paymob Webhook Type', ['type' => $type, 'data' => $obj]);
                     return response()->json(['success' => true, 'message' => 'Unknown type, ignoring']);
             }
-            
         } catch (\Exception $e) {
             Log::error('Paymob Webhook Error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'request_data' => $request->all()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Internal server error',
@@ -98,12 +99,12 @@ class PaymentController extends Controller
         $isCapture = $transaction['is_capture'] ?? false;
         $isVoided = $transaction['is_voided'] ?? false;
         $isRefunded = $transaction['is_refunded'] ?? false;
-        
+
         // استخراج order ID من merchant_reference أو reference_id
-        $orderId = $transaction['merchant_reference'] ?? 
-                   $transaction['reference_id'] ?? 
-                   ($transaction['order']['merchant_order_id'] ?? null);
-        
+        $orderId = $transaction['merchant_reference'] ??
+            $transaction['reference_id'] ??
+            ($transaction['order']['merchant_order_id'] ?? null);
+
         Log::info('Processing Paymob Transaction', [
             'transaction_id' => $transactionId,
             'order_id' => $orderId,
@@ -143,7 +144,7 @@ class PaymentController extends Controller
     private function handleSuccessfulPayment(array $transaction, $orderId, $amount, $currency)
     {
         DB::beginTransaction();
-        
+
         try {
             // البحث عن طلب الدفعة (Order أو LedgerEntry للودائع)
             if (strpos($orderId, 'DEP-') === 0) {
@@ -153,7 +154,6 @@ class PaymentController extends Controller
                 // هذا دفع للطلب
                 return $this->handleOrderPayment($transaction, $orderId, $amount, $currency);
             }
-            
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to process successful payment', [
@@ -161,7 +161,7 @@ class PaymentController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to process payment',
@@ -184,7 +184,7 @@ class PaymentController extends Controller
         $originalAmount = floatval($parts[1]);
         $originalCurrency = $parts[2];
         $timestamp = $parts[3];
-        
+
         // البحث عن إدخال الدفعة المعلق
         $pendingEntry = LedgerEntry::where('reference', $orderId)
             ->where('type', LedgerEntry::TYPE_DEPOSIT_PENDING)
@@ -399,10 +399,10 @@ class PaymentController extends Controller
     private function handleDispute(array $dispute)
     {
         Log::warning('Payment dispute received', ['dispute' => $dispute]);
-        
+
         // هنا يمكنك إضافة منطق إدارة النزاعات
         // مثل تحديث حالة الطلب، إرسال إشعارات، إلخ
-        
+
         return response()->json(['success' => true, 'message' => 'Dispute recorded']);
     }
 
@@ -416,7 +416,7 @@ class PaymentController extends Controller
             if ($order->user) {
                 // إرسال إشعار في التطبيق
                 $order->user->notify(new \App\Notifications\PaymentSuccessful($order));
-                
+
                 // إرسال رسالة WhatsApp (اختياري)
                 if ($order->user->phone) {
                     // $this->sendWhatsAppMessage($order->user->phone, ...);
@@ -426,7 +426,7 @@ class PaymentController extends Controller
             // إشعار للسائق إذا كان هناك عرض مقبول
             if ($acceptedOffer = $order->offers()->where('status', 'paid')->first()) {
                 if ($acceptedOffer->driver) {
-                    $acceptedOffer->driver->notify(new \App\Notifications\OrderPaid($order));
+                    $acceptedOffer->driver->notify(new OrderPaid($order));
                 }
             }
 
@@ -470,7 +470,7 @@ class PaymentController extends Controller
         unset($payload['hmac']);
 
         ksort($payload);
-        
+
         $concatenated = '';
         foreach ($payload as $key => $value) {
             if (is_array($value)) {
@@ -488,7 +488,7 @@ class PaymentController extends Controller
     /**
      * بدء عملية الدفع للطلب
      */
-   /**
+    /**
      * بدء عملية الدفع للطلب
      */
     public function initiatePayment(Request $request, $orderId)
@@ -525,7 +525,7 @@ class PaymentController extends Controller
             if ($paymentResult['success']) {
                 // إرسال إشعارات
                 auth()->user()->notify(new PaymentSuccessful($order));
-                
+
                 // إرسال إشعار للسائق إذا كان هناك عرض مقبول
                 if ($order->driver) {
                     $order->driver->notify(new OrderPaid($order));
@@ -646,7 +646,7 @@ class PaymentController extends Controller
                 'name' => 'Apple Pay',
                 'description' => 'الدفع عبر Apple Pay',
                 'icon' => 'apple',
-               // 'available' => request()->header('User-Agent', '')->contains('iPhone'),
+                // 'available' => request()->header('User-Agent', '')->contains('iPhone'),
             ],
         ];
 

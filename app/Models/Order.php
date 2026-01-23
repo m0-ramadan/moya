@@ -22,6 +22,12 @@ class Order extends Model
     const PAYMENT_METHOD_APPLE_PAY = 'apple_pay';
     const PAYMENT_METHOD_PAYMOB = 'paymob';
 
+    const PAYMENT_STATUS_PROCESSING = 'processing';
+
+    const PAYMENT_GATEWAY_WALLET = 'wallet';
+    const PAYMENT_GATEWAY_PAYMOB = 'paymob';
+    const PAYMENT_GATEWAY_TAMARA = 'tamara';
+    const PAYMENT_GATEWAY_TABBY = 'tabby';
     // الحقول القابلة للتعبئة
     protected $fillable = [
         'user_id',
@@ -37,6 +43,7 @@ class Order extends Model
         'paid_at',
         'order_date',
         'contract_id',
+        'payment_gateway',
     ];
 
     protected $casts = [
@@ -46,14 +53,6 @@ class Order extends Model
     ];
 
     // ================== الأساليب المساعدة ==================
-
-    /**
-     * التحقق من حالة الدفع
-     */
-    public function isPaid(): bool
-    {
-        return $this->payment_status === self::PAYMENT_STATUS_PAID;
-    }
 
     /**
      * التحقق من حالة الدفع المعلق
@@ -71,17 +70,7 @@ class Order extends Model
         return $this->payment_status === self::PAYMENT_STATUS_REFUNDED;
     }
 
-    /**
-     * الحصول على مبلغ الدفع
-     */
-    public function getPaymentAmount(): float
-    {
-        if ($acceptedOffer = $this->offers()->where('status', 'accepted')->first()) {
-            return $acceptedOffer->price;
-        }
-        
-        return $this->price ?? 0;
-    }
+
 
     // ================== العلاقات ==================
 
@@ -156,5 +145,39 @@ class Order extends Model
     public function userRating()
     {
         return $this->hasOne(OrderRating::class)->where('rated_by', 'user');
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->payment_status === self::PAYMENT_STATUS_PAID;
+    }
+
+    public function isProcessing(): bool
+    {
+        return $this->payment_status === self::PAYMENT_STATUS_PROCESSING;
+    }
+
+    public function isPendingPayment(): bool
+    {
+        return $this->payment_status === self::PAYMENT_STATUS_PENDING;
+    }
+
+    public function getPaymentGateway(): ?string
+    {
+        return $this->payment_gateway;
+    }
+
+    public function getPaymentTransactionId(): ?string
+    {
+        return $this->payment_transaction_id;
+    }
+
+    public function getPaymentAmount(): float
+    {
+        if ($acceptedOffer = $this->offers()->whereIn('status', ['accepted', 'paid'])->first()) {
+            return $acceptedOffer->price;
+        }
+
+        return $this->price ?? 0;
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Orders;
 
 use Carbon\Carbon;
 use App\Models\Order;
@@ -9,9 +9,10 @@ use App\Models\OrderOffer;
 use App\Models\OrderStatus;
 use App\Jobs\ExpireOrderJob;
 use Illuminate\Http\Request;
-use App\Events\OfferCancelled;
+
 use App\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\DB;
+use App\Events\Order\OfferCancelled;
 use App\Http\Controllers\Controller;
 use App\Events\Order\NewOrderAvailable;
 use App\Events\Order\DriverAcceptedOrder;

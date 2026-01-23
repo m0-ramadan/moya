@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Events;
+namespace App\Events\Order;
 
 use App\Models\OrderOffer;
 use Illuminate\Broadcasting\Channel;

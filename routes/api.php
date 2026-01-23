@@ -5,11 +5,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatController;
-use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\Orders\OrderController;
 use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\SliderController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\Orders\PaymentController as PaymentOrdersController;
+
+
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\ContactUsController;
@@ -59,11 +62,32 @@ Route::prefix('v1')->group(function () {
             Route::get('/{orderId}/tracking', [DriverOrderController::class, 'getLiveTracking']);
 
             // طرق الدفع الجديدة
-            Route::post('/{orderId}/payment/initiate', [PaymentController::class, 'initiatePayment']);
-            Route::get('/{orderId}/payment/status', [PaymentController::class, 'checkPaymentStatus']);
-            Route::post('/{orderId}/payment/refund', [PaymentController::class, 'refundPayment']);
-            Route::get('/payment-methods', [PaymentController::class, 'getPaymentMethods']);
+            // Route::post('/{orderId}/payment/initiate', [PaymentController::class, 'initiatePayment']);
+            // Route::get('/{orderId}/payment/status', [PaymentController::class, 'checkPaymentStatus']);
+            // Route::post('/{orderId}/payment/refund', [PaymentController::class, 'refundPayment']);
+            Route::get('/payment-methods', [PaymentOrdersController::class, 'getPaymentMethods']);
 
+            // دفع الطلبات
+            Route::prefix('payments')->middleware(['auth:sanctum'])->group(function () {
+                Route::post('/orders/{order}/initiate', [PaymentOrdersController::class, 'initiatePayment']);
+                Route::get('/orders/{order}/status', [PaymentOrdersController::class, 'checkPaymentStatus']);
+                Route::post('/orders/{order}/refund', [PaymentOrdersController::class, 'refundPayment']);
+                Route::get('/methods', [PaymentOrdersController::class, 'getPaymentMethods']);
+            });
+
+            // Callback URLs
+            Route::prefix('payment/callback')->group(function () {
+                Route::get('/success/{gateway}', [PaymentOrdersController::class, 'paymentSuccess'])->name('payment.callback.success');
+                Route::get('/failure/{gateway}', [PaymentOrdersController::class, 'paymentFailure'])->name('payment.callback.failure');
+                Route::get('/cancel/{gateway}', [PaymentOrdersController::class, 'paymentCancel'])->name('payment.callback.cancel');
+            });
+
+            // Webhooks
+            Route::prefix('payment/webhook')->group(function () {
+                Route::post('/paymob', [PaymentOrdersController::class, 'handleWebhook'])->name('payment.webhook.paymob');
+                Route::post('/tamara', [PaymentOrdersController::class, 'handleWebhook'])->name('payment.webhook.tamara');
+                Route::post('/tabby', [PaymentOrdersController::class, 'handleWebhook'])->name('payment.webhook.tabby');
+            });
             // تأكيد السائق (بعد الدفع)
             Route::post('/{orderId}/confirm-driver', [OrderController::class, 'confirmDriver']);
 
@@ -246,7 +270,6 @@ Route::prefix('v1')->group(function () {
         Route::post('/deposit', [UserWalletController::class, 'initiateDeposit']);
         Route::post('/withdraw', [UserWalletController::class, 'withdraw']);
         Route::post('/transfer', [UserWalletController::class, 'transfer']);
-        
     });
 
 
@@ -258,7 +281,8 @@ Route::prefix('v1')->group(function () {
     });
 
     // Payment callback
-    Route::middleware(['ip.whitelist:paymob'])->post('/payment/callback', [PaymentCallbackController::class, 'handle']);
+    // Route::middleware(['ip.whitelist:paymob'])->post('/payment/callback', [PaymentCallbackController::class, 'handle']);
+    Route::post('/payment/callback', [PaymentCallbackController::class, 'handle']);
 
 
 
@@ -288,10 +312,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/reviews', [DriverDashboardController::class, 'getReviews']);
         });
     });
-// في routes/api.php
-Route::post('/paymob/webhook', [PaymentController::class, 'handleWebhook'])->name('paymob.webhook');
-   
-// تحديث Middleware للسائقين
+    // في routes/api.php
+    Route::post('/paymob/webhook', [PaymentController::class, 'handleWebhook'])->name('paymob.webhook');
+
+    // تحديث Middleware للسائقين
     // Route::middleware(['auth:sanctum', 'driver.only'])->prefix('driver')->group(function () {
     //   //  Route::post('/orders/{orderId}/accept', [OrderController::class, 'acceptOrder']);
     //   //  Route::post('/orders/{orderId}/update-status', [DriverOrderController::class, 'updateStatus']);

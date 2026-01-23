@@ -2,47 +2,115 @@
 
 namespace App\Services\Wallet;
 
-use App\Models\Wallet\LedgerEntry;
-use App\Models\Wallet\AbstractWallet;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Models\Wallet\LedgerEntry;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Models\Wallet\AbstractWallet;
 
 class LedgerService
 {
     /**
      * Credit wallet
      */
-    public function credit(
-        AbstractWallet $wallet,
-        float $amount,
-        string $type,
-        string $description,
-        array $metadata = [],
-        array $ownerInfo = []
-    ): LedgerEntry {
-        return DB::transaction(function () use ($wallet, $amount, $type, $description, $metadata, $ownerInfo) {
-            $ledgerEntry = LedgerEntry::create([
-                'wallet_type' => $wallet->getWalletType(),
+    // public function credit(
+    //     AbstractWallet $wallet,
+    //     float $amount,
+    //     string $type,
+    //     string $description,
+    //     array $metadata = [],
+    //     array $ownerInfo = []
+    // ): LedgerEntry {
+    //     return DB::transaction(function () use ($wallet, $amount, $type, $description, $metadata, $ownerInfo) {
+    //         $ledgerEntry = LedgerEntry::create([
+    //             'wallet_type' => $wallet->getWalletType(),
+    //             'wallet_id' => $wallet->id,
+    //             'owner_type' => $ownerInfo['owner_type'] ?? LedgerEntry::OWNER_TYPE_SYSTEM,
+    //             'owner_id' => $ownerInfo['owner_id'] ?? null,
+    //             'type' => $type,
+    //             'amount' => $amount,
+    //             'balance_before' => $wallet->balance,
+    //             'balance_after' => $wallet->balance + $amount,
+    //             'available_balance_before' => $wallet->available_balance,
+    //             'available_balance_after' => $wallet->available_balance + $amount,
+    //             'description' => $description,
+    //             'status' => LedgerEntry::STATUS_COMPLETED,
+    //             'reference' => $this->generateReference($type),
+    //             'metadata' => $metadata,
+    //             'processed_at' => now()
+    //         ]);
+
+    //         $wallet->updateBalance($amount, 'increment');
+
+    //         return $ledgerEntry;
+    //     });
+    // }
+    // في AbstractWalletService أو LedgerService
+    public function credit($wallet, float $amount, string $type, string $description, array $metadata = [], array $ownerData = []): ?LedgerEntry
+    {
+        Log::debug('Credit method called', [
+            'wallet_id' => $wallet->id,
+            'amount' => $amount,
+            'type' => $type,
+            'description' => $description
+        ]);
+
+        try {
+            // حساب الرصيد الجديد
+            $newBalance = $wallet->balance + $amount;
+            $newAvailableBalance = $wallet->available_balance + $amount;
+
+            Log::debug('Balance calculations', [
+                'old_balance' => $wallet->balance,
+                'old_available_balance' => $wallet->available_balance,
+                'new_balance' => $newBalance,
+                'new_available_balance' => $newAvailableBalance
+            ]);
+
+            // إنشاء السجل
+            $entry = LedgerEntry::create([
+                'wallet_type' => $wallet->getMorphClass(),
                 'wallet_id' => $wallet->id,
-                'owner_type' => $ownerInfo['owner_type'] ?? LedgerEntry::OWNER_TYPE_SYSTEM,
-                'owner_id' => $ownerInfo['owner_id'] ?? null,
+                'owner_type' => $ownerData['owner_type'] ?? null,
+                'owner_id' => $ownerData['owner_id'] ?? null,
                 'type' => $type,
                 'amount' => $amount,
                 'balance_before' => $wallet->balance,
-                'balance_after' => $wallet->balance + $amount,
+                'balance_after' => $newBalance,
                 'available_balance_before' => $wallet->available_balance,
-                'available_balance_after' => $wallet->available_balance + $amount,
+                'available_balance_after' => $newAvailableBalance,
                 'description' => $description,
                 'status' => LedgerEntry::STATUS_COMPLETED,
-                'reference' => $this->generateReference($type),
+                'reference' => $this->generateReference('DEP'),
                 'metadata' => $metadata,
-                'processed_at' => now()
+                'processed_at' => now(),
             ]);
 
-            $wallet->updateBalance($amount, 'increment');
+            Log::debug('Ledger entry created', [
+                'entry_id' => $entry->id,
+                'reference' => $entry->reference
+            ]);
 
-            return $ledgerEntry;
-        });
+            // تحديث محفظة
+            $wallet->update([
+                'balance' => $newBalance,
+                'available_balance' => $newAvailableBalance,
+                'last_transaction_at' => now(),
+            ]);
+
+            Log::debug('Wallet updated', [
+                'new_balance' => $wallet->balance,
+                'new_available_balance' => $wallet->available_balance
+            ]);
+
+            return $entry;
+        } catch (\Exception $e) {
+            Log::error('Error in credit method', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return null;
+        }
     }
 
     /**

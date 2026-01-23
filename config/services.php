@@ -39,17 +39,52 @@ return [
         'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'),
     ],
 
-'paymob' => [
-    'username' => env('PAYMOB_USERNAME'),
-    'password' => env('PAYMOB_PASSWORD'),
-    'api_key' => env('PAYMOB_API_KEY'),
-    'hmac_secret' => env('PAYMOB_HMAC_SECRET'),
-    'integration_id' => env('PAYMOB_INTEGRATION_ID'),
-    'iframe_id' => env('PAYMOB_IFRAME_ID', null),
-    'mode' => env('PAYMOB_MODE', 'test'),
-    'currency' => env('PAYMOB_CURRENCY', 'SAR'),
-    'base_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com'),
-    'auth_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com') . '/api/auth/tokens',
-    'payment_links_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com') . '/api/ecommerce/payment-links',
-],
+    'paymob' => [
+        'username' => env('PAYMOB_USERNAME'),
+        'password' => env('PAYMOB_PASSWORD'),
+        'api_key' => env('PAYMOB_API_KEY'),
+        'hmac_secret' => env('PAYMOB_HMAC_SECRET'),
+        'integration_id' => env('PAYMOB_INTEGRATION_ID', '19293'),
+        'iframe_id' => env('PAYMOB_IFRAME_ID', '11784'),
+        'mode' => env('PAYMOB_MODE', 'test'),        // test أو live
+        'currency' => env('PAYMOB_CURRENCY', 'SAR'),
+        'base_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com'),
+
+        // Endpoints
+        'auth_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com') . '/api/auth/tokens',
+        'payment_links_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com') . '/api/ecommerce/payment-links',
+
+        // Public key
+        'public_key' => env('PAYMOB_PUBLIC_KEY'),
+
+        // Features
+        'tokenization_enabled' => env('PAYMOB_TOKENIZATION_ENABLED', false),
+        'save_card_enabled' => env('PAYMOB_SAVE_CARD_ENABLED', true),
+
+        // IP Whitelist
+        'allowed_ips' => explode(',', env('PAYMOB_ALLOWED_IPS', '')),
+
+        // URLs
+        'callback_url' => env('PAYMOB_CALLBACK_URL'),
+        'return_url' => env('PAYMOB_RETURN_URL'),
+        'cancel_url' => env('PAYMOB_CANCEL_URL'),
+    ],
+    'tamara' => [
+        'sandbox' => env('TAMARA_SANDBOX', true),
+        'username' => env('TAMARA_USERNAME'),
+        'password' => env('TAMARA_PASSWORD'),
+        'api_key' => env('TAMARA_API_KEY'),
+        'notification_token' => env('TAMARA_NOTIFICATION_TOKEN'),
+        'webhook_token' => env('TAMARA_WEBHOOK_TOKEN'),
+        'currency' => 'SAR',
+    ],
+
+    'tabby' => [
+        'sandbox' => env('TABBY_SANDBOX', true),
+        'merchant_code' => env('TABBY_MERCHANT_CODE'),
+        'secret_key' => env('TABBY_SECRET_KEY'),
+        'webhook_secret' => env('TABBY_WEBHOOK_SECRET'),
+        'currency' => 'SAR',
+    ],
+
 ];

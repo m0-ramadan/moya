@@ -10,26 +10,26 @@ class IpWhitelist
     /**
      * Check if IP is allowed
      */
-    public function isAllowed(string $ip, array $allowedIps): bool
-    {
-        // Cache the check for performance
-        $cacheKey = 'ip_whitelist_' . md5($ip . implode('', $allowedIps));
+    // public function isAllowed(string $ip, array $allowedIps): bool
+    // {
+    //     // Cache the check for performance
+    //     $cacheKey = 'ip_whitelist_' . md5($ip . implode('', $allowedIps));
 
-        return Cache::remember($cacheKey, 300, function () use ($ip, $allowedIps) {
-            foreach ($allowedIps as $allowedIp) {
-                if ($this->ipMatches($ip, $allowedIp)) {
-                    return true;
-                }
-            }
+    //     return Cache::remember($cacheKey, 300, function () use ($ip, $allowedIps) {
+    //         foreach ($allowedIps as $allowedIp) {
+    //             if ($this->ipMatches($ip, $allowedIp)) {
+    //                 return true;
+    //             }
+    //         }
 
-            Log::warning('IP address not whitelisted', [
-                'ip' => $ip,
-                'allowed_ips' => $allowedIps
-            ]);
+    //         Log::warning('IP address not whitelisted', [
+    //             'ip' => $ip,
+    //             'allowed_ips' => $allowedIps
+    //         ]);
 
-            return false;
-        });
-    }
+    //         return false;
+    //     });
+    // }
 
     /**
      * Check if IP matches pattern (supports CIDR)

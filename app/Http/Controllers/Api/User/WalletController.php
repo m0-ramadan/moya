@@ -8,9 +8,12 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use App\Services\Wallet\UserWalletService;
+use App\Traits\ApiResponseTrait;
 
 class WalletController extends Controller
 {
+    use ApiResponseTrait;
+
     private UserWalletService $walletService;
 
     public function __construct(UserWalletService $walletService)
@@ -29,15 +32,9 @@ class WalletController extends Controller
         try {
             $balance = $this->walletService->getBalance($user);
 
-            return response()->json([
-                'success' => true,
-                'wallet' => $balance
-            ]);
+            return $this->successResponse($balance, 'تم الحصول على رصيد المحفظة بنجاح');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'فشل في الحصول على رصيد المحفظة'
-            ], 500);
+            return $this->errorResponse('فشل في الحصول على رصيد المحفظة', 500);
         }
     }
 
@@ -48,14 +45,11 @@ class WalletController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'amount' => 'required|numeric|min:10|max:50000',
-            'payment_method' => 'sometimes|in:paymob'
+            'payment_method' => 'sometimes|in:paymob,tamara,tabby'
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+            return $this->validationError($validator->errors(), 'خطأ في البيانات المرسلة');
         }
 
         $user = $request->user();
@@ -65,18 +59,13 @@ class WalletController extends Controller
                 'payment_method' => $request->payment_method ?? 'paymob'
             ]);
 
-            return response()->json([
-                'success' => true,
+            return $this->successResponse([
                 'payment_url' => $result['payment_url'],
                 'order_id' => $result['order_id'],
-                'amount' => $request->amount,
-                'message' => 'تم إنشاء طلب الدفع بنجاح'
-            ]);
+                'amount' => $request->amount
+            ], 'تم إنشاء طلب الدفع بنجاح');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
+            return $this->errorResponse($e->getMessage(), 400);
         }
     }
 
@@ -92,10 +81,7 @@ class WalletController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+            return $this->validationError($validator->errors(), 'خطأ في البيانات المرسلة');
         }
 
         $user = $request->user();
@@ -106,21 +92,16 @@ class WalletController extends Controller
                 'description' => $request->description
             ]);
 
-            return response()->json([
-                'success' => true,
+            return $this->successResponse([
                 'entry' => [
                     'id' => $entry->id,
                     'reference' => $entry->reference,
                     'amount' => $entry->amount,
                     'status' => $entry->status
-                ],
-                'message' => 'تم تقديم طلب السحب بنجاح'
-            ]);
+                ]
+            ], 'تم تقديم طلب السحب بنجاح');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
+            return $this->errorResponse($e->getMessage(), 400);
         }
     }
 
@@ -137,10 +118,7 @@ class WalletController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+            return $this->validationError($validator->errors(), 'خطأ في البيانات المرسلة');
         }
 
         $user = $request->user();
@@ -159,21 +137,16 @@ class WalletController extends Controller
                 ]);
             }
 
-            return response()->json([
-                'success' => true,
+            return $this->successResponse([
                 'transfer' => [
                     'id' => $result['transfer_id'],
                     'debit_entry_id' => $result['debit_entry']->id,
                     'credit_entry_id' => $result['credit_entry']->id,
                     'amount' => $request->amount
-                ],
-                'message' => 'تم التحويل بنجاح'
-            ]);
+                ]
+            ], 'تم التحويل بنجاح');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
+            return $this->errorResponse($e->getMessage(), 400);
         }
     }
 
@@ -191,10 +164,7 @@ class WalletController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+            return $this->validationError($validator->errors(), 'خطأ في البيانات المرسلة');
         }
 
         $user = $request->user();
@@ -208,17 +178,9 @@ class WalletController extends Controller
                 'limit' => $request->limit ?? 20
             ]);
 
-            return response()->json([
-                'success' => true,
-                'entries' => $entries,
-                'total' => $entries->total(),
-                'current_page' => $entries->currentPage()
-            ]);
+            return $this->paginated($entries, 'تم جلب سجل المعاملات بنجاح');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'فشل في الحصول على سجل المعاملات'
-            ], 500);
+            return $this->errorResponse('فشل في الحصول على سجل المعاملات', 500);
         }
     }
 }
