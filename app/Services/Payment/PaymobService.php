@@ -2,10 +2,11 @@
 
 namespace App\Services\Payment;
 
-use App\Services\Wallet\ExchangeRateService;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use App\Services\Wallet\ExchangeRateService;
+use App\Services\Payment\Interfaces\PaymentGatewayInterface;
 
 class PaymobService implements PaymentGatewayInterface
 {

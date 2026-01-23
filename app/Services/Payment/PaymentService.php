@@ -42,18 +42,20 @@ class PaymentService
             $amount = $offer->price;
             $orderData = $this->prepareOrderData($order, $offer, $user, $gateway, $additionalData);
 
+
             // اختيار Gateway المناسب
             if ($gateway === 'wallet') {
                 $result = $this->processWalletPayment($user, $order, $amount);
             } else {
+
                 $paymentGateway = $this->gatewayFactory->make($gateway);
+
                 $result = $paymentGateway->initiatePayment($orderData);
             }
 
             if (!$result['success']) {
                 throw new \Exception($result['error'] ?? 'Payment failed');
             }
-
             // حفظ بيانات الدفع
             $this->savePaymentData($order, $offer, $gateway, $paymentMethod, $result);
 
@@ -86,16 +88,16 @@ class PaymentService
     private function validatePaymentRequest(Order $order, OrderOffer $offer): void
     {
         if ($order->isPaid()) {
-            throw new \Exception('Order is already paid');
+            throw new \Exception(message: 'Order is already paid');
         }
 
         if ($offer->status !== 'pending') {
             throw new \Exception('Offer is not available for payment');
         }
 
-        if ($order->driver_id !== $offer->driver_id) {
-            throw new \Exception('Offer does not belong to the selected driver');
-        }
+        // if ($order->driver_id !== $offer->driver_id) {
+        //     throw new \Exception('Offer does not belong to the selected driver');
+        // }
     }
 
     private function prepareOrderData(

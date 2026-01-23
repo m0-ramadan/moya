@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use App\Services\Wallet\ExchangeRateService;
+use App\Services\Payment\Wallet\PaymentGatewayInterface;
 
 class PaymobService implements PaymentGatewayInterface
 {

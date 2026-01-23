@@ -27,13 +27,10 @@ class TamaraGateway extends BaseGateway
 
     protected function fetchAuthToken(): string
     {
-        $response = Http::post($this->getBaseUrl() . '/auth/tokens', [
-            'username' => $this->config['username'],
-            'password' => $this->config['password'],
-        ]);
+        $ApiToken = $this->config['api_token'] ?? '';
 
-        if ($response->successful()) {
-            return $response->json()['access_token'];
+        if ($ApiToken) {
+            return $ApiToken;
         }
 
         throw new \Exception('Failed to get Tamara auth token');
@@ -47,45 +44,61 @@ class TamaraGateway extends BaseGateway
             if (!$this->validateRequired($data, $required)) {
                 throw new \Exception('Missing required payment data');
             }
+            $authToken = $this->fetchAuthToken();
 
-            $authToken = $this->getAuthToken();
 
-            // إنشاء طلب الدفع
+            // إنشاء طلب الدفع مع القيم الافتراضية
             $paymentData = [
-                'order_reference_id' => $data['order_id'],
+                'order_reference_id' => (string) ($data['order_id'] ?? '0'),
                 'total_amount' => [
-                    'amount' => $data['amount'],
-                    'currency' => $this->currency,
+                    'amount' => (float) ($data['amount'] ?? 0),
+                    'currency' => $this->currency ?? 'SAR',
                 ],
                 'description' => $data['description'] ?? 'Order Payment',
-                'country_code' => 'SA',
-                'payment_type' => 'PAY_BY_INSTALMENTS',
-                'locale' => 'ar_SA',
-                'platform' => 'API',
-                'items' => $data['items'],
-                'consumer' => $this->prepareConsumerData($data['customer']),
-                'billing_address' => $data['billing_address'] ?? $this->getDefaultAddress(),
-                'shipping_address' => $data['shipping_address'] ?? $this->getDefaultAddress(),
+                'country_code' => $data['country_code'] ?? 'SA',
+                'payment_type' => $data['payment_type'] ?? 'PAY_BY_INSTALMENTS',
+                'locale' => $data['locale'] ?? 'ar_SA',
+                'platform' => $data['platform'] ?? 'API',
+                'items' => array_map(function ($item) {
+                    return [
+                        'name' => $item['name'] ?? 'Item',
+                        'description' => $item['description'] ?? '',
+                        'quantity' => (int) ($item['quantity'] ?? 1),
+                        'unit_price' => [
+                            'amount' => (float) ($item['unit_price'] ?? 0),
+                            'currency' => $item['currency'] ?? 'SAR',
+                        ],
+                        'total_amount' => [
+                            'amount' => (float) ($item['total_price'] ?? 0),
+                            'currency' => $item['currency'] ?? 'SAR',
+                        ],
+                        'sku' => $item['sku'] ?? 'SKU-UNKNOWN',
+                    ];
+                }, $data['items'] ?? [['name' => 'Item', 'quantity' => 1, 'unit_price' => 0, 'total_price' => 0, 'sku' => 'SKU-UNKNOWN']]),
+                'consumer' => $this->prepareConsumerData($data['customer'] ?? []),
+                'billing_address' => $this->sanitizeAddress($data['billing_address'] ?? $this->getDefaultAddress()),
+                'shipping_address' => $this->sanitizeAddress($data['shipping_address'] ?? $this->getDefaultAddress()),
                 'merchant_url' => [
-                    'success' => $data['callback_urls']['success'] ?? route('payment.callback.success'),
-                    'failure' => $data['callback_urls']['failure'] ?? route('payment.callback.failure'),
-                    'cancel' => $data['callback_urls']['cancel'] ?? route('payment.callback.cancel'),
-                    'notification' => route('payment.webhook.tamara'),
+                    'success' =>  'https://floretty-thermoscopic-cali.ngrok-free.dev',
+                    'failure' =>  'https://floretty-thermoscopic-cali.ngrok-free.dev',
+                    'cancel' =>  'https://floretty-thermoscopic-cali.ngrok-free.dev',
+                    'notification' =>  'https://floretty-thermoscopic-cali.ngrok-free.dev',
                 ],
+                'instalments' => isset($data['instalments']) ? (string) $data['instalments'] : "3",
             ];
+
 
             // إضافة خيارات التقسيط إذا كانت موجودة
             if (isset($data['installments'])) {
                 $paymentData['instalments'] = $data['installments'];
             }
-
             $response = $this->makeRequest(
                 'POST',
                 '/checkout',
                 $paymentData,
                 ['Authorization' => "Bearer {$authToken}"]
             );
-
+            dd($response, $paymentData);
             if (!$response['success']) {
                 throw new \Exception($response['error'] ?? 'Failed to initiate payment');
             }
@@ -112,6 +125,33 @@ class TamaraGateway extends BaseGateway
                 'error_code' => 'TAMARA_INIT_FAILED',
             ];
         }
+    }
+
+
+    private function sanitizeAddress(array $address): array
+    {
+        return [
+            'first_name' => $address['first_name'] ?? '',
+            'last_name'  => $address['last_name'] ?? '',
+            'line1'      => $address['address_line1'] ?? '',
+            'line2'      => $address['address_line2'] ?? '',
+            'city'       => $address['city'] ?? '',
+            'region'     => $address['state'] ?? '',
+            'country_code' => $address['country'] ?? 'SA',
+            'phone_number' => isset($address['phone']) ? ltrim($address['phone'], '+') : '',
+        ];
+    }
+    private function prepareConsumerData(array $customer): array
+    {
+        return [
+            'first_name' => $customer['first_name'] ?? 'customer',
+            'last_name' => $customer['last_name'] ?? '',
+            'phone_number' => isset($customer['phone_number']) ? ltrim($customer['phone_number'], '+') : '',
+            'email' => $customer['email'] ?? '',
+            'national_id' => $customer['national_id'] ?? '',
+            'date_of_birth' => $customer['date_of_birth'] ?? '',
+            'is_first_order' => $customer['is_first_order'] ?? true,
+        ];
     }
 
     public function verifyPayment(array $data): array
@@ -283,18 +323,18 @@ class TamaraGateway extends BaseGateway
         }
     }
 
-    private function prepareConsumerData(array $customer): array
-    {
-        return [
-            'first_name' => $customer['first_name'] ?? 'Customer',
-            'last_name' => $customer['last_name'] ?? '',
-            'phone_number' => $customer['phone'] ?? '+966500000000',
-            'email' => $customer['email'] ?? 'customer@example.com',
-            'national_id' => $customer['national_id'] ?? '',
-            'date_of_birth' => $customer['date_of_birth'] ?? null,
-            'is_first_order' => $customer['is_first_order'] ?? true,
-        ];
-    }
+    // private function prepareConsumerData(array $customer): array
+    // {
+    //     return [
+    //         'first_name' => $customer['first_name'] ?? 'Customer',
+    //         'last_name' => $customer['last_name'] ?? '',
+    //         'phone_number' => $customer['phone'] ?? '+966500000000',
+    //         'email' => $customer['email'] ?? 'customer@example.com',
+    //         'national_id' => $customer['national_id'] ?? '',
+    //         'date_of_birth' => $customer['date_of_birth'] ?? null,
+    //         'is_first_order' => $customer['is_first_order'] ?? true,
+    //     ];
+    // }
 
     private function getDefaultAddress(): array
     {

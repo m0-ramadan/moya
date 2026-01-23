@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Auth;
+namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -33,10 +33,10 @@ class PhoneLoginRequest extends FormRequest
     {
         $countryCode = $this->input('country_code', '+966');
         $phoneNumber = $this->input('phone_number');
-        
+
         // Remove leading zeros from phone number
         $phoneNumber = ltrim($phoneNumber, '0');
-        
+
         return $countryCode . $phoneNumber;
     }
 }

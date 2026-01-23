@@ -76,6 +76,7 @@ return [
         'api_key' => env('TAMARA_API_KEY'),
         'notification_token' => env('TAMARA_NOTIFICATION_TOKEN'),
         'webhook_token' => env('TAMARA_WEBHOOK_TOKEN'),
+        'api_token' => env('TAMARA_API_TOKEN'),
         'currency' => 'SAR',
     ],
 

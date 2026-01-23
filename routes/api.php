@@ -68,7 +68,7 @@ Route::prefix('v1')->group(function () {
 
             // دفع الطلبات
             Route::prefix('payments')->middleware(['auth:sanctum'])->group(function () {
-                Route::post('/orders/{order}/initiate', [PaymentOrdersController::class, 'initiatePayment']);
+                Route::post('/{order}/initiate', [PaymentOrdersController::class, 'initiatePayment']);
                 Route::get('/orders/{order}/status', [PaymentOrdersController::class, 'checkPaymentStatus']);
                 Route::post('/orders/{order}/refund', [PaymentOrdersController::class, 'refundPayment']);
                 Route::get('/methods', [PaymentOrdersController::class, 'getPaymentMethods']);
