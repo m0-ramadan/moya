@@ -263,4 +263,248 @@ class PaymentController extends Controller
         return redirect()->route('orders.index')
             ->with('warning', 'تم إلغاء عملية الدفع');
     }
+
+    /**
+     * Callback لـ Paymob
+     */
+    public function paymentCallbackPaymob(Request $request)
+    {
+        Log::channel('payment')->info('Paymob Callback Received', [
+            'query_params' => $request->query(),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        try {
+            // جمع البيانات من query parameters
+            $callbackData = $request->query();
+            
+            // تسجيل البيانات الكاملة للفحص
+            Log::channel('payment')->debug('Paymob Callback Full Data', $callbackData);
+
+            // استخراج معلومات الطلب
+            $merchantOrderId = $callbackData['merchant_order_id'] ?? null;
+            $success = filter_var($callbackData['success'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+            $pending = filter_var($callbackData['pending'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
+            $isAuth = filter_var($callbackData['is_auth'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+            $isCapture = filter_var($callbackData['is_capture'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+            $transactionId = $callbackData['id'] ?? null;
+            $amountCents = $callbackData['amount_cents'] ?? 0;
+            $amount = $amountCents / 100; // تحويل من سنتس إلى العملة
+
+            // التحقق من وجود معرف الطلب
+            if (!$merchantOrderId) {
+                Log::channel('payment')->error('Missing merchant_order_id in Paymob callback', $callbackData);
+            }
+
+            // البحث عن الطلب
+            $order = Order::find($merchantOrderId);
+            if (!$order) {
+                Log::channel('payment')->error('Order not found for Paymob callback', [
+                    'merchant_order_id' => $merchantOrderId,
+                ]);
+            }
+
+            // التحقق من حالة الدفع
+            if ($order->isPaid()) {
+                Log::channel('payment')->info('Order already paid, redirecting', [
+                    'order_id' => $order->id,
+                ]);
+            }
+
+            // بناء بيانات التحقق
+            $verificationData = [
+                'id' => $transactionId,
+                'merchant_order_id' => $merchantOrderId,
+                'success' => $success,
+                'pending' => $pending,
+                'is_auth' => $isAuth,
+                'is_capture' => $isCapture,
+                'amount_cents' => $amountCents,
+                'amount' => $amount,
+                'data' => $callbackData,
+            ];
+
+            Log::channel('payment')->info('Processing Paymob callback verification', [
+                'order_id' => $order->id,
+                'success' => $success,
+                'is_capture' => $isCapture,
+                'amount' => $amount,
+            ]);
+
+            // معالجة الدفع بناءً على الحالة
+            if ($success && $isCapture) {
+                // الدفع ناجح ومستلم
+                $this->processSuccessfulPayment($order, $verificationData);
+ 
+                    
+            } elseif ($success && !$isCapture && $pending) {
+                // الدفع معلق (لم يتم الاستلام بعد)
+                $this->processPendingPayment($order, $verificationData);
+                
+                    
+            } else {
+                // الدفع فاشل
+                $this->processFailedPayment($order, $verificationData);
+
+            }
+
+        } catch (\Exception $e) {
+            Log::channel('payment')->error('Paymob callback processing failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+            ]);
+        }
+    }
+
+    /**
+     * معالجة الدفع الناجح
+     */
+    private function processSuccessfulPayment(Order $order, array $paymentData): void
+    {
+        try {
+            // تحديث حالة الطلب
+            $order->update([
+                'payment_status' => Order::PAYMENT_STATUS_PAID,
+                'payment_transaction_id' => $paymentData['id'] ?? null,
+                'payment_method' => 'card',
+                'payment_gateway' => 'paymob',
+                'paid_at' => now(),
+                'payment_details' => array_merge(
+                    $order->payment_details ?? [],
+                    [
+                        'paymob_callback' => $paymentData,
+                        'verified_at' => now(),
+                        'status' => 'completed',
+                        'amount_paid' => $paymentData['amount'] ?? 0,
+                    ]
+                ),
+            ]);
+ 
+            // إرسال إشعار بالدفع الناجح
+            $this->sendPaymentSuccessNotification($order);
+
+            Log::channel('payment')->info('Paymob payment processed successfully', [
+                'order_id' => $order->id,
+                'transaction_id' => $paymentData['id'],
+                'amount' => $paymentData['amount'],
+            ]);
+
+        } catch (\Exception $e) {
+            Log::channel('payment')->error('Failed to process successful payment', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * معالجة الدفع المعلق
+     */
+    private function processPendingPayment(Order $order, array $paymentData): void
+    {
+        try {
+            $order->update([
+                'payment_status' => Order::PAYMENT_STATUS_PENDING,
+                'payment_transaction_id' => $paymentData['id'] ?? null,
+                'payment_method' => 'card',
+                'payment_gateway' => 'paymob',
+                'payment_details' => array_merge(
+                    $order->payment_details ?? [],
+                    [
+                        'paymob_callback' => $paymentData,
+                        'status' => 'pending',
+                        'pending_at' => now(),
+                        'amount' => $paymentData['amount'] ?? 0,
+                    ]
+                ),
+            ]);
+
+            Log::channel('payment')->info('Paymob payment marked as pending', [
+                'order_id' => $order->id,
+                'transaction_id' => $paymentData['id'],
+            ]);
+
+        } catch (\Exception $e) {
+            Log::channel('payment')->error('Failed to process pending payment', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * معالجة الدفع الفاشل
+     */
+    private function processFailedPayment(Order $order, array $paymentData): void
+    {
+        try {
+            $order->update([
+                'payment_status' => Order::PAYMENT_STATUS_FAILED,
+                'payment_details' => array_merge(
+                    $order->payment_details ?? [],
+                    [
+                        'paymob_callback' => $paymentData,
+                        'failed_at' => now(),
+                        'failure_reason' => 'Payment declined or failed',
+                        'status' => 'failed',
+                    ]
+                ),
+            ]);
+
+            Log::channel('payment')->warning('Paymob payment failed', [
+                'order_id' => $order->id,
+                'payment_data' => $paymentData,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::channel('payment')->error('Failed to process failed payment', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * إرسال إشعار بنجاح الدفع
+     */
+    private function sendPaymentSuccessNotification(Order $order): void
+    {
+        try {
+            if ($order->user) {
+                // إرسال إشعار داخلي
+                // $order->user->notify(new PaymentSuccessful($order));
+                
+                // يمكنك إضافة إشعار Firebase هنا إذا كان متوفراً
+                // $this->firebaseService->sendToDevice(...)
+            }
+
+            Log::channel('payment')->info('Payment success notification sent', [
+                'order_id' => $order->id,
+                'user_id' => $order->user_id,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::channel('payment')->error('Failed to send payment success notification', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * إضافة route لهذا الـ callback في routes/api.php:
+     * 
+     * Route::get('/payment/callback/paymob', [PaymentController::class, 'paymentCallbackPaymob'])
+     *     ->name('payment.callback.paymob');
+     * 
+     * وفي Paymob dashboard، اضبط Callback URL ليكون:
+     * https://yourdomain.com/api/v1/payment/callback/paymob
+     * 
+     * أو للـ success/cancel URLs:
+     * Success URL: https://yourdomain.com/api/v1/payment/success/paymob
+     * Cancel URL: https://yourdomain.com/api/v1/payment/cancel/paymob
+     */
 }

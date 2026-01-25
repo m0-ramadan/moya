@@ -2,10 +2,10 @@
 
 namespace App\Services\Payment\Gateways;
 
-use App\Contracts\Payment\PaymentGatewayInterface;
+use App\Contracts\Payment\PaymentGatewayInterface ;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 abstract class BaseGateway implements PaymentGatewayInterface
 {
@@ -13,6 +13,7 @@ abstract class BaseGateway implements PaymentGatewayInterface
     protected string $currency;
     protected bool $isSandbox;
     protected ?string $authToken = null;
+    protected string $baseUrl;
 
     public function __construct()
     {
@@ -38,11 +39,71 @@ abstract class BaseGateway implements PaymentGatewayInterface
     /**
      * Get auth token - دالة افتراضية يمكن تخطيها
      */
-    protected function getAuthToken(): ?string
+    protected function getAuthToken(string $gateway = null): ?string
     {
-        // Default implementation returns null
-        // الـ Child Classes تoverride إذا احتاجت
-        return $this->authToken;
+        $gatewayName = $gateway ?? $this->getGatewayName();
+
+        return match ($gatewayName) {
+            'paymob' => $this->getPaymobAuthToken(),
+            'tamara' => $this->getTamaraAuthToken(),
+            'tabby' => $this->getTabbyAuthToken(),
+            default => $this->fetchAuthToken(),
+        };
+    }
+
+protected function getPaymobAuthToken(): ?string
+{
+    $apiKey = config('services.paymob.api_key');
+
+    // تحقق من وجود API Key
+    if (empty($apiKey)) {
+        Log::channel('payment')->error('Paymob API Key not found');
+        return null;
+    }
+
+    try {
+        $response = Http::post('https://ksa.paymob.com/api/auth/tokens', [
+            'api_key' => $apiKey,
+        ]);
+
+        if (! $response->successful()) {
+            Log::channel('payment')->error('Paymob Auth Failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            return null;
+        }
+
+        $token = $response->json('token');
+
+        if (empty($token)) {
+            Log::channel('payment')->error('Paymob Auth Token not found in response', [
+                'response' => $response->body(),
+            ]);
+            return null;
+        }
+
+        // يمكنك تخزين التوكن في الكاش إذا أردت
+        // $this->cacheAuthToken($token);
+
+        return $token;
+    } catch (\Throwable $e) {
+        Log::channel('payment')->error('Paymob Auth Exception', [
+            'message' => $e->getMessage(),
+        ]);
+        return null;
+    }
+}
+
+
+    protected function getTamaraAuthToken(): ?string
+    {
+        return config('services.tamara.token');
+    }
+
+    protected function getTabbyAuthToken(): ?string
+    {
+        return config('services.tabby.secret_key');
     }
 
     /**
@@ -78,8 +139,8 @@ abstract class BaseGateway implements PaymentGatewayInterface
      */
     protected function makeRequest(string $method, string $endpoint, array $data = [], array $headers = []): array
     {
-        $url = $this->getBaseUrl() . $endpoint;
-
+        $url = $this->getBaseUrl().$endpoint;
+   
         // Add auth token if available
         $authToken = $this->getAuthToken();
         if ($authToken) {
@@ -130,7 +191,7 @@ abstract class BaseGateway implements PaymentGatewayInterface
 
             return [
                 'success' => false,
-                'error' => 'Gateway connection failed: ' . $e->getMessage(),
+                'error' => 'Gateway connection failed: '.$e->getMessage(),
                 'status' => 500,
             ];
         }
@@ -142,11 +203,12 @@ abstract class BaseGateway implements PaymentGatewayInterface
     protected function validateRequired(array $data, array $required): bool
     {
         foreach ($required as $field) {
-            if (!isset($data[$field]) || empty($data[$field])) {
+            if (! isset($data[$field]) || empty($data[$field])) {
                 Log::channel('payment')->warning("Missing required field: {$field}", $data);
                 return false;
             }
         }
+
         return true;
     }
 
@@ -173,7 +235,7 @@ abstract class BaseGateway implements PaymentGatewayInterface
      */
     protected function generateReferenceId(string $prefix = 'ORD'): string
     {
-        return $prefix . '-' . uniqid() . '-' . time();
+        return $prefix.'-'.uniqid().'-'.time();
     }
 
     /**
@@ -205,6 +267,13 @@ abstract class BaseGateway implements PaymentGatewayInterface
                 'sku' => $item['sku'] ?? '',
             ];
         }
+
         return $preparedItems;
     }
+
+    // Interface methods that need to be implemented by child classes
+    abstract public function createPaymentOrder(array $data): array;
+    abstract public function verifyTransaction(array $data): array;
+    abstract public function refund(string $transactionId, float $amount, string $reason = ''): array;
+    abstract public function getTransactionStatus(string $transactionId): array;
 }

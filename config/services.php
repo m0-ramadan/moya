@@ -51,8 +51,8 @@ return [
         'base_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com'),
 
         // Endpoints
-        'auth_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com') . '/api/auth/tokens',
-        'payment_links_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com') . '/api/ecommerce/payment-links',
+        'auth_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com').'/api/auth/tokens',
+        'payment_links_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com').'/api/ecommerce/payment-links',
 
         // Public key
         'public_key' => env('PAYMOB_PUBLIC_KEY'),
@@ -79,17 +79,31 @@ return [
         'api_token' => env('TAMARA_API_TOKEN'),
         'currency' => 'SAR',
     ],
-
     'tabby' => [
+        // بيئة Tabby (Sandbox / Production)
         'sandbox' => env('TABBY_SANDBOX', true),
+
+        // Merchant Info
         'merchant_code' => env('TABBY_MERCHANT_CODE'),
+
+        // Keys
         'secret_key' => env('TABBY_SECRET_KEY'),
+        'public_key' => env('TABBY_PUBLIC_KEY'),
+
+        // Webhook
         'webhook_secret' => env('TABBY_WEBHOOK_SECRET'),
+
         'currency' => 'SAR',
+        'base_url' => env('TABBY_SANDBOX', true)
+            ? 'https://api.tabby.ai/api/v1/sandbox'
+            : 'https://api.tabby.ai/api/v1',
     ],
 
-    'orders'=>[
-        'expiration_minutes'=> env('ORDERS_EXPIRATION_MINUTES', 10),
+    'orders' => [
+        'expiration_minutes' => env('ORDERS_EXPIRATION_MINUTES', 10),
+    ],
+    'region' => [
+        'default' => env('APP_TIMEZONE', 'asia/riyadh'),
     ],
 
 ];

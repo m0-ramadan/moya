@@ -60,13 +60,12 @@ class DriverOrderController extends Controller
                 $query->where('driver_id', $driver->id);
             }
         ])
-            ->where('order_status_id', 1) // معلق فقط
+            ->where('order_status_id', 1)->whereNull('order_date')
             ->whereNull('driver_id') // ليس له سائق بعد
             ->whereDoesntHave('offers', function ($query) use ($driver) {
                 $query->where('driver_id', $driver->id)
                     ->whereIn('status', ['pending', 'accepted']);
             });
-dd(1);
         // فلترة حسب الموقع (اختياري)
         if ($request->has(['latitude', 'longitude'])) {
             $latitude = $request->latitude;
@@ -95,7 +94,7 @@ dd(1);
         }
 
         // استبعاد الطلبات المنتهية الصلاحية
-        $expirationMinutes = config('orders.expiration_minutes', 5);
+        $expirationMinutes = config('services.orders.expiration_minutes', 5);
         $expiryTime = Carbon::now()->subMinutes($expirationMinutes);
 
         $query->where('created_at', '>=', $expiryTime);

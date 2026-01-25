@@ -1,38 +1,36 @@
 <?php
 
-use Pusher\Pusher;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\ArticleCategoryController;
+use App\Http\Controllers\Api\ArticleCommentController;
+use App\Http\Controllers\Api\ArticleController;
+use App\Http\Controllers\Api\ArticleInteractionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatController;
-use App\Http\Controllers\Api\Orders\OrderController;
-use App\Http\Controllers\Api\RatingController;
-use App\Http\Controllers\Api\SliderController;
-use App\Http\Controllers\Api\ArticleController;
-use App\Http\Controllers\Api\PaymentController;
-use App\Http\Controllers\Api\Orders\PaymentController as PaymentOrdersController;
-
-
-use App\Http\Controllers\Api\ServiceController;
-use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\ContactUsController;
-use App\Http\Controllers\Api\StaticPagesController;
+use App\Http\Controllers\Api\ContractController;
+use App\Http\Controllers\Api\Driver\DriverAuthController;
+use App\Http\Controllers\Api\Driver\DriverCurrentOrderController;
+use App\Http\Controllers\Api\Driver\DriverDashboardController;
+use App\Http\Controllers\Api\Driver\DriverOrderController;
+use App\Http\Controllers\Api\Driver\WalletController as DriverWalletController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\Orders\OrderController;
+use App\Http\Controllers\Api\Orders\PaymentController as PaymentOrdersController;
+use App\Http\Controllers\Api\Payment\PaymentCallbackController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\RatingController;
+use App\Http\Controllers\Api\SavedLocationController;
+use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\SliderController;
+use App\Http\Controllers\Api\StaticPagesController;
+use App\Http\Controllers\Api\User\WalletController as UserWalletController;
 use App\Http\Controllers\Api\VoiceMessageController;
 use App\Http\Controllers\Api\Website\HomeController;
 use App\Http\Controllers\Api\Website\PageController;
-use App\Http\Controllers\Api\SavedLocationController;
-use App\Http\Controllers\Api\ArticleCommentController;
-use App\Http\Controllers\Api\ArticleCategoryController;
-use App\Http\Controllers\Api\Driver\DriverAuthController;
-use App\Http\Controllers\Api\ArticleInteractionController;
-use App\Http\Controllers\Api\Driver\DriverOrderController;
 use App\Http\Controllers\Api\Website\UserAddressController;
-use App\Http\Controllers\Api\Driver\DriverDashboardController;
-use App\Http\Controllers\Api\Payment\PaymentCallbackController;
-use App\Http\Controllers\Api\Driver\DriverCurrentOrderController;
-use App\Http\Controllers\Api\User\WalletController as UserWalletController;
-use App\Http\Controllers\Api\Driver\WalletController as DriverWalletController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use Pusher\Pusher;
 
 Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
@@ -61,11 +59,6 @@ Route::prefix('v1')->group(function () {
             Route::get('/{orderId}/offers', [RatingController::class, 'getOrderOffers']);
             Route::get('/{orderId}/tracking', [DriverOrderController::class, 'getLiveTracking']);
 
-            // طرق الدفع الجديدة
-            // Route::post('/{orderId}/payment/initiate', [PaymentController::class, 'initiatePayment']);
-            // Route::get('/{orderId}/payment/status', [PaymentController::class, 'checkPaymentStatus']);
-            // Route::post('/{orderId}/payment/refund', [PaymentController::class, 'refundPayment']);
-
             // دفع الطلبات
             Route::prefix('payments')->middleware(['auth:sanctum'])->group(function () {
                 Route::post('/{order}/initiate', [PaymentOrdersController::class, 'initiatePayment']);
@@ -76,6 +69,7 @@ Route::prefix('v1')->group(function () {
 
             // Callback URLs
             Route::prefix('payment/callback')->group(function () {
+                Route::get('/paymob', [PaymentOrdersController::class, 'paymentCallbackPaymob'])->name('payment.callback.paymob');
                 Route::get('/success/{gateway}', [PaymentOrdersController::class, 'paymentSuccess'])->name('payment.callback.success');
                 Route::get('/failure/{gateway}', [PaymentOrdersController::class, 'paymentFailure'])->name('payment.callback.failure');
                 Route::get('/cancel/{gateway}', [PaymentOrdersController::class, 'paymentCancel'])->name('payment.callback.cancel');
@@ -205,7 +199,6 @@ Route::prefix('v1')->group(function () {
     Route::get('home', [HomeController::class, 'index']);
     Route::get('static-pages/{slug}', [StaticPagesController::class, 'index']);
 
-
     // المجموعة الرئيسية للمقالات
     Route::prefix('articles')->group(function () {
         // عرض المقالات
@@ -241,15 +234,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/{slug}/articles', [ArticleCategoryController::class, 'articles']);
     });
 
-
     // التعليقات العامة
     Route::prefix('comments')->middleware('auth:sanctum')->group(function () {
         Route::post('/{commentId}/like', [ArticleCommentController::class, 'like']);
     });
 
-
     Route::post('contact-us', [ContactUsController::class, 'store']);
-
 
     // حفظ عنوان
     Route::post('/locations', [SavedLocationController::class, 'store']);
@@ -271,7 +261,6 @@ Route::prefix('v1')->group(function () {
         Route::post('/transfer', [UserWalletController::class, 'transfer']);
     });
 
-
     // Driver wallet routes
     Route::middleware(['auth:sanctum', 'driver.only'])->prefix('driver/wallet')->group(function () {
         Route::get('/', [DriverWalletController::class, 'getBalance']);
@@ -282,8 +271,6 @@ Route::prefix('v1')->group(function () {
     // Payment callback
     // Route::middleware(['ip.whitelist:paymob'])->post('/payment/callback', [PaymentCallbackController::class, 'handle']);
     Route::post('/payment/callback', [PaymentCallbackController::class, 'handle']);
-
-
 
     // إضافة Routes للسائقين
     Route::prefix('driver')->group(function () {

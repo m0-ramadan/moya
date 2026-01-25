@@ -56,6 +56,7 @@ class OrderController extends Controller
                 'order_status_id'   => 1, // pending
                 'order_date'        => $validated['order_date'] ?? null,
                 'notes'             => $validated['notes'] ?? null,
+                'created_at'        => Carbon::now(),
             ]);
 
             DB::commit();
@@ -383,7 +384,7 @@ class OrderController extends Controller
      */
     private function scheduleOrderExpiration(Order $order)
     {
-        $expirationMinutes = config('orders.expiration_minutes', 5);
+        $expirationMinutes = config('services.orders.expiration_minutes', 5);
 
         // تأجيل job انتهاء الصلاحية
         ExpireOrderJob::dispatch($order)

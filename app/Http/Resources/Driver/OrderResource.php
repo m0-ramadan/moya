@@ -19,9 +19,9 @@ class OrderResource extends JsonResource
             'service' => $this->service->name,
             'water_type' => $this->waterType->name ?? null,
             'status' => [
-                'id' => $this->status->id,
-                'name' => $this->status->name,
-                'color' => $this->getStatusColor($this->status->id),
+                'id' => $this->status?->id,
+                'name' => $this->status?->name,
+                'color' => $this->getStatusColor($this->status?->id),
             ],
             'price' => $this->price,
             'location' => [
