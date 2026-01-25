@@ -66,7 +66,7 @@ class DriverOrderController extends Controller
                 $query->where('driver_id', $driver->id)
                     ->whereIn('status', ['pending', 'accepted']);
             });
-
+dd(1);
         // فلترة حسب الموقع (اختياري)
         if ($request->has(['latitude', 'longitude'])) {
             $latitude = $request->latitude;

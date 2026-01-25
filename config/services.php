@@ -88,4 +88,8 @@ return [
         'currency' => 'SAR',
     ],
 
+    'orders'=>[
+        'expiration_minutes'=> env('ORDERS_EXPIRATION_MINUTES', 10),
+    ],
+
 ];

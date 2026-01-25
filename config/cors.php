@@ -11,7 +11,7 @@ return [
         'http://72.62.25.136:3000',
         'https://talaaljazeera.com',
         'https://www.talaaljazeera.com',
-        'https://ecommerce-xo.vercel.app',
+        'https://moy2.vercel.app',
     ],
 
     'allowed_origins_patterns' => [],
