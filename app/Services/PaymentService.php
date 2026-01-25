@@ -135,7 +135,7 @@ class PaymentService
                 'amount' => $amount,
                 'wallet_currency' => 'SAR',
                 'order_id' => 'ORDER-' . $order->order_number,
-                'callback_url' => route('paymob.webhook'),
+                'callback_url' => route('payment.callback.handle'),
             ]);
 
             if (!$paymentResult['success']) {

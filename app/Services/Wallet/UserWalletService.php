@@ -86,7 +86,7 @@ class UserWalletService extends AbstractWalletService
             'amount' => $amount,
             'wallet_currency' => $wallet->currency,
             'order_id' => $orderId,
-            'callback_url' => route('paymob.webhook'),
+            'callback_url' => route('payment.callback.handle'),
         ]);
         if (! $paymentData['success']) {
             $pendingEntry->markFailed($paymentData['error']);
