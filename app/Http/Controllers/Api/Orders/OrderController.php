@@ -57,7 +57,7 @@ class OrderController extends Controller
                 'order_date'        => $validated['order_date'] ?? null,
                 'notes'             => $validated['notes'] ?? null,
                 'created_at'        => Carbon::now(),
-                'expires_at'        => now()->addMinutes(5),
+                'expires_at'        => now()->addMinutes(5)->toDateTimeString(),
 
             ]);
 
@@ -90,7 +90,7 @@ class OrderController extends Controller
             ->whereDoesntHave('orders', function ($query) {
                 $query->whereIn('order_status_id', [1, 2, 3, 4]); // الطلبات النشطة
             })
-            ->with('user.activeDeviceTokens')
+            ->with(relations: 'user.activeDeviceTokens')
             ->get();
 
         // إرسال إشعار Firebase لكل سائق
