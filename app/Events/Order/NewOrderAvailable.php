@@ -50,7 +50,7 @@ class NewOrderAvailable implements ShouldBroadcast
                 'estimated_price' => $this->order->price ?? null,
             ],
             'available_drivers_count' => $this->availableDriversCount,
-            'expires_at' => now()->addMinutes(5)->toDateTimeString(),
+            'expires_at' => optional($this->order->expires_at)->toDateTimeString(),
         ];
     }
 

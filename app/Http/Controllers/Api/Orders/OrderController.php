@@ -57,6 +57,8 @@ class OrderController extends Controller
                 'order_date'        => $validated['order_date'] ?? null,
                 'notes'             => $validated['notes'] ?? null,
                 'created_at'        => Carbon::now(),
+                'expires_at'        => now()->addMinutes(5),
+
             ]);
 
             DB::commit();
