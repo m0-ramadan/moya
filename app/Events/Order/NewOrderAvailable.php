@@ -69,7 +69,7 @@ class NewOrderAvailable implements ShouldBroadcast
     private function getAvailableDriversCount()
     {
         return \App\Models\Driver::where('is_active', true)
-            ->where('status', 'active')
+            ->where('is_verified', 1)
             ->whereDoesntHave('orders', function ($query) {
                 $query->whereIn('order_status_id', [1, 2, 3, 4]);
             })
