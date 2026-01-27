@@ -51,7 +51,12 @@ class Order extends Model
         'payment_details' => 'array',
         'paid_at' => 'datetime',
         'order_date' => 'datetime',
+        'expires_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
+
+
 
     // ================== الأساليب المساعدة ==================
 

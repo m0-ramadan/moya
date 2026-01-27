@@ -48,6 +48,9 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
+            // Get saved location details
+            $savedLocation = \App\Models\SavedLocation::findOrFail($validated['saved_location_id']);
+
             $order = Order::create([
                 'user_id'           => auth()->id(),
                 'service_id'        => $validated['service_id'],
@@ -57,11 +60,15 @@ class OrderController extends Controller
                 'order_date'        => $validated['order_date'] ?? null,
                 'notes'             => $validated['notes'] ?? null,
                 'created_at'        => Carbon::now(),
-                'expires_at'        => now()->addMinutes(5)->toDateTimeString(),
-
+                'expires_at'        => Carbon::now()->addMinutes(env('ORDER_EXPIRATION_MINUTES', 5)),
+                // Add price if needed
+                'price'            => null, // Will be set when driver accepts
             ]);
 
             DB::commit();
+
+            // Load relationships for the event
+            $order->load(['user', 'service', 'waterType', 'location']);
 
             // إذا كان الطلب غير مجدول (فوري)
             if (!$order->order_date) {
@@ -386,12 +393,22 @@ class OrderController extends Controller
      */
     private function scheduleOrderExpiration(Order $order)
     {
-        $expirationMinutes = config('services.orders.expiration_minutes', 5);
+        // Ensure expires_at is set
+        if (!$order->expires_at) {
+            $order->update([
+                'expires_at' => Carbon::now()->addMinutes(config('services.orders.expiration_minutes', 5))
+            ]);
+        }
 
-        // تأجيل job انتهاء الصلاحية
-        ExpireOrderJob::dispatch($order)
-            ->delay(now()->addMinutes($expirationMinutes))
-            ->onQueue('orders');
+        // Calculate delay in seconds
+        $delayInSeconds = Carbon::now()->diffInSeconds($order->expires_at, false);
+
+        // Only dispatch if not already expired
+        if ($delayInSeconds > 0) {
+            ExpireOrderJob::dispatch($order)
+                ->delay(now()->addSeconds($delayInSeconds))
+                ->onQueue('orders');
+        }
     }
 
     /**

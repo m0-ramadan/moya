@@ -130,6 +130,11 @@ class User extends Authenticatable
         return $this->hasMany(Contract::class);
     }
 
+    public function savedLocations()
+    {
+        return $this->hasMany(SavedLocation::class);
+    }
+
     // علاقة المستخدم مع المدفوعات
     public function payments()
     {

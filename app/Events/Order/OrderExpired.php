@@ -20,6 +20,9 @@ class OrderExpired implements ShouldBroadcast
     {
         $this->order = $order;
         $this->expiredAt = now();
+
+        // Load necessary relationships
+        $this->order->load(['user']);
     }
 
     public function broadcastOn()
@@ -51,7 +54,7 @@ class OrderExpired implements ShouldBroadcast
             'order_id' => $this->order->id,
             'status' => 'expired',
             'message' => 'انتهت صلاحية الطلب',
-            'expired_at' => $this->expiredAt->toDateTimeString(),
+            'expired_at' => $this->expiredAt->format('Y-m-d H:i:s'), // Consistent format
             'reason' => 'انتهت مدة الانتظار بدون تأكيد من المستخدم',
         ];
     }

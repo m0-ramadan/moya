@@ -34,33 +34,44 @@ class NewOrderAvailable implements ShouldBroadcast
 
     public function broadcastWith()
     {
+        // Load required relationships if not already loaded
+        $this->order->loadMissing([
+            'user',
+            'service',
+            'waterType',
+            'location',
+            'user.savedLocations' // Add this to get the saved location
+        ]);
+
+        // Get the saved location
+        $savedLocation = $this->order->location;
+
         return [
             'order' => [
                 'id' => $this->order->id,
                 'user_name' => $this->order->user->name,
-                'user_phone' => $this->order->user->phone,
+                'user_phone' => $this->order->user->phone, // Ensure phone is populated
                 'service_name' => $this->order->service->name,
-                'water_type' => $this->order->waterType->name ?? null,
+                'water_type' => $this->order->waterType ? $this->order->waterType->name : 'غير محدد', // Fix null case
                 'location' => [
-                    'address' => $this->order->location->address_details,
-                    'latitude' => $this->order->location->latitude,
-                    'longitude' => $this->order->location->longitude,
+                    'address' => $savedLocation ? $savedLocation->address_details : null,
+                    'latitude' => $savedLocation ? $savedLocation->latitude : null,
+                    'longitude' => $savedLocation ? $savedLocation->longitude : null,
                 ],
-                'created_at' => $this->order->created_at,
-                'estimated_price' => $this->order->price ?? null,
+                'created_at' => $this->order->created_at->toIso8601String(),
+                'estimated_price' => $this->order->price,
             ],
             'available_drivers_count' => $this->availableDriversCount,
-            'expires_at' => optional($this->order->expires_at)->toDateTimeString(),
+            'expires_at' => $this->order->expires_at ? $this->order->expires_at->toIso8601String() : null, // Fix date format
         ];
     }
 
     private function getAvailableDriversCount()
     {
-        // عدد السائقين المتاحين (ليس لديهم طلبات نشطة)
         return \App\Models\Driver::where('is_active', true)
             ->where('status', 'active')
             ->whereDoesntHave('orders', function ($query) {
-                $query->whereIn('order_status_id', [1, 2, 3, 4]); // الطلبات النشطة
+                $query->whereIn('order_status_id', [1, 2, 3, 4]);
             })
             ->count();
     }
