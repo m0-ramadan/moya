@@ -33,10 +33,10 @@ class DriverCurrentOrderController extends Controller
         $activeOrder = Order::with([
             'service',
             'waterType',
-            'location',
-            'status',
-            'user',
-            'acceptedOffer',
+            // 'location',
+            // 'status',
+            // 'user',
+            // 'acceptedOffer',
             'driverLocations' => function ($query) {
                 $query->orderBy('created_at', 'desc')->limit(10);
             },
@@ -45,7 +45,7 @@ class DriverCurrentOrderController extends Controller
             }
         ])
             ->where('driver_id', $driver->id)
-            ->whereIn('order_status_id', [1, 2, 3, 4]) // الطلبات النشطة
+            ->whereIn('order_status_id', [1, 2]) // الطلبات النشطة
             ->orderBy('created_at', 'desc')
             ->first();
 
@@ -163,7 +163,7 @@ class DriverCurrentOrderController extends Controller
                     ] : null,
                 ],
                 'actions' => $nextSteps,
-                'can_update_location' => in_array($activeOrder->order_status_id, [2, 3]), // مقبول أو جاري التوصيل
+                'can_update_location' => in_array($activeOrder->order_status_id, [2, 5]), // مقبول أو جاري التوصيل
                 'can_update_status' => true,
                 'can_contact_user' => true,
                 'has_chat' => $activeOrder->order_status_id >= 2,

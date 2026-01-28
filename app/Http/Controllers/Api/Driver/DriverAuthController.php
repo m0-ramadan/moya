@@ -129,6 +129,14 @@ class DriverAuthController extends Controller
                 return $this->errorResponse('رقم رخصة القيادة مسجل مسبقاً', 400);
             }
 
+            $existingLicense = Driver::where('id_number', $request->id_number)->exists();
+            if ($existingLicense) {
+                return $this->errorResponse('رقم الهوية مسجل مسبقاً', 400);
+            }
+            $existingLicense = Driver::where('national_id', $request->national_id)->exists();
+            if ($existingLicense) {
+                return $this->errorResponse('رقم الهوية مسجل مسبقاً', 400);
+            }
             // بدء المعاملة
             DB::beginTransaction();
 

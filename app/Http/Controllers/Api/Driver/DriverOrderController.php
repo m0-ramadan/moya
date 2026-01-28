@@ -42,7 +42,7 @@ class DriverOrderController extends Controller
 
         // التحقق من أن السائق ليس لديه طلبات نشطة
         $activeOrders = Order::where('driver_id', $driver->id)
-            ->whereIn('order_status_id', [1, 2, 3, 4])
+            ->whereIn('order_status_id', [1, 2])
             ->exists();
 
         if ($activeOrders) {
