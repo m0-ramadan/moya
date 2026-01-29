@@ -40,9 +40,9 @@ class DriverCurrentOrderController extends Controller
             'driverLocations' => function ($query) {
                 $query->orderBy('created_at', 'desc')->limit(10);
             },
-            'driver' => function ($query) {
-                $query->select('id', 'full_name', 'photo', 'total_orders', 'average_rating');
-            }
+            // 'driver' => function ($query) {
+            //     $query->select('id', 'full_name', 'photo', 'total_orders', 'average_rating');
+            // }
         ])
             ->where('driver_id', $driver->id)
             ->whereIn('order_status_id', [1, 2]) // الطلبات النشطة
