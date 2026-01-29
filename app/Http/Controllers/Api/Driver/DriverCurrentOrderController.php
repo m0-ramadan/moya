@@ -41,7 +41,7 @@ class DriverCurrentOrderController extends Controller
                 $query->orderBy('created_at', 'desc')->limit(10);
             },
             'driver' => function ($query) {
-                $query->select('id', 'user_id', 'full_name', 'photo', 'total_orders', 'average_rating');
+                $query->select('id', 'full_name', 'photo', 'total_orders', 'average_rating');
             }
         ])
             ->where('driver_id', $driver->id)
