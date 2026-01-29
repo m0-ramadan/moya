@@ -103,7 +103,7 @@ class DriverAuthController extends Controller
     {
         try {
             // التحقق من أن المستخدم مسجل
-            $user = auth()->guard('web')->user();
+            $user = auth()->user();
 
             if (!$user) {
                 return $this->errorResponse('يجب تسجيل الدخول أولاً', 401);
@@ -163,7 +163,7 @@ class DriverAuthController extends Controller
             // }
 
             // تحديث المستخدم ليكون سائق
-          //  $user->update(['type' => 'driver']);
+            $user->update(['type' => 'driver']);
 
             DB::commit();
 
