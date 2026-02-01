@@ -239,7 +239,7 @@ $driver = Driver::create([
 
     // المركبة
     'vehicle_size'                 => $validator->validated()['vehicle_size'] ?? null,
-    'is_vehicle_owner'             => $validator->validated()['is_vehicle_owner'] ?? null,
+    'is_vehicle_owner'             => (bool)$validator->validated()['is_vehicle_owner'] ?? null,
     'vehicle_plate_number'         => $validator->validated()['vehicle_plate_number'] ?? null,
     'vehicle_registration_number'  => $validator->validated()['vehicle_registration_number'] ?? null,
     'vehicle_residency_number'     => $validator->validated()['vehicle_residency_number'] ?? null,
