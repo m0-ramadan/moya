@@ -18,6 +18,7 @@ use App\Traits\UploadFileTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class DriverAuthController extends Controller
 {
@@ -96,89 +97,123 @@ class DriverAuthController extends Controller
     /**
      * تسجيل سائق جديد
      */
-    public function register(Request $request)
-    {
-        try {
-            // التحقق من أن المستخدم مسجل
-            $user = auth()->user();
-            Log::error('Driver registration : '.$request);
 
-            if (! $user) {
-                return $this->errorResponse('يجب تسجيل الدخول أولاً', 401);
-            }
 
-            // التحقق إذا كان المستخدم مسجل كسائق بالفعل
-            $existingDriver = $user->driver;
-            if ($existingDriver) {
-                return $this->errorResponse('أنت مسجل كسائق بالفعل', 400);
-            }
+public function register(Request $request)
+{
+    try {
+        // ✅ المستخدم الحالي
+        $user = auth()->user();
 
-            // التحقق من رقم الهوية إذا كان سعودي
-            if ($request->citizenship === 'saudi') {
-                $existingId = Driver::where('id_number', $request->id_number)->exists();
-                if ($existingId) {
-                    return $this->errorResponse('رقم الهوية مسجل مسبقاً', 400);
-                }
-            }
-
-            // التحقق من رقم رخصة القيادة
-            $existingLicense = Driver::where('license_number', $request->license_number)->exists();
-            if ($existingLicense) {
-                return $this->errorResponse('رقم رخصة القيادة مسجل مسبقاً', 400);
-            }
-
-            $existingLicense = Driver::where('id_number', $request->id_number)->exists();
-            if ($existingLicense) {
-                return $this->errorResponse('رقم الهوية مسجل مسبقاً', 400);
-            }
-            $existingLicense = Driver::where('national_id', $request->national_id)->exists();
-            if ($existingLicense) {
-                return $this->errorResponse('رقم الهوية مسجل مسبقاً', 400);
-            }
-            // بدء المعاملة
-            DB::beginTransaction();
-
-            // رفع الصور
-            $uploadedFiles = $this->uploadDriverDocuments($request, $user->id);
-
-            // إنشاء سجل السائق
-            $driverData = array_merge(
-                $request->validated(),
-                $uploadedFiles,
-                [
-                    'user_id' => $user->id,
-                    'is_verified' => false, // في انتظار المراجعة
-                    'is_active' => false,
-                ]
-            );
-
-            // إنشاء السائق
-            $driver = Driver::create($driverData);
-
-            // إنشاء مركبة إذا كانت هناك معلومات
-            // if ($request->has('vehicle_plate_number')) {
-            //     $this->createVehicle($driver->id, $request);
-            // }
-
-            // تحديث المستخدم ليكون سائق
-            $user->update(['type' => 'driver']);
-
-            DB::commit();
-
-            // إرسال إشعار للمسؤول
-            $this->sendAdminNotification($driver);
-
-            return $this->successResponse([
-                'driver' => new DriverResource($driver),
-                'message' => 'تم تسجيل طلبك بنجاح، سيتم مراجعة بياناتك خلال 24 ساعة',
-            ], 'تم تسجيل طلب التسجيل بنجاح');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Driver registration failed: '.$e->getMessage());
-
-            return $this->errorResponse('فشل تسجيل السائق: '.$e->getMessage(), 500);
+        if (! $user) {
+            return $this->errorResponse('يجب تسجيل الدخول أولاً', 401);
         }
+
+        // ✅ Validation
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:100',
+            'date_of_birth' => 'required|date',
+
+            'citizenship' => 'required|in:saudi,resident',
+            'country_id' => 'required_if:citizenship,resident|exists:countries,id',
+
+            // الهوية
+            'national_id' => 'required|string|max:20|unique:drivers,national_id',
+            'id_number' => 'required|string|max:20|unique:drivers,id_number',
+            'id_image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+            'id_image_back' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+
+            // رخصة القيادة
+            'license_number' => 'required|string|max:50|unique:drivers,license_number',
+            'issue_date' => 'required|date',
+            'expiry_date' => 'required|date|after:today',
+            'license_image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+            'license_image_back' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+
+            // الصورة الشخصية
+            'photo' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+
+            // المركبة
+            'vehicle_size' => 'required',
+            'is_vehicle_owner' => 'required|boolean',
+            'vehicle_plate_number' => 'required|string|max:20',
+            'vehicle_registration_number' => 'nullable|string|max:50',
+            'vehicle_registration_image' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+
+            // إضافي
+            'blood_type' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'driving_experience_years' => 'nullable|integer|min:1|max:50',
+            'is_smoker' => 'nullable|boolean',
+            'has_helper' => 'nullable|boolean',
+            'helper_count' => 'nullable|integer|min:0|max:5',
+
+            // الطوارئ
+            'emergency_contact_name' => 'nullable|string|max:100',
+            'emergency_contact_phone' => 'nullable|string|max:20',
+
+            // التفضيلات
+            'preferred_working_hours' => 'nullable|string',
+            'max_daily_orders' => 'nullable|integer|min:1|max:20',
+            'radius_km' => 'nullable|integer|min:5|max:100',
+
+            // البنك
+            'bank_name' => 'nullable|string|max:100',
+            'iban_number' => 'nullable|string|max:34',
+
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        // ✅ منع التسجيل المكرر
+        if ($user->driver) {
+            return $this->errorResponse('أنت مسجل كسائق بالفعل', 400);
+        }
+
+        DB::beginTransaction();
+
+        // ✅ رفع الملفات
+        $uploadedFiles = $this->uploadDriverDocuments($request, $user->id);
+
+        // ✅ إنشاء السائق
+        $driver = Driver::create(array_merge(
+            $validator->validated(),
+            $uploadedFiles,
+            [
+                'user_id' => $user->id,
+                'is_verified' => false,
+                'is_active' => false,
+            ]
+        ));
+
+        // ✅ تحديث نوع المستخدم
+        $user->update(['type' => 'driver']);
+
+        DB::commit();
+
+        // ✅ إشعار الأدمن (اختياري)
+        $this->sendAdminNotification($driver);
+
+        return $this->successResponse([
+            'driver' => $driver,
+        ], 'تم تسجيل طلبك بنجاح وسيتم مراجعته خلال 24 ساعة');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        Log::error('Driver registration failed', [
+            'error' => $e->getMessage(),
+            'request' => $request->all(),
+        ]);
+
+        return $this->errorResponse('فشل تسجيل السائق', 500);
     }
+}
+
 
     /**
      * إكمال ملف السائق (للسائقين المسجلين)
