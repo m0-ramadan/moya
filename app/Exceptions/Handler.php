@@ -69,7 +69,7 @@ class Handler extends ExceptionHandler
 
                 // 🔹 الحالة 4: أي خطأ عام آخر
                 return $this->errorResponse(
-                    config('app.debug') ? $e->getMessage() : 'حدث خطأ غير متوقع، برجاء المحاولة لاحقًا.',
+                    'حدث خطأ غير متوقع، برجاء المحاولة لاحقًا.'. $e->getMessage(),
                     500,
                     class_basename($e)
                 );
