@@ -104,6 +104,7 @@ class DriverAuthController extends Controller
         try {
             // التحقق من أن المستخدم مسجل
             $user = auth()->user();
+                Log::error('Driver registration : ' . $request->json());
 
             if (!$user) {
                 return $this->errorResponse('يجب تسجيل الدخول أولاً', 401);
@@ -176,7 +177,7 @@ class DriverAuthController extends Controller
             ], 'تم تسجيل طلب التسجيل بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            //    Log::error('Driver registration failed: ' . $e->getMessage());
+                Log::error('Driver registration failed: ' . $e->getMessage());
             return $this->errorResponse('فشل تسجيل السائق: ' . $e->getMessage(), 500);
         }
     }
