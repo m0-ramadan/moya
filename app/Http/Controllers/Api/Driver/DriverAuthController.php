@@ -99,17 +99,43 @@ class DriverAuthController extends Controller
      */
 
 
+
 public function register(Request $request)
 {
+    Log::info('Driver Register: request started');
+
     try {
-        // ✅ المستخدم الحالي
+        // 1️⃣ المستخدم الحالي
         $user = auth()->user();
+        Log::info('Driver Register: auth user', [
+            'user_id' => optional($user)->id,
+        ]);
 
         if (! $user) {
+            Log::warning('Driver Register: unauthenticated');
             return $this->errorResponse('يجب تسجيل الدخول أولاً', 401);
         }
 
-        // ✅ Validation
+        // 2️⃣ بيانات الريكوست (من غير الملفات)
+        Log::info('Driver Register: request data', [
+            'data' => $request->except([
+                'id_image',
+                'id_image_back',
+                'license_image',
+                'license_image_back',
+                'photo',
+                'vehicle_registration_image',
+            ]),
+        ]);
+
+        // 3️⃣ أسماء الملفات المرفوعة
+        Log::info('Driver Register: uploaded files', [
+            'files' => array_keys($request->allFiles()),
+        ]);
+
+        // 4️⃣ Validation
+        Log::info('Driver Register: validation started');
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:100',
             'date_of_birth' => 'required|date',
@@ -117,66 +143,74 @@ public function register(Request $request)
             'citizenship' => 'required|in:saudi,resident',
             'country_id' => 'required_if:citizenship,resident|exists:countries,id',
 
-            // الهوية
             'national_id' => 'required|string|max:20|unique:drivers,national_id',
             'id_number' => 'required|string|max:20|unique:drivers,id_number',
             'id_image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
             'id_image_back' => 'required|image|mimes:jpg,jpeg,png|max:5120',
 
-            // رخصة القيادة
             'license_number' => 'required|string|max:50|unique:drivers,license_number',
             'issue_date' => 'required|date',
             'expiry_date' => 'required|date|after:today',
             'license_image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
             'license_image_back' => 'required|image|mimes:jpg,jpeg,png|max:5120',
 
-            // الصورة الشخصية
             'photo' => 'required|image|mimes:jpg,jpeg,png|max:5120',
 
-            // المركبة
             'vehicle_size' => 'required',
             'is_vehicle_owner' => 'required',
             'vehicle_plate_number' => 'required|string|max:20',
             'vehicle_registration_number' => 'nullable|string|max:50',
             'vehicle_registration_image' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
 
-            // إضافي
-            'blood_type' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
-            'driving_experience_years' => 'nullable|integer|min:1|max:50',
-            'is_smoker' => 'nullable',
-            'has_helper' => 'nullable',
-            'helper_count' => 'nullable|integer|min:0|max:5',
-
-            // الطوارئ
             'emergency_contact_name' => 'nullable|string|max:100',
             'emergency_contact_phone' => 'nullable|string|max:20',
 
-            // التفضيلات
             'preferred_working_hours' => 'nullable|string',
             'max_daily_orders' => 'nullable|integer|min:1|max:20',
             'radius_km' => 'nullable|integer|min:5|max:100',
 
-            // البنك
             'bank_name' => 'nullable|string|max:100',
             'iban_number' => 'nullable|string|max:34',
-
         ]);
 
         if ($validator->fails()) {
+            Log::warning('Driver Register: validation failed', [
+                'errors' => $validator->errors(),
+            ]);
+
             return response()->json([
                 'status' => false,
+                'message' => 'Validation failed',
                 'errors' => $validator->errors(),
             ], 422);
         }
 
-        // ✅ منع التسجيل المكرر
+        Log::info('Driver Register: validation passed');
+
+        // 5️⃣ منع التكرار
         if ($user->driver) {
+            Log::warning('Driver Register: user already driver', [
+                'user_id' => $user->id,
+            ]);
+
             return $this->errorResponse('أنت مسجل كسائق بالفعل', 400);
         }
 
+        // 6️⃣ بدء المعاملة
         DB::beginTransaction();
+        Log::info('Driver Register: DB transaction started');
+
+        // 7️⃣ رفع الملفات
+        Log::info('Driver Register: uploading documents');
 
         $uploadedFiles = $this->uploadDriverDocuments($request, $user->id);
+
+        Log::info('Driver Register: documents uploaded', [
+            'files' => array_keys($uploadedFiles),
+        ]);
+
+        // 8️⃣ إنشاء السائق
+        Log::info('Driver Register: creating driver');
 
         $driver = Driver::create(array_merge(
             $validator->validated(),
@@ -188,13 +222,28 @@ public function register(Request $request)
             ]
         ));
 
-        // ✅ تحديث نوع المستخدم
+        Log::info('Driver Register: driver created', [
+            'driver_id' => $driver->id,
+        ]);
+
+        // 9️⃣ تحديث المستخدم
         $user->update(['type' => 'driver']);
+        Log::info('Driver Register: user updated to driver', [
+            'user_id' => $user->id,
+        ]);
 
         DB::commit();
+        Log::info('Driver Register: DB transaction committed');
 
-        // ✅ إشعار الأدمن (اختياري)
-        $this->sendAdminNotification($driver);
+        // 🔟 إشعار الأدمن
+        try {
+            $this->sendAdminNotification($driver);
+            Log::info('Driver Register: admin notified');
+        } catch (\Exception $e) {
+            Log::error('Driver Register: admin notification failed', [
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return $this->successResponse([
             'driver' => $driver,
@@ -203,14 +252,15 @@ public function register(Request $request)
     } catch (\Exception $e) {
         DB::rollBack();
 
-        Log::error('Driver registration failed', [
+        Log::error('Driver Register: exception occurred', [
             'error' => $e->getMessage(),
-            'request' => $request->all(),
+            'trace' => $e->getTraceAsString(),
         ]);
 
         return $this->errorResponse('فشل تسجيل السائق', 500);
     }
 }
+
 
 
     /**
