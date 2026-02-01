@@ -2,25 +2,22 @@
 
 namespace App\Http\Controllers\Api\Driver;
 
-
-use App\Models\User;
-use App\Models\Driver;
+use App\DataTransferObjects\PhoneLoginData;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\VerifyOtpRequest;
+use App\Http\Requests\Driver\CompleteProfileRequest;
+use App\Http\Requests\Driver\RegisterDriverRequest;
+use App\Http\Resources\Driver\CountryResource;
+use App\Http\Resources\Driver\DriverResource;
 use App\Models\Country;
+use App\Models\Driver;
 use App\Models\Vehicle;
-use Illuminate\Http\Request;
 use App\Services\AuthService;
-use App\Traits\UploadFileTrait;
 use App\Traits\ApiResponseTrait;
+use App\Traits\UploadFileTrait;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
-use App\DataTransferObjects\PhoneLoginData;
-use App\Http\Requests\Auth\VerifyOtpRequest;
-use App\Http\Resources\Driver\DriverResource;
-use App\Services\FirebaseNotificationService;
-use App\Http\Resources\Driver\CountryResource;
-use App\Http\Requests\Driver\RegisterDriverRequest;
-use App\Http\Requests\Driver\CompleteProfileRequest;
 
 class DriverAuthController extends Controller
 {
@@ -83,7 +80,7 @@ class DriverAuthController extends Controller
                     'phone' => $user->full_phone,
                     'name' => $user->name,
                     'is_verified' => $user->isPhoneVerified(),
-                    'is_driver' => !is_null($driver),
+                    'is_driver' => ! is_null($driver),
                     'driver_status' => $driver ? $driver->status : null,
                     'driver_is_verified' => $driver ? $driver->is_verified : false,
                 ],
@@ -99,14 +96,14 @@ class DriverAuthController extends Controller
     /**
      * تسجيل سائق جديد
      */
-    public function register(RegisterDriverRequest $request)
+    public function register(Request $request)
     {
         try {
             // التحقق من أن المستخدم مسجل
             $user = auth()->user();
-                Log::error('Driver registration : ' . $request->json());
+            Log::error('Driver registration : '.$request->json());
 
-            if (!$user) {
+            if (! $user) {
                 return $this->errorResponse('يجب تسجيل الدخول أولاً', 401);
             }
 
@@ -177,8 +174,9 @@ class DriverAuthController extends Controller
             ], 'تم تسجيل طلب التسجيل بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-                Log::error('Driver registration failed: ' . $e->getMessage());
-            return $this->errorResponse('فشل تسجيل السائق: ' . $e->getMessage(), 500);
+            Log::error('Driver registration failed: '.$e->getMessage());
+
+            return $this->errorResponse('فشل تسجيل السائق: '.$e->getMessage(), 500);
         }
     }
 
@@ -191,7 +189,7 @@ class DriverAuthController extends Controller
             $user = $request->user();
             $driver = $user->driver;
 
-            if (!$driver) {
+            if (! $driver) {
                 return $this->errorResponse('لم يتم العثور على بيانات السائق', 404);
             }
 
@@ -202,7 +200,7 @@ class DriverAuthController extends Controller
             // رفع الصور المحدثة
             if ($request->hasFile('photo')) {
                 $this->deleteOldFile($driver->personal_photo);
-                $data['personal_photo'] = $this->uploadProfilePhoto($request->file('photo'),  intval($driver->id));
+                $data['personal_photo'] = $this->uploadProfilePhoto($request->file('photo'), intval($driver->id));
             }
 
             if ($request->hasFile('id_image')) {
@@ -216,7 +214,7 @@ class DriverAuthController extends Controller
             }
             if ($request->has('name') || $request->hasFile('photo')) {
                 $this->deleteOldFile($user->avatar);
-                $photo = $this->uploadProfilePhoto($request->file('photo'),  intval($driver->id));
+                $photo = $this->uploadProfilePhoto($request->file('photo'), intval($driver->id));
 
                 $user->update(['name' => $request->name, 'avatar' => $photo]);
             }
@@ -246,7 +244,8 @@ class DriverAuthController extends Controller
             ], 'تم تحديث الملف الشخصي بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            return $this->errorResponse('فشل تحديث الملف الشخصي: ' . $e->getMessage(), 500);
+
+            return $this->errorResponse('فشل تحديث الملف الشخصي: '.$e->getMessage(), 500);
         }
     }
 
@@ -258,7 +257,7 @@ class DriverAuthController extends Controller
         $user = $request->user();
         $driver = $user->driver()->first();
 
-        if (!$driver) {
+        if (! $driver) {
             return $this->errorResponse('لم يتم العثور على بيانات السائق', 404);
         }
 
@@ -299,7 +298,7 @@ class DriverAuthController extends Controller
         $user = $request->user();
         $driver = $user->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return $this->successResponse([
                 'is_registered' => false,
                 'message' => 'لم يتم تسجيلك كسائق بعد',
@@ -393,12 +392,12 @@ class DriverAuthController extends Controller
                 ->pluck('token')
                 ->toArray();
 
-            if (!empty($adminTokens)) {
+            if (! empty($adminTokens)) {
                 $firebaseService = app(\App\Services\FirebaseNotificationService::class);
 
                 $firebaseService->sendToMultipleDevices($adminTokens, [
                     'title' => 'طلب تسجيل سائق جديد',
-                    'body' => 'تم تقديم طلب تسجيل سائق جديد: ' . $driver->full_name,
+                    'body' => 'تم تقديم طلب تسجيل سائق جديد: '.$driver->full_name,
                     'image' => null,
                 ], [
                     'driver_id' => $driver->id,
@@ -410,14 +409,14 @@ class DriverAuthController extends Controller
             // تسجيل في قاعدة البيانات
             DB::table('admin_notifications')->insert([
                 'title' => 'طلب تسجيل سائق جديد',
-                'message' => 'تم تقديم طلب تسجيل سائق جديد: ' . $driver->full_name,
+                'message' => 'تم تقديم طلب تسجيل سائق جديد: '.$driver->full_name,
                 'type' => 'driver_registration',
                 'data' => json_encode(['driver_id' => $driver->id]),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to send admin notification: ' . $e->getMessage());
+            Log::error('Failed to send admin notification: '.$e->getMessage());
         }
     }
 
@@ -446,7 +445,7 @@ class DriverAuthController extends Controller
             'id_image_back',
             'license_image',
             'license_image_back',
-            'vehicle_registration_image'
+            'vehicle_registration_image',
         ];
 
         $completed = 0;
@@ -454,14 +453,14 @@ class DriverAuthController extends Controller
 
         // التحقق من الحقول المطلوبة
         foreach ($requiredFields as $field) {
-            if (!empty($driver->$field)) {
+            if (! empty($driver->$field)) {
                 $completed++;
             }
         }
 
         // التحقق من المستندات
         foreach ($documentFields as $field) {
-            if (!empty($driver->$field) && file_exists(public_path($driver->$field))) {
+            if (! empty($driver->$field) && file_exists(public_path($driver->$field))) {
                 $completed++;
             }
         }
@@ -486,7 +485,7 @@ class DriverAuthController extends Controller
         $missing = [];
 
         foreach ($documents as $field => $name) {
-            if (empty($driver->$field) || !file_exists(public_path($driver->$field))) {
+            if (empty($driver->$field) || ! file_exists(public_path($driver->$field))) {
                 $missing[] = $name;
             }
         }
