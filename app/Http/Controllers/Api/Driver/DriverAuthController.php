@@ -211,16 +211,51 @@ public function register(Request $request)
 
         // 8️⃣ إنشاء السائق
         Log::info('Driver Register: creating driver');
+$driver = Driver::create([
 
-        $driver = Driver::create(array_merge(
-            $validator->validated(),
-            $uploadedFiles,
-            [
-                'user_id' => $user->id,
-                'is_verified' => false,
-                'is_active' => false,
-            ]
-        ));
+    // الربط بالمستخدم
+    'user_id' => $user->id,
+
+    // الجنسية
+    'citizenship' => $validator->validated()['citizenship'] ?? null,
+    'country_id'  => $validator->validated()['country_id'] ?? null,
+
+    // بيانات شخصية
+    'date_of_birth' => $validator->validated()['date_of_birth'] ?? null,
+    'national_id'   => $validator->validated()['national_id'] ?? null,
+    'iqama_number'  => $validator->validated()['iqama_number'] ?? null,
+    'iqama_expiry_date' => $validator->validated()['iqama_expiry_date'] ?? null,
+
+    // الصور
+    'personal_photo' => $uploadedFiles['personal_photo'] ?? null,
+    'id_image_front' => $uploadedFiles['id_image_front'] ?? null,
+    'id_image_back'  => $uploadedFiles['id_image_back'] ?? null,
+
+    // رخصة القيادة
+    'license_number'       => $validator->validated()['license_number'] ?? null,
+    'license_expiry_date'  => $validator->validated()['license_expiry_date'] ?? null,
+    'license_image_front'  => $uploadedFiles['license_image_front'] ?? null,
+    'license_image_back'   => $uploadedFiles['license_image_back'] ?? null,
+
+    // المركبة
+    'vehicle_size'                 => $validator->validated()['vehicle_size'] ?? null,
+    'is_vehicle_owner'             => $validator->validated()['is_vehicle_owner'] ?? null,
+    'vehicle_plate_number'         => $validator->validated()['vehicle_plate_number'] ?? null,
+    'vehicle_registration_number'  => $validator->validated()['vehicle_registration_number'] ?? null,
+    'vehicle_residency_number'     => $validator->validated()['vehicle_residency_number'] ?? null,
+
+    // رخصة السير
+    'vehicle_registration_image' => $uploadedFiles['vehicle_registration_image'] ?? null,
+
+    // التحقق والحالة
+    'is_verified' => false,
+    'verified_at' => null,
+    'rejection_reason' => null,
+
+    'status'    => 'pending',
+    'is_active' => false,
+]);
+
 
         Log::info('Driver Register: driver created', [
             'driver_id' => $driver->id,
