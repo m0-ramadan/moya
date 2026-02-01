@@ -252,7 +252,7 @@ $driver = Driver::create([
     'verified_at' => null,
     'rejection_reason' => null,
 
-    'status'    => 'pending',
+    'status'    => 'saudi',
     'is_active' => false,
 ]);
 
