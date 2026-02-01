@@ -176,10 +176,8 @@ public function register(Request $request)
 
         DB::beginTransaction();
 
-        // ✅ رفع الملفات
         $uploadedFiles = $this->uploadDriverDocuments($request, $user->id);
 
-        // ✅ إنشاء السائق
         $driver = Driver::create(array_merge(
             $validator->validated(),
             $uploadedFiles,
