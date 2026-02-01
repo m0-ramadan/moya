@@ -419,8 +419,7 @@ public function register(Request $request)
     {
         try {
             // إرسال إشعار Firebase للمسؤولين
-            $adminTokens = \App\Models\User::where('is_admin', true)
-                ->with('activeDeviceTokens')
+            $adminTokens = \App\Models\User::with('activeDeviceTokens')
                 ->get()
                 ->pluck('activeDeviceTokens')
                 ->flatten()
