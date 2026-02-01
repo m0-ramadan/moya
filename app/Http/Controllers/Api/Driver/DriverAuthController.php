@@ -101,7 +101,7 @@ class DriverAuthController extends Controller
         try {
             // التحقق من أن المستخدم مسجل
             $user = auth()->user();
-            Log::error('Driver registration : '.$request->json());
+            Log::error('Driver registration : '.$request);
 
             if (! $user) {
                 return $this->errorResponse('يجب تسجيل الدخول أولاً', 401);
