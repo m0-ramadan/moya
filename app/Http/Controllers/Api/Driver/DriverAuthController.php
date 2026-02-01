@@ -135,7 +135,7 @@ public function register(Request $request)
 
             // المركبة
             'vehicle_size' => 'required',
-            'is_vehicle_owner' => 'required|boolean',
+            'is_vehicle_owner' => 'required',
             'vehicle_plate_number' => 'required|string|max:20',
             'vehicle_registration_number' => 'nullable|string|max:50',
             'vehicle_registration_image' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
@@ -143,8 +143,8 @@ public function register(Request $request)
             // إضافي
             'blood_type' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
             'driving_experience_years' => 'nullable|integer|min:1|max:50',
-            'is_smoker' => 'nullable|boolean',
-            'has_helper' => 'nullable|boolean',
+            'is_smoker' => 'nullable',
+            'has_helper' => 'nullable',
             'helper_count' => 'nullable|integer|min:0|max:5',
 
             // الطوارئ
