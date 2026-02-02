@@ -1,17 +1,19 @@
 <?php
+
 // app/Http/Controllers/Api/AuthController.php
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\User;
-use Illuminate\Http\Request;
-use App\Services\AuthService;
-use App\Traits\ApiResponseTrait;
-use App\Http\Controllers\Controller;
 use App\DataTransferObjects\PhoneLoginData;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\PhoneLoginRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Http\Resources\AppUser\UserResource;
-use App\Http\Requests\Auth\PhoneLoginRequest;
+use App\Models\DeviceToken;
+use App\Models\User;
+use App\Services\AuthService;
+use App\Traits\ApiResponseTrait;
+use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
@@ -31,6 +33,7 @@ class AuthController extends Controller
             $dto = PhoneLoginData::fromRequest($request);
 
             $res = $this->authService->sendOtp($dto, $request);
+
             return $this->successResponse([
                 'phone' => $res['phone'],
                 'method' => $res['method'],
@@ -49,6 +52,10 @@ class AuthController extends Controller
             $otp = $request->input('otp');
 
             $res = $this->authService->verifyOtp($fullPhone, $otp);
+            $deviceToken = DeviceToken::where('session_id', $request->input('session_id'))->first();
+            if ($deviceToken) {
+                $deviceToken->update(['user_id' => $res['user']->id]);
+            }
 
             return $this->successResponse([
                 'user' => [
@@ -58,7 +65,7 @@ class AuthController extends Controller
                     'is_verified' => true,
                 ],
                 'token' => $res['token'],
-                'token_type' => 'Bearer'
+                'token_type' => 'Bearer',
             ], 'تم التحقق من رمز OTP بنجاح');
         } catch (\Exception $e) {
             return $this->validationError(['otp' => [$e->getMessage()]]);
@@ -87,15 +94,15 @@ class AuthController extends Controller
         $user->update($data);
 
         return $this->successResponse([
-            'user' => new UserResource($user)
+            'user' => new UserResource($user),
         ], 'تم إكمال الملف الشخصي بنجاح');
     }
-
 
     // Logout (current token)
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()?->delete();
+
         return $this->successResponse(null, 'تم تسجيل الخروج بنجاح');
     }
 
@@ -110,7 +117,7 @@ class AuthController extends Controller
     {
         $request->validate(['phone_number' => ['required', 'string']]);
         $fullPhone = $request->input('phone_number');
-        if (!$this->authService->canResend($fullPhone)) {
+        if (! $this->authService->canResend($fullPhone)) {
             return $this->errorResponse('طلبات رمز التحقق كثيرة جدًا. الرجاء المحاولة لاحقًا .', 429);
         }
 
@@ -121,6 +128,7 @@ class AuthController extends Controller
             $parts = $this->splitFullPhone($fullPhone);
             $dto = new PhoneLoginData($parts['country_code'], $parts['phone_number']);
             $res = $this->authService->sendOtp($dto, $request);
+
             return $this->successResponse(['phone' => $res['phone'], 'method' => $res['method']], 'OTP resent');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);
@@ -140,8 +148,10 @@ class AuthController extends Controller
                 $cc = substr($full, 0, 3);
                 $rest = ltrim(substr($full, 3), '+');
             }
+
             return ['country_code' => $cc, 'phone_number' => $rest];
         }
+
         return ['country_code' => '+966', 'phone_number' => $full];
     }
 
@@ -160,7 +170,7 @@ class AuthController extends Controller
             'user' => [
                 'id' => $user->id,
                 'allow_notifications' => $user->allow_notifications,
-            ]
+            ],
         ], 'تم تحديث إعدادات الإشعارات بنجاح');
     }
 }
