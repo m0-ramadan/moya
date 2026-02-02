@@ -175,12 +175,14 @@ Route::prefix('v1')->group(function () {
 
             return $pusher->socket_auth($request->channel_name, $request->socket_id);
         });
-            Route::prefix('auth')->group(function () {
+        Route::prefix('auth')->group(function () {
+            Route::post('/complete-profile', [AuthController::class, 'completeProfile']);
+        });
+    });
+    Route::prefix('auth')->group(function () {
         Route::post('/send-otp', [AuthController::class, 'sendOtp']);
         Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
         Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
-        Route::post('/complete-profile', [AuthController::class, 'completeProfile']);
-    });
     });
     Route::get('/services', [ServiceController::class, 'index']);
     Route::get('/type-water', [ServiceController::class, 'typeWater']);
@@ -272,13 +274,13 @@ Route::prefix('v1')->group(function () {
     // Route::middleware(['ip.whitelist:paymob'])->post('/payment/callback', [PaymentCallbackController::class, 'handle']);
     Route::post('/payment/callback', [PaymentCallbackController::class, 'handle'])->name('payment.callback.handle');
 
-            // Callback URLs
-            Route::prefix('orders/payment/callback')->group(function () {
-                Route::get('/paymob', [PaymentOrdersController::class, 'paymentCallbackPaymob'])->name('payment.callback.paymob');
-                Route::get('/success/{gateway}', [PaymentOrdersController::class, 'paymentSuccess'])->name('payment.callback.success');
-                Route::get('/failure/{gateway}', [PaymentOrdersController::class, 'paymentFailure'])->name('payment.callback.failure');
-                Route::get('/cancel/{gateway}', [PaymentOrdersController::class, 'paymentCancel'])->name('payment.callback.cancel');
-            });
+    // Callback URLs
+    Route::prefix('orders/payment/callback')->group(function () {
+        Route::get('/paymob', [PaymentOrdersController::class, 'paymentCallbackPaymob'])->name('payment.callback.paymob');
+        Route::get('/success/{gateway}', [PaymentOrdersController::class, 'paymentSuccess'])->name('payment.callback.success');
+        Route::get('/failure/{gateway}', [PaymentOrdersController::class, 'paymentFailure'])->name('payment.callback.failure');
+        Route::get('/cancel/{gateway}', [PaymentOrdersController::class, 'paymentCancel'])->name('payment.callback.cancel');
+    });
 
     // إضافة Routes للسائقين
     Route::prefix('driver')->group(function () {
@@ -307,7 +309,7 @@ Route::prefix('v1')->group(function () {
         });
     });
     // في routes/api.php
-  //  Route::post('/paymob/webhook', [PaymentController::class, 'handleWebhook'])->name('paymob.webhook');
+    //  Route::post('/paymob/webhook', [PaymentController::class, 'handleWebhook'])->name('paymob.webhook');
     Route::get('/payment-methods', [PaymentOrdersController::class, 'getPaymentMethods']);
 
     // تحديث Middleware للسائقين
