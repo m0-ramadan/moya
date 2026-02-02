@@ -175,6 +175,12 @@ Route::prefix('v1')->group(function () {
 
             return $pusher->socket_auth($request->channel_name, $request->socket_id);
         });
+            Route::prefix('auth')->group(function () {
+        Route::post('/send-otp', [AuthController::class, 'sendOtp']);
+        Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+        Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
+        Route::post('/complete-profile', [AuthController::class, 'completeProfile']);
+    });
     });
     Route::get('/services', [ServiceController::class, 'index']);
     Route::get('/type-water', [ServiceController::class, 'typeWater']);
@@ -183,12 +189,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/banners', [SliderController::class, 'banners']);
 
-    Route::prefix('auth')->group(function () {
-        Route::post('/send-otp', [AuthController::class, 'sendOtp']);
-        Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
-        Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
-        Route::post('/complete-profile', [AuthController::class, 'completeProfile']);
-    });
+
 
     Route::get('home', [HomeController::class, 'index']);
     Route::get('static-pages/{slug}', [StaticPagesController::class, 'index']);

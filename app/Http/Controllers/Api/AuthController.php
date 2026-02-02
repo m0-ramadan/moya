@@ -75,14 +75,15 @@ class AuthController extends Controller
     // Complete profile
     public function completeProfile(Request $request)
     {
+
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif', 'max:2048'], // 2MB max
             'email' => ['nullable', 'email', 'max:255'],
         ]);
 
-        $user = $request->user();
-
+        $user = auth()->user();
         $data = $request->only(['name', 'email']);
 
         // لو فيه صورة
