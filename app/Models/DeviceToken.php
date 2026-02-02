@@ -16,7 +16,7 @@ class DeviceToken extends Model
         'device_name',
         'device_model',
         'app_version',
-        'is_active',
+        'is_active','session_id'
     ];
 
     protected $casts = [

@@ -439,6 +439,7 @@ class NotificationController extends Controller
             [
                 'user_id'      => $user?->id, // 👈 مهم
                 'device_type'  => $request->device_type,
+                'session_id'   => $request->session_id,
                 'device_name'  => $request->device_name,
                 'device_model' => $request->device_model,
                 'app_version'  => $request->app_version,
