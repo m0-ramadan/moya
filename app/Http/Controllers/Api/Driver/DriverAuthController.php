@@ -147,7 +147,8 @@ class DriverAuthController extends Controller
 
                 'license_number' => 'required|string|max:50|unique:drivers,license_number',
                 'issue_date' => 'required|date',
-                'expiry_date' => 'required|date|after:today',
+                // 'expiry_date' => 'required|date|after:today',
+                'expiry_date' => 'required|date',
                 'license_image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
                 'license_image_back' => 'required|image|mimes:jpg,jpeg,png|max:5120',
 
@@ -273,7 +274,6 @@ class DriverAuthController extends Controller
             return $this->successResponse([
                 'driver' => $driver,
             ], 'تم تسجيل طلبك بنجاح وسيتم مراجعته خلال 24 ساعة');
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -351,7 +351,7 @@ class DriverAuthController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return $this->errorResponse('فشل تحديث الملف الشخصي: '.$e->getMessage(), 500);
+            return $this->errorResponse('فشل تحديث الملف الشخصي: ' . $e->getMessage(), 500);
         }
     }
 
@@ -502,7 +502,7 @@ class DriverAuthController extends Controller
 
                 $firebaseService->sendToMultipleDevices($adminTokens, [
                     'title' => 'طلب تسجيل سائق جديد',
-                    'body' => 'تم تقديم طلب تسجيل سائق جديد: '.$driver->full_name,
+                    'body' => 'تم تقديم طلب تسجيل سائق جديد: ' . $driver->full_name,
                     'image' => null,
                 ], [
                     'driver_id' => $driver->id,
@@ -514,14 +514,14 @@ class DriverAuthController extends Controller
             // تسجيل في قاعدة البيانات
             DB::table('admin_notifications')->insert([
                 'title' => 'طلب تسجيل سائق جديد',
-                'message' => 'تم تقديم طلب تسجيل سائق جديد: '.$driver->full_name,
+                'message' => 'تم تقديم طلب تسجيل سائق جديد: ' . $driver->full_name,
                 'type' => 'driver_registration',
                 'data' => json_encode(['driver_id' => $driver->id]),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to send admin notification: '.$e->getMessage());
+            Log::error('Failed to send admin notification: ' . $e->getMessage());
         }
     }
 
