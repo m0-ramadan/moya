@@ -200,6 +200,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('home', [HomeController::class, 'index']);
     Route::get('static-pages/{slug}', [StaticPagesController::class, 'index']);
+    Route::get('faq', [StaticPagesController::class, 'getFaq']);
 
 
     // المجموعة الرئيسية للمقالات
