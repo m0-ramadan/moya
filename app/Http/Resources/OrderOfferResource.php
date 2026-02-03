@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Driver;
 use App\Http\Resources\Driver\DriverResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Driver\DriverShortResource;
@@ -16,6 +17,7 @@ class OrderOfferResource extends JsonResource
      */
     public function toArray($request)
     {
+        $driver=Driver::find($this->driver_id);
 
         return [
             'id' => $this->id,
