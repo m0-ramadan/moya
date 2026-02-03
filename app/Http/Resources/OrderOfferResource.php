@@ -17,7 +17,7 @@ class OrderOfferResource extends JsonResource
      */
     public function toArray($request)
     {
-        $driver=Driver::find($this->driver_id);
+        $driver=Driver::findOrFail($this->driver_id);
 
         return [
             'id' => $this->id,
@@ -29,7 +29,7 @@ class OrderOfferResource extends JsonResource
             'created_at' => $this->created_at->toDateTimeString(),
             'updated_at' => $this->updated_at->toDateTimeString(),
             // Include related models if needed
-            'driver' =>new DriverShortResource($this->driver)  ,
+            'driver' =>new DriverShortResource($driver)  ,
         ];
     }
 }
