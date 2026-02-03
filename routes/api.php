@@ -104,7 +104,7 @@ Route::prefix('v1')->group(function () {
                     Route::post('/{orderId}/rate-user', [RatingController::class, 'rateUser']);
 
                     // تحديث وجلب موقع السائق
-                    Route::prefix('/location')->group(function () {
+                    Route::prefix('location')->group(function () {
                         Route::post('/update', [DriverLocationController::class, 'updateLocation']);
                         Route::get('/current', [DriverLocationController::class, 'getCurrentLocation']);
                     });
