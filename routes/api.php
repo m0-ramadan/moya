@@ -5,19 +5,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatController;
-use App\Http\Controllers\Api\Orders\OrderController;
 use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\SliderController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\PaymentController;
-use App\Http\Controllers\Api\Orders\PaymentController as PaymentOrdersController;
-
-
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\ContractController;
+
+
 use App\Http\Controllers\Api\ContactUsController;
 use App\Http\Controllers\Api\StaticPagesController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\Orders\OrderController;
 use App\Http\Controllers\Api\VoiceMessageController;
 use App\Http\Controllers\Api\Website\HomeController;
 use App\Http\Controllers\Api\Website\PageController;
@@ -28,11 +27,13 @@ use App\Http\Controllers\Api\Driver\DriverAuthController;
 use App\Http\Controllers\Api\ArticleInteractionController;
 use App\Http\Controllers\Api\Driver\DriverOrderController;
 use App\Http\Controllers\Api\Website\UserAddressController;
+use App\Http\Controllers\Api\Driver\DriverLocationController;
 use App\Http\Controllers\Api\Driver\DriverDashboardController;
 use App\Http\Controllers\Api\Payment\PaymentCallbackController;
 use App\Http\Controllers\Api\Driver\DriverCurrentOrderController;
 use App\Http\Controllers\Api\User\WalletController as UserWalletController;
 use App\Http\Controllers\Api\Driver\WalletController as DriverWalletController;
+use App\Http\Controllers\Api\Orders\PaymentController as PaymentOrdersController;
 
 Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
@@ -101,6 +102,12 @@ Route::prefix('v1')->group(function () {
                     Route::post('/{orderId}/update-location', [DriverOrderController::class, 'updateLocation']);
                     Route::get('/{orderId}/path', [DriverOrderController::class, 'getDriverPath']);
                     Route::post('/{orderId}/rate-user', [RatingController::class, 'rateUser']);
+
+                    // تحديث وجلب موقع السائق
+                    Route::prefix('/location')->group(function () {
+                        Route::post('/update', [DriverLocationController::class, 'updateLocation']);
+                        Route::get('/current', [DriverLocationController::class, 'getCurrentLocation']);
+                    });
                 });
             });
 
@@ -311,5 +318,4 @@ Route::prefix('v1')->group(function () {
     // في routes/api.php
     //  Route::post('/paymob/webhook', [PaymentController::class, 'handleWebhook'])->name('paymob.webhook');
     Route::get('/payment-methods', [PaymentOrdersController::class, 'getPaymentMethods']);
-
 });

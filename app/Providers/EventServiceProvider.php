@@ -29,22 +29,22 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
-        NewEmail::class => [
-            NewEmailListener::class,
+        'App\Events\DriverLocationReceived' => [
+            'App\Listeners\UpdateDriverCurrentLocation',
         ],
-        ClientViewCategory::class => [
-            ClientViewCategoryListener::class
-        ],
-        OrderChangeStatus::class => [
-            OrderChangeListener::class,
-        ],
-        NewOrder::class=>[
-            NewOrderCreatedListener::class,
-            InformOrderClient::class,
-        ],
-        OrderStatusChanged::class => [
-            InformClientOrderChange::class,
-        ],
+        // ClientViewCategory::class => [
+        //     ClientViewCategoryListener::class
+        // ],
+        // OrderChangeStatus::class => [
+        //     OrderChangeListener::class,
+        // ],
+        // NewOrder::class => [
+        //     NewOrderCreatedListener::class,
+        //     InformOrderClient::class,
+        // ],
+        // OrderStatusChanged::class => [
+        //     InformClientOrderChange::class,
+        // ],
     ];
 
     /**
