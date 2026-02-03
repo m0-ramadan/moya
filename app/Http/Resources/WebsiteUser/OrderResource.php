@@ -56,6 +56,8 @@ class OrderResource extends JsonResource
             'order_date' => $this->order_date,
 
             'created_at' => $this->created_at->format('Y-m-d H:i'),
+
+            'expires_at'=> $this->expires_at,
         ];
     }
 }
