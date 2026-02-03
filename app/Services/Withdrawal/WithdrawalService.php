@@ -160,12 +160,12 @@ class WithdrawalService
 
         if ($entry->owner_type === LedgerEntry::OWNER_TYPE_USER) {
             $info['name'] = $owner->name ?? '';
-            $info['phone'] = $owner->phone ?? '';
+            $info['phone'] = $owner->phone_number ?? '';
             $info['email'] = $owner->email ?? '';
         } elseif ($entry->owner_type === LedgerEntry::OWNER_TYPE_DRIVER) {
-            $info['name'] = $owner->full_name ?? '';
-            $info['phone'] = $owner->phone_number ?? '';
-            $info['email'] = $owner->user->email ?? '';
+            $info['name'] = $owner->user->name ?? '';
+            $info['phone'] = $owner->user?->phone_number ?? '';
+            $info['email'] = $owner->user?->email ?? '';
         }
 
         // Add bank account info if available

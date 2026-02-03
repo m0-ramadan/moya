@@ -15,7 +15,7 @@ class SendNotificationRequest extends FormRequest
     public function rules()
     {
         return [
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'nullable|exists:users,id',
             'title' => 'required|string|max:255',
             'message' => 'required|string',
             'type' => 'nullable|string|in:info,warning,success,error,system',

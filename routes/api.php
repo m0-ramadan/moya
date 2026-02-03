@@ -135,7 +135,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/{notification}/mark-read', [NotificationController::class, 'markAsRead']);
             Route::delete('/{notification}', [NotificationController::class, 'destroy']);
             // الطرق الجديدة لإرسال الإشعارات
-            Route::post('/send-to-user', [NotificationController::class, 'sendToUser']);
+            Route::post('/send-to-user', [NotificationController::class, 'sendToFcmToken']);
             Route::post('/send-to-multiple', [NotificationController::class, 'sendToMultipleUsers']);
             Route::post('/send-test/{userId}', [NotificationController::class, 'sendTestToUser']);
 
@@ -312,13 +312,4 @@ Route::prefix('v1')->group(function () {
     //  Route::post('/paymob/webhook', [PaymentController::class, 'handleWebhook'])->name('paymob.webhook');
     Route::get('/payment-methods', [PaymentOrdersController::class, 'getPaymentMethods']);
 
-    // تحديث Middleware للسائقين
-    // Route::middleware(['auth:sanctum', 'driver.only'])->prefix('driver')->group(function () {
-    //   //  Route::post('/orders/{orderId}/accept', [OrderController::class, 'acceptOrder']);
-    //   //  Route::post('/orders/{orderId}/update-status', [DriverOrderController::class, 'updateStatus']);
-    //    // Route::post('/orders/{orderId}/update-location', [DriverOrderController::class, 'updateLocation']);
-    //    // Route::get('/orders/{orderId}/path', [DriverOrderController::class, 'getDriverPath']);
-    //   //  Route::post('/orders/{orderId}/rate-user', [RatingController::class, 'rateUser']);
-    //   //  Route::post('/offers/{offerId}/cancel', [OrderController::class, 'cancelOffer']);
-    // });
 });

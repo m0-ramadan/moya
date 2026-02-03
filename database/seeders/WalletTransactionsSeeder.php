@@ -406,7 +406,7 @@ class WalletTransactionsSeeder extends Seeder
                 'bank_account' => [
                     'bank_name' => $this->getRandomBankName(),
                     'account_number' => '****' . rand(1000, 9999),
-                    'account_holder' => $driver->full_name ?? $driver->first_name . ' ' . $driver->family_name
+                    'account_holder' => $driver->user?->name ?? $driver->first_name . ' ' . $driver->family_name
                 ],
                 'processing_fee' => $amount * 0.02,
                 'net_amount' => $amount * 0.98,

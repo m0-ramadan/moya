@@ -14,6 +14,7 @@ use App\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\DB;
 use App\Services\GoogleMapsService;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\OrderOfferResource;
 
 class RatingController extends Controller
 {
@@ -155,7 +156,7 @@ class RatingController extends Controller
         $order = Order::where('user_id', $user->id)
             ->findOrFail($orderId);
 
-        $offers = \App\Models\OrderOffer::where('order_id', $orderId)
+        $offers = OrderOffer::where('order_id', $orderId)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -190,7 +191,7 @@ class RatingController extends Controller
             'total_offers' => $offers->count(),
             'active_offers' => $offers->where('status', 'pending')->count(),
             'accepted_offer' => $offers->where('status', 'accepted')->first(),
-            'offers' => $offers,
+            'offers' =>OrderOfferResource::collection($offers) ,
         ], 'تم جلب العروض بنجاح');
     }
 
@@ -210,7 +211,7 @@ class RatingController extends Controller
         return $this->successResponse([
             'driver' => [
                 'id' => $driver->id,
-                'name' => $driver->full_name,
+                'name' => $driver->user?->name,
                 'average_rating' => $driver->average_rating,
                 'total_ratings' => $driver->total_ratings,
                 'total_orders' => $driver->total_orders,

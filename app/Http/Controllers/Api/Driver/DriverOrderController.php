@@ -417,7 +417,7 @@ class DriverOrderController extends Controller
         return $this->successResponse([
             'order_id' => $order->id,
             'order_status' => $order->status->name,
-            'driver_name' => $order->driver->full_name,
+            'driver_name' => $order->driver->user?->name,
             'driver_phone' => $order->driver->user->phone,
             'driver_photo' => $order->driver->photo,
             'path' => $locations,
@@ -480,7 +480,7 @@ class DriverOrderController extends Controller
             'last_update' => $latestLocation->created_at,
             'driver' => [
                 'id' => $driver->id,
-                'name' => $driver->full_name,
+                'name' => $driver->user?->name,
                 'phone' => $driver->user->phone,
                 'photo' => $driver->photo,
                 'rating' => $driver->average_rating,

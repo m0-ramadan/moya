@@ -40,9 +40,6 @@ class DriverCurrentOrderController extends Controller
             'driverLocations' => function ($query) {
                 $query->orderBy('created_at', 'desc')->limit(10);
             },
-            // 'driver' => function ($query) {
-            //     $query->select('id', 'full_name', 'photo', 'total_orders', 'average_rating');
-            // }
         ])
             ->where('driver_id', $driver->id)
             ->whereIn('order_status_id', [1, 2]) // الطلبات النشطة
@@ -214,7 +211,7 @@ class DriverCurrentOrderController extends Controller
                     'description' => 'الاتصال لتأكيد العنوان أو الاستفسار',
                     'icon' => 'phone',
                     'color' => 'info',
-                    'phone_number' => $order->user->phone,
+                    'phone_number' => $order->user->phone_number,
                 ];
                 break;
 

@@ -60,7 +60,7 @@ class Driver extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class,'user_id');
     }
 
     // public function vehicle()
@@ -103,23 +103,6 @@ class Driver extends Model
         return $this->hasOne(DriverWallet::class);
     }
 
-    /**
-     * Create driver wallet
-     */
-    // public function createDriverWallet()
-    // {
-    //     if (!$this->driverWallet) {
-    //         return DriverWallet::create([
-    //             'driver_id' => $this->id,
-    //             'balance' => 0,
-    //             'held_balance' => 0,
-    //             'currency' => config('wallet.default_currency', 'SAR'),
-    //             'status' => 'active'
-    //         ]);
-    //     }
-
-    //     return $this->driverWallet;
-    // }
 
     /**
      * Get wallet
@@ -213,4 +196,12 @@ class Driver extends Model
     {
         return $this->citizenship === 'resident';
     }
+
+    public function latestLocation()
+{
+    return $this->hasOne(DriverLocation::class)->latestOfMany();
+}
+public function currectLocation(){
+    return $this->hasOne(DriverCurrentLocation::class);
+}
 }

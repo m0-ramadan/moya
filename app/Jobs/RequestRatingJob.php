@@ -64,14 +64,14 @@ class RequestRatingJob implements ShouldQueue
             // إعداد بيانات الإشعار
             $notificationData = [
                 'title' => 'كيف كانت تجربتك؟ ✨',
-                'body' => 'ساعدنا بتحسين الخدمة من خلال تقييم السائق ' . $this->order->driver->full_name,
+                'body' => 'ساعدنا بتحسين الخدمة من خلال تقييم السائق ' . $this->order->driver->user?->name,
                 'image' => $this->order->driver->photo ?? null,
             ];
 
             $firebaseData = [
                 'order_id' => $this->order->id,
                 'driver_id' => $this->order->driver_id,
-                'driver_name' => $this->order->driver->full_name,
+                'driver_name' => $this->order->driver->user?->name,
                 'driver_photo' => $this->order->driver->photo ?? null,
                 'driver_rating' => $this->order->driver->average_rating,
                 'type' => 'rating_request',

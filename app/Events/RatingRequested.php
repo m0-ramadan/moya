@@ -66,7 +66,7 @@ class RatingRequested implements ShouldBroadcast
                 'total_orders' => $this->order->user->orders()->count(),
             ],
             'driver_details' => [
-                'name' => $this->order->driver->full_name,
+                'name' => $this->order->driver->user?->name,
                 'rating' => $this->order->driver->average_rating,
                 'total_orders' => $this->order->driver->total_orders,
             ],

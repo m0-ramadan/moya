@@ -68,7 +68,7 @@ class OrderRated implements ShouldBroadcast
         if ($this->ratedBy === 'user') {
             $response['driver'] = [
                 'id' => $this->rating->driver_id,
-                'name' => $this->rating->driver->full_name,
+                'name' => $this->rating->driver->user?->name,
                 'new_average_rating' => $this->rating->driver->average_rating,
             ];
             $response['user'] = [
@@ -83,7 +83,7 @@ class OrderRated implements ShouldBroadcast
             ];
             $response['driver'] = [
                 'id' => $this->rating->driver_id,
-                'name' => $this->rating->driver->full_name,
+                'name' => $this->rating->driver->user?->name,
             ];
         }
 
@@ -101,7 +101,7 @@ class OrderRated implements ShouldBroadcast
         } else {
             return [
                 'title' => 'تقييم جديد',
-                'body' => 'قام السائق ' . $this->rating->driver->full_name . ' بتقييمك بـ ' . $this->rating->rating . ' نجوم',
+                'body' => 'قام السائق ' . $this->rating->driver->user?->name . ' بتقييمك بـ ' . $this->rating->rating . ' نجوم',
                 'type' => 'user_rated',
             ];
         }

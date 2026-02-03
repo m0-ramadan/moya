@@ -52,7 +52,7 @@ class DriverLocationUpdated implements ShouldBroadcast
             ],
             'driver' => [
                 'id' => $this->driver->id,
-                'name' => $this->driver->full_name,
+                'name' => $this->driver->user?->name,
                 'vehicle' => $this->driver->vehicle->type ?? null,
                 'plate_number' => $this->driver->vehicle->plate_number ?? null,
             ],

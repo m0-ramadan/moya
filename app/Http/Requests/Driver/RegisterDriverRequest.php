@@ -51,7 +51,7 @@ class RegisterDriverRequest extends FormRequest
             // 'vehicle_type' => ['nullable', 'in:truck,van,pickup'],
 
             // معلومات إضافية
-            'blood_type' => ['nullable', 'in:A+,A-,B+,B-,AB+,AB-,O+,O-'],
+          //  'blood_type' => ['nullable', 'in:A+,A-,B+,B-,AB+,AB-,O+,O-'],
             'driving_experience_years' => ['nullable', 'integer', 'min:1', 'max:50'],
             'is_smoker' => ['nullable', 'boolean'],
             'has_helper' => ['nullable', 'boolean'],

@@ -13,7 +13,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Services\FirebaseNotificationService;
 use App\Http\Requests\SendNotificationRequest;
-
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\CloudMessage;
 class NotificationController extends Controller
 {
     use ApiResponseTrait;
@@ -210,50 +211,112 @@ class NotificationController extends Controller
     /**
      * Send notification to specific user by ID.
      */
-    public function sendToUser(SendNotificationRequest $request)
-    {
-        try {
+    // public function sendToUser(SendNotificationRequest $request)
+    // {
+    //     try {
 
-            $sender = Auth::user();
-            $receiver = User::findOrFail($request->user_id);
+    //         $sender = Auth::user();
+    //         $receiver = User::findOrFail($request->user_id);
 
-            // إنشاء الإشعار في قاعدة البيانات
-            $notification = $receiver->createNotification([
-                'title' => $request->title,
-                'message' => $request->message,
-                'type' => $request->type ?? 'info',
-                'data' => $request->data ?? [],
-            ]);
+    //         // إنشاء الإشعار في قاعدة البيانات
+    //         $notification = $receiver->createNotification([
+    //             'title' => $request->title,
+    //             'message' => $request->message,
+    //             'type' => $request->type ?? 'info',
+    //             'data' => $request->data ?? [],
+    //         ]);
 
-            // إرسال إلى Firebase إذا كان مطلوبًا
-            $firebaseResult = null;
-            if ($request->boolean('send_to_firebase', true)) {
-                $firebaseResult = $this->sendFirebaseNotification($receiver, $notification, $request);
-            }
+    //         // إرسال إلى Firebase إذا كان مطلوبًا
+    //         $firebaseResult = null;
+    //         if ($request->boolean('send_to_firebase', true)) {
+    //             $firebaseResult = $this->sendFirebaseNotification($receiver, $notification, $request);
+    //         }
 
-            // تسجيل النشاط (اختياري)
-            //  $this->logNotificationActivity($sender, $receiver, $notification);
+    //         // تسجيل النشاط (اختياري)
+    //         //  $this->logNotificationActivity($sender, $receiver, $notification);
 
-            return $this->successResponse(
-                [
-                    'notification' => $notification,
-                    'firebase_result' => $firebaseResult,
-                    'receiver' => [
-                        'id' => $receiver->id,
-                        'name' => $receiver->name,
-                        'email' => $receiver->email,
-                    ]
-                ],
-                'تم إرسال الإشعار بنجاح'
-            );
-        } catch (\Exception $e) {
-            Log::error('Failed to send notification: ' . $e->getMessage());
-            return $this->errorResponse(
-                'فشل إرسال الإشعار: ' . $e->getMessage(),
-                500
-            );
+    //         return $this->successResponse(
+    //             [
+    //                 'notification' => $notification,
+    //                 'firebase_result' => $firebaseResult,
+    //                 'receiver' => [
+    //                     'id' => $receiver->id,
+    //                     'name' => $receiver->name,
+    //                     'email' => $receiver->email,
+    //                 ]
+    //             ],
+    //             'تم إرسال الإشعار بنجاح'
+    //         );
+    //     } catch (\Exception $e) {
+    //         Log::error('Failed to send notification: ' . $e->getMessage());
+    //         return $this->errorResponse(
+    //             'فشل إرسال الإشعار: ' . $e->getMessage(),
+    //             500
+    //         );
+    //     }
+    // }
+public function sendToFcmToken(SendNotificationRequest $request)
+{
+    try {
+        $token = $request->fcm_token; // الـ FCM token مباشرة
+
+        if (!$token) {
+            return $this->errorResponse('يجب توفير FCM token', 422);
         }
+
+        // إنشاء البيانات للإشعار
+        $notificationData = [
+            'title' => $request->title,
+            'message' => $request->message,
+            'type' => $request->type ?? 'info',
+            'data' => $request->data ?? [],
+        ];
+
+        // إرسال الإشعار مباشرة عبر Firebase
+        $firebaseResult = $this->sendFirebaseNotificationByToken($token, $notificationData);
+
+        return $this->successResponse(
+            [
+                'firebase_result' => $firebaseResult,
+                'token' => $token,
+            ],
+            'تم إرسال الإشعار بنجاح عبر FCM token'
+        );
+    } catch (\Exception $e) {
+        Log::error('Failed to send FCM notification: ' . $e->getMessage());
+        return $this->errorResponse(
+            'فشل إرسال الإشعار: ' . $e->getMessage(),
+            500
+        );
     }
+}
+protected function sendFirebaseNotificationByToken($token, $notificationData)
+{
+    $factory = (new Factory)
+        ->withServiceAccount(storage_path('app/moya-7058d-firebase-adminsdk-fbsvc-33a2274f50.json'));
+    
+    $messaging = $factory->createMessaging();
+
+    $message = CloudMessage::withTarget('token', $token)
+        ->withNotification([
+            'title' => $notificationData['title'],
+            'body' => $notificationData['message'],
+        ])
+        ->withData($notificationData['data'] ?? []);
+
+    try {
+        $result = $messaging->send($message);
+
+        // سجل النتيجة عشان تعرف Message ID
+        Log::info('FCM Message Sent', ['token' => $token, 'result' => $result]);
+
+        return $result; // سترجع Message ID لو نجح
+    } catch (\Throwable $e) {
+        Log::error('FCM Error: ' . $e->getMessage(), ['token' => $token]);
+        return null;
+    }
+}
+
 
     /**
      * Send notification to multiple users.

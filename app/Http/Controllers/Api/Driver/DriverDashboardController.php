@@ -50,7 +50,7 @@ class DriverDashboardController extends Controller
         return $this->successResponse([
             'driver' => [
                 'id' => $driver->id,
-                'name' => $driver->full_name,
+                'name' => $driver->user?->name,
                 'photo' => $driver->photo,
                 'status' => $driver->status,
                 'is_active' => $driver->is_active,
