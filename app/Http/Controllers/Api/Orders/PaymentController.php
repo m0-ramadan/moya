@@ -269,18 +269,14 @@ class PaymentController extends Controller
      */
     public function paymentCallbackPaymob(Request $request)
     {
-        Log::channel('payment')->info('Paymob Callback Received', [
-            'query_params' => $request->query(),
-            'ip' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ]);
 
         try {
+
             // جمع البيانات من query parameters
             $callbackData = $request->query();
             
             // تسجيل البيانات الكاملة للفحص
-            Log::channel('payment')->debug('Paymob Callback Full Data', $callbackData);
+            Log::info('Paymob Callback Full Data', $callbackData);
 
             // استخراج معلومات الطلب
             $merchantOrderId = $callbackData['merchant_order_id'] ?? null;
@@ -357,7 +353,7 @@ class PaymentController extends Controller
             ]);
         }
     }
-
+ 
     /**
      * معالجة الدفع الناجح
      */

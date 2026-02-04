@@ -35,6 +35,13 @@ class PaymentCallbackController extends Controller
      */
     public function handle(Request $request)
     {
+              Log::info('Paymob Callback Received', [
+            'query_params' => $request->query(),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'DATA'=> $request->json(),
+        ]);
+
         // 1. Log the incoming request for debugging
         $this->logCallbackRequest($request);
 
