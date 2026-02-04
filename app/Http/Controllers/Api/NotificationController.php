@@ -6,15 +6,17 @@ use App\Models\User;
 use App\Models\DeviceToken;
 use App\Models\Notification;
 use Illuminate\Http\Request;
+use Kreait\Firebase\Factory;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Support\FacadesLog;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
+use Kreait\Firebase\Messaging\CloudMessage;
 use App\Services\FirebaseNotificationService;
 use App\Http\Requests\SendNotificationRequest;
-use Kreait\Firebase\Factory;
-use Kreait\Firebase\Messaging\CloudMessage;
+
 class NotificationController extends Controller
 {
     use ApiResponseTrait;
@@ -493,7 +495,7 @@ protected function sendFirebaseNotificationByToken($token, $notificationData)
             'app_version' => 'nullable|string',
         ]);
 
-        $user = Auth::guard('web')->user(); // ممكن null
+        $user = auth()->user(); 
 
         $deviceToken = DeviceToken::updateOrCreate(
             [
