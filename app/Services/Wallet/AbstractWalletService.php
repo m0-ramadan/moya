@@ -186,59 +186,60 @@ abstract class AbstractWalletService
     /**
      * Process with idempotency
      */
-    protected function processWithIdempotency(
-        string $key,
-        array $requestData,
-        callable $processCallback,
-        string $ownerType = null,
-        int $ownerId = null,
-        int $ttl = 3600
-    ) {
-        $requestHash = md5(json_encode($requestData));
+public function processWithIdempotency(
+    string $key,
+    array $requestData,
+    callable $processCallback,
+    string $ownerType = null,
+    int $ownerId = null,
+    int $ttl = 3600
+) {
+    $requestHash = md5(json_encode($requestData));
 
-        $idempotencyKey = IdempotencyKey::acquireLock(
-            $key,
-            $requestHash,
-            $ownerType,
-            $ownerId,
-            $ttl
+    $idempotencyKey = IdempotencyKey::acquireLock(
+        $key,
+        $requestHash,
+        $ttl,
+        $ownerType,
+      //  $ownerId
+    );
+dd($idempotencyKey);
+    if (!$idempotencyKey) {
+        throw new \Exception('العملية قيد المعالجة حالياً');
+    }
+
+    if ($idempotencyKey->status === IdempotencyKey::STATUS_COMPLETED) {
+        $resource = $this->getResourceByIdempotency($idempotencyKey);
+        return $resource; // رجع الـ LedgerEntry اللي سبق تنفيذ العملية
+    }
+
+    try {
+        DB::beginTransaction();
+
+        $result = $processCallback();
+
+        DB::commit();
+
+        $idempotencyKey->completeWithResponse(
+            md5(json_encode($result)),
+            get_class($result),
+            $result->id
         );
 
-        if (!$idempotencyKey) {
-            throw new \Exception('العملية قيد المعالجة حالياً');
-        }
-
-        if ($idempotencyKey->status === IdempotencyKey::STATUS_COMPLETED) {
-            $resource = $this->getResourceByIdempotency($idempotencyKey);
-            return ['already_processed' => true, 'resource' => $resource];
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $result = $processCallback();
-
-            DB::commit();
-
-            $idempotencyKey->completeWithResponse(
-                md5(json_encode($result)),
-                get_class($result),
-                $result->id
-            );
-
-            return $result;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $idempotencyKey->markFailed();
-            Log::error('Idempotent processing failed', [
-                'key' => $key,
-                'owner_type' => $ownerType,
-                'owner_id' => $ownerId,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        }
+        return $result;
+    } catch (\Exception $e) {
+        DB::rollBack();
+        $idempotencyKey->markFailed();
+        Log::error('Idempotent processing failed', [
+            'key' => $key,
+            'owner_type' => $ownerType,
+            'owner_id' => $ownerId,
+            'error' => $e->getMessage()
+        ]);
+        throw $e;
     }
+}
+
 
     /**
      * Generate unique reference

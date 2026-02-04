@@ -493,7 +493,7 @@ protected function sendFirebaseNotificationByToken($token, $notificationData)
             'app_version' => 'nullable|string',
         ]);
 
-        $user = Auth::user(); // ممكن null
+        $user = Auth::guard('web')->user(); // ممكن null
 
         $deviceToken = DeviceToken::updateOrCreate(
             [

@@ -3,6 +3,7 @@
 namespace App\Models\Wallet;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
@@ -235,4 +236,35 @@ class LedgerEntry extends Model
 
         return in_array($this->type, $creditTypes) ? 'credit' : 'debit';
     }
+    public static function acquireLock(string $key, string $requestHash, int $ttl, string $ownerType = null, int $ownerId = null)
+{
+    try {
+        // تحقق من وجود lock مسبق
+        $existing = self::where('key', $key)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if ($existing) {
+            return null; // Already locked
+        }
+
+        // إنشاء lock جديد
+        return self::create([
+            'key' => $key,
+            'request_hash' => $requestHash,
+            'status' => self::STATUS_PROCESSING,
+            'owner_type' => $ownerType,
+            'owner_id' => $ownerId,
+            'expires_at' => now()->addSeconds($ttl)
+        ]);
+    } catch (\Exception $e) {
+        Log::error('IdempotencyKey acquireLock failed: ' . $e->getMessage(), [
+            'key' => $key,
+            'owner_type' => $ownerType,
+            'owner_id' => $ownerId
+        ]);
+        return null; // null بدل string
+    }
+}
+
 }

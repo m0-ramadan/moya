@@ -114,6 +114,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/location/current', [DriverLocationController::class, 'getCurrentLocation']);
             Route::get('/{id}', [DriverAuthController::class,'show']);
         });
+
         Route::patch('/user/settings/notifications', [AuthController::class, 'updateNotifications']);
 
         // عقود المستخدم
@@ -181,6 +182,7 @@ Route::prefix('v1')->group(function () {
 
             return $pusher->socket_auth($request->channel_name, $request->socket_id);
         });
+
         Route::prefix('auth')->group(function () {
             Route::post('/complete-profile', [AuthController::class, 'completeProfile']);
         });
@@ -264,9 +266,11 @@ Route::prefix('v1')->group(function () {
     Route::middleware(['auth:sanctum'])->prefix('user/wallet')->group(function () {
         Route::get('/', [UserWalletController::class, 'getBalance']);
         Route::get('/transactions', [UserWalletController::class, 'getTransactions']);
+        Route::get('/banks', [UserWalletController::class, 'getBanks']);
         Route::post('/deposit', [UserWalletController::class, 'initiateDeposit']);
         Route::post('/withdraw', [UserWalletController::class, 'withdraw']);
         Route::post('/transfer', [UserWalletController::class, 'transfer']);
+
     });
 
 

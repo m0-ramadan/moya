@@ -149,7 +149,7 @@ class LedgerService
                 'available_balance_before' => $wallet->available_balance,
                 'available_balance_after' => $wallet->available_balance - $amount,
                 'description' => $description,
-                'status' => LedgerEntry::STATUS_COMPLETED,
+                'status' => LedgerEntry::STATUS_PROCESSING,
                 'reference' => $this->generateReference($type),
                 'metadata' => $metadata,
                 'processed_at' => now()

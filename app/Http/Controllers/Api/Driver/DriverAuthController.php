@@ -501,9 +501,7 @@ public function completeProfile(CompleteProfileRequest $request)
     public function show($id){
         $driver=Driver::find($id);
         if(! $driver) {
-                      return $this->successResponse(null,' لا يوجد سائق بهذا ال id ');
-             
-           
+          return $this->successResponse(null,' لا يوجد سائق بهذا ال id ');
         }
         return $this->successResponse(new DriverWithRatingResource($driver),'');
     }

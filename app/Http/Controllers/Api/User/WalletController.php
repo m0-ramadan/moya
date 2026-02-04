@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Driver;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\BankAccount;
 use Illuminate\Support\Facades\Validator;
 use App\Services\Wallet\UserWalletService;
 use App\Traits\ApiResponseTrait;
@@ -72,38 +73,41 @@ class WalletController extends Controller
     /**
      * Withdraw funds
      */
-    public function withdraw(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'amount' => 'required|numeric|min:50',
-            'bank_account_id' => 'required|exists:bank_accounts,id',
-            'description' => 'nullable|string|max:255'
+public function withdraw(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'amount' => 'required|numeric|min:50',
+        'bank_account_id' => 'required|exists:bank_accounts,id',
+        'description' => 'nullable|string|max:255',
+        'payment_identifier' => 'required|string|max:255'
+    ]);
+
+    if ($validator->fails()) {
+        return $this->validationError($validator->errors(), 'خطأ في البيانات المرسلة');
+    }
+
+    $user = $request->user();
+
+    try {
+        $entry = $this->walletService->withdraw($user, $request->amount, [
+            'bank_account_id' => $request->bank_account_id,
+            'description' => $request->description,
+            'payment_identifier' => $request->payment_identifier
         ]);
 
-        if ($validator->fails()) {
-            return $this->validationError($validator->errors(), 'خطأ في البيانات المرسلة');
-        }
-
-        $user = $request->user();
-
-        try {
-            $entry = $this->walletService->withdraw($user, $request->amount, [
-                'bank_account_id' => $request->bank_account_id,
-                'description' => $request->description
-            ]);
-
-            return $this->successResponse([
-                'entry' => [
-                    'id' => $entry->id,
-                    'reference' => $entry->reference,
-                    'amount' => $entry->amount,
-                    'status' => $entry->status
-                ]
-            ], 'تم تقديم طلب السحب بنجاح');
-        } catch (\Exception $e) {
-            return $this->errorResponse($e->getMessage(), 400);
-        }
+        return $this->successResponse([
+            'entry' => [
+                'id' => $entry->id,
+                'reference' => $entry->reference,
+                'amount' => $entry->amount,
+                'status' => $entry->status
+            ]
+        ], 'تم تقديم طلب السحب بنجاح');
+    } catch (\Exception $e) {
+        return $this->errorResponse($e->getMessage(), 400);
     }
+}
+
 
     /**
      * Transfer funds
@@ -183,4 +187,9 @@ class WalletController extends Controller
             return $this->errorResponse('فشل في الحصول على سجل المعاملات', 500);
         }
     }
+
+    public function getBanks(){
+        return BankAccount::where('is_active', true)->select(['id','name','image','type'])->get();
+    }
 }
+

@@ -35,7 +35,9 @@ class PaymentCallbackController extends Controller
      */
     public function handle(Request $request)
     {
-              Log::info('Paymob Callback Received', [
+        try {
+
+        Log::info('Paymob Callback Received', [
             'query_params' => $request->query(),
             'ip' => $request->ip(),
             'user_agent' => $request->userAgent(),
@@ -54,7 +56,6 @@ class PaymentCallbackController extends Controller
         }
 
         // 4. Process the callback مباشرة بدون idempotency للتجربة
-        try {
             return $this->handleTransactionCallbackDirectly($callbackData);
         } catch (\Exception $e) {
             Log::error('Callback processing failed', [

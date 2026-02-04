@@ -6,10 +6,12 @@ use App\Models\User;
 use App\Events\WalletEvent;
 use App\Models\Wallet\UserWallet;
 use App\Models\Wallet\LedgerEntry;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Wallet\IdempotencyKey;
-use App\Services\Payment\Wallet\PaymobService;
 use App\Services\Security\FraudDetector;
+use App\Services\Payment\Wallet\PaymobService;
+use App\Services\Wallet\AbstractWalletService;
 
 class UserWalletService extends AbstractWalletService
 {
@@ -221,46 +223,52 @@ class UserWalletService extends AbstractWalletService
     /**
      * Withdraw funds
      */
-    public function withdraw(User $user, float $amount, array $data = []): LedgerEntry
-    {
-        $wallet = $user->userWallet ?? $user->createUserWallet();
+public function withdraw(User $user, float $amount, array $data = []): LedgerEntry
+{
+    $wallet = $user->userWallet ?? $user->createUserWallet();
 
-        // Validate
-        $this->validateWithdrawal($wallet, $amount);
+    // تحقق من الرصيد
+    $this->validateWithdrawal($wallet, $amount);
 
-        return $this->processWithIdempotency(
-            'withdrawal_' . $user->id . '_' . md5($amount . now()->toISOString()),
-            ['user_id' => $user->id, 'amount' => $amount, 'data' => $data],
-            function () use ($wallet, $amount, $user, $data) {
-                $lockedWallet = $this->lockWallet($wallet);
+    try {
+        DB::beginTransaction();
 
-                $entry = $this->debit(
-                    $lockedWallet,
-                    $amount,
-                    LedgerEntry::TYPE_WITHDRAWAL,
-                    $data['description'] ?? 'سحب رصيد',
-                    [
-                        'withdrawal_method' => $data['withdrawal_method'] ?? 'bank_transfer',
-                        'bank_account_id' => $data['bank_account_id'] ?? null,
-                    ],
-                    [
-                        'owner_type' => LedgerEntry::OWNER_TYPE_USER,
-                        'owner_id' => $user->id,
-                    ]
-                );
-
-                // Update daily totals
-                $lockedWallet->updateDailyTotals($amount, 'withdrawal');
-
-                // Fire event
-                event(new WalletEvent($entry));
-
-                return $entry;
-            },
-            LedgerEntry::OWNER_TYPE_USER,
-            $user->id
+        // عمل debit للسحب
+        $entry = $this->debit(
+            $wallet,
+            $amount,
+            LedgerEntry::TYPE_WITHDRAWAL,
+            $data['description'] ?? 'سحب رصيد',
+            [
+                'withdrawal_method' => $data['withdrawal_method'] ?? 'bank_transfer',
+                'bank_account_id' => $data['bank_account_id'] ?? null,
+                'payment_identifier' => $data['payment_identifier'] ?? null,
+            ],
+            [
+                'owner_type' => LedgerEntry::OWNER_TYPE_USER,
+                'owner_id' => $user->id,
+            ]
         );
+
+        // تحديث daily totals
+        $wallet->updateDailyTotals($amount, 'withdrawal');
+
+        // إطلاق الحدث لو في event listener
+        event(new WalletEvent($entry));
+
+        DB::commit();
+
+        return $entry;
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Wallet withdrawal failed', [
+            'user_id' => $user->id,
+            'amount' => $amount,
+            'error' => $e->getMessage()
+        ]);
+        throw $e;
     }
+}
 
     /**
      * Transfer funds

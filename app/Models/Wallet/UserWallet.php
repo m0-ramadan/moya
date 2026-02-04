@@ -40,7 +40,7 @@ class UserWallet extends AbstractWallet
     /**
      * Get wallet type
      */
-    protected function getWalletType(): string
+    public function getWalletType(): string
     {
         return 'user';
     }
