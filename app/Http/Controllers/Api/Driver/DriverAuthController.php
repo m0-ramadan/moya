@@ -2,23 +2,25 @@
 
 namespace App\Http\Controllers\Api\Driver;
 
-use App\DataTransferObjects\PhoneLoginData;
-use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\VerifyOtpRequest;
-use App\Http\Requests\Driver\CompleteProfileRequest;
-use App\Http\Resources\Driver\CountryResource;
-use App\Http\Resources\Driver\DriverResource;
-use App\Models\Country;
-use App\Models\Driver;
 use App\Models\User;
+use App\Models\Driver;
+use App\Models\Country;
 use App\Models\Vehicle;
-use App\Services\AuthService;
-use App\Traits\ApiResponseTrait;
-use App\Traits\UploadFileTrait;
 use Illuminate\Http\Request;
+use App\Services\AuthService;
+use App\Traits\UploadFileTrait;
+use App\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
+use App\DataTransferObjects\PhoneLoginData;
+use App\Http\Requests\Auth\VerifyOtpRequest;
+use App\Http\Resources\Driver\DriverResource;
+use App\Services\FirebaseNotificationService;
+use App\Http\Resources\Driver\CountryResource;
+use App\Http\Requests\Driver\CompleteProfileRequest;
+use App\Http\Resources\Driver\DriverWithRatingResource;
 
 class DriverAuthController extends Controller
 {
@@ -496,6 +498,10 @@ public function completeProfile(CompleteProfileRequest $request)
         ]);
     }
 
+    public function show($id){
+        $driver=Driver::find($id);
+        return $this->successResponse(new DriverWithRatingResource($driver),'');
+    }
     // ========== الدوال المساعدة ==========
 
     /**

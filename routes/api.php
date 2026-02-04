@@ -109,9 +109,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/{orderId}/confirm-driver', [OrderController::class, 'confirmDriver']);
         });
         // تحديث وجلب موقع السائق
-        Route::prefix('driver/location')->group(function () {
-            Route::post('/update', [DriverLocationController::class, 'updateLocation']);
-            Route::get('/current', [DriverLocationController::class, 'getCurrentLocation']);
+        Route::prefix('driver')->group(function () {
+            Route::post('/location/update', [DriverLocationController::class, 'updateLocation']);
+            Route::get('/location/current', [DriverLocationController::class, 'getCurrentLocation']);
+            Route::get('/{id}', [DriverAuthController::class,'show']);
         });
         Route::patch('/user/settings/notifications', [AuthController::class, 'updateNotifications']);
 
