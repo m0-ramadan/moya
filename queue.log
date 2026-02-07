@@ -19,3 +19,41 @@ nohup: ignoring input
   2026-02-07 15:37:38 App\Jobs\ExpireOrderJob ................... 21.87ms FAIL
   2026-02-07 15:37:38 App\Jobs\ExpireOrderJob ........................ RUNNING
   2026-02-07 15:37:38 App\Jobs\ExpireOrderJob ................... 26.39ms FAIL
+  2026-02-07 16:45:07 App\Events\Order\NewOrderAvailable ............. RUNNING
+  2026-02-07 16:45:08 App\Events\Order\NewOrderAvailable ....... 424.17ms DONE
+  2026-02-07 16:45:08 App\Events\Order\NewOrderAvailable ............. RUNNING
+  2026-02-07 16:45:08 App\Events\Order\NewOrderAvailable ....... 129.65ms DONE
+  2026-02-07 16:45:15 App\Events\Order\NewOrderAvailable ............. RUNNING
+  2026-02-07 16:45:15 App\Events\Order\NewOrderAvailable ....... 419.21ms DONE
+  2026-02-07 16:46:36 App\Events\Order\NewOrderAvailable ............. RUNNING
+  2026-02-07 16:46:39 App\Events\Order\NewOrderAvailable ............. 3s DONE
+  2026-02-07 16:49:58 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 16:49:58 App\Jobs\ExpireOrderJob ................... 26.08ms DONE
+  2026-02-07 16:49:58 App\Events\Order\OrderExpired .................. RUNNING
+  2026-02-07 16:49:58 App\Events\Order\OrderExpired ............ 577.80ms DONE
+  2026-02-07 16:50:07 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 16:50:07 App\Jobs\ExpireOrderJob ................... 24.68ms DONE
+  2026-02-07 16:50:07 App\Events\Order\OrderExpired .................. RUNNING
+  2026-02-07 16:50:07 App\Events\Order\OrderExpired ............ 122.04ms DONE
+  2026-02-07 16:50:10 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 16:50:11 App\Jobs\ExpireOrderJob ................... 25.31ms DONE
+  2026-02-07 16:50:11 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 16:50:11 App\Jobs\ExpireOrderJob ................... 28.52ms DONE
+  2026-02-07 16:50:11 App\Events\Order\OrderExpired .................. RUNNING
+  2026-02-07 16:50:11 App\Events\Order\OrderExpired ............ 354.94ms DONE
+  2026-02-07 16:50:14 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 16:50:14 App\Jobs\ExpireOrderJob ................... 27.69ms DONE
+  2026-02-07 16:50:14 App\Events\Order\OrderExpired .................. RUNNING
+  2026-02-07 16:50:14 App\Events\Order\OrderExpired ............ 329.17ms DONE
+  2026-02-07 16:50:17 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 16:50:17 App\Jobs\ExpireOrderJob ................... 26.76ms FAIL
+  2026-02-07 16:51:35 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 16:51:35 App\Jobs\ExpireOrderJob ................... 23.64ms FAIL
+  2026-02-07 16:51:35 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 16:51:36 App\Jobs\ExpireOrderJob ................... 28.19ms FAIL
+  2026-02-07 16:56:42 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 16:56:42 App\Jobs\ExpireOrderJob ................... 24.05ms FAIL
+  2026-02-07 16:56:42 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 16:56:42 App\Jobs\ExpireOrderJob ................... 20.60ms FAIL
+  2026-02-07 16:56:42 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 16:56:42 App\Jobs\ExpireOrderJob ................... 24.63ms FAIL
