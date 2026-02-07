@@ -58,7 +58,7 @@ class DriverAcceptedOrder implements ShouldBroadcast
             'offer' => [
                 'id' => $this->offer->id,
                 'driver_id' => $this->offer->driver_id,
-                'driver_name' => $this->offer->driver->user?->name,
+                'driver_name' => $this->offer->driver?->user?->name,
                 'driver_phone' => $this->offer->driver?->user?->phone ?? null,
                 'price' => $this->offer->price,
                 'delivery_duration_minutes' => $this->offer->delivery_duration_minutes,
