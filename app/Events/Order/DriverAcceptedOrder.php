@@ -19,12 +19,8 @@ class DriverAcceptedOrder implements ShouldBroadcast
 
     public function __construct(OrderOffer $offer)
     {
-        // 🔴 لازم نحمل العلاقات صراحة (queue-safe)
-        $this->offer = $offer->load([
-            'driver.user',
-            'order',
-        ]);
-
+                    Log::warning('DriverAcceptedOrder skipped بسبب بيانات ناقصة'. $offer->id);
+        $this->offer = $offer;
         $this->remainingDriversCount = $this->getRemainingDriversCount();
     }
 
