@@ -19,32 +19,29 @@ class DriverAcceptedOrder implements ShouldBroadcast
 
     public function __construct(OrderOffer $offer)
     {
-        // تحميل العلاقات مع تحقق null
-        try {
-            $this->offer = $offer->load([
-                'driver.user',
-                'order'
-            ]);
-        } catch (\Exception $e) {
-            Log::error('DriverAcceptedOrder: Error loading relations', [
-                'offer_id' => $offer->id,
-                'error' => $e->getMessage()
-            ]);
-            $this->offer = $offer;
-        }
-
+        $this->offer = $offer;
         $this->remainingDriversCount = $this->getRemainingDriversCount();
     }
 
     public function broadcastOn()
     {
-        // 🔴 تحقق شامل
-        if (!$this->offer || !$this->offer->order || !$this->offer->order->user_id) {
-            Log::error('DriverAcceptedOrder: Invalid data for broadcasting', [
-                'offer_exists' => !empty($this->offer),
-                'order_exists' => !empty($this->offer->order),
-                'user_id' => $this->offer->order->user_id ?? null,
-                'offer_id' => $this->offer->id ?? null,
+        if (!$this->offer->order) {
+            try {
+                $this->offer->load('order');
+            } catch (\Exception $e) {
+                Log::error('DriverAcceptedOrder: Failed to load order', [
+                    'offer_id' => $this->offer->id,
+                    'error' => $e->getMessage()
+                ]);
+                return [];
+            }
+        }
+
+        if (!$this->offer->order || !$this->offer->order->user_id) {
+            Log::warning('DriverAcceptedOrder: No order or user_id found', [
+                'offer_id' => $this->offer->id,
+                'has_order' => !empty($this->offer->order),
+                'user_id' => $this->offer->order->user_id ?? null
             ]);
             return [];
         }
@@ -59,41 +56,50 @@ class DriverAcceptedOrder implements ShouldBroadcast
 
     public function broadcastWith()
     {
-        // 🔴 هذا هو السطر 42 الذي يسبب المشكلة - إصلاحه كالتالي:
-        
-        // تحقق متعدد المستويات
-        $driver = $this->offer->driver ?? null;
-        
-        // حل المشكلة: تحقق إذا كان السائق موجوداً قبل محاولة الوصول إلى user
+        // تحميل العلاقات إذا لم تكن محملة
+        if (!$this->offer->relationLoaded('driver')) {
+            $this->offer->load('driver.user');
+        }
+
+        // تحقق آمن من السائق والمستخدم - هذا هو السطر 42 الآن
         $driverName = 'غير معروف';
         $driverPhone = null;
+        $driverId = null;
         
-        if ($driver && $driver->user) {
-            $driverName = $driver->user->full_name ?? $driver->user->name ?? 'غير معروف';
-            $driverPhone = $driver->user->phone ?? null;
-        } elseif ($driver) {
-            // إذا كان هناك سائق ولكن بدون user
-            $driverName = $driver->name ?? 'سائق';
+        // تحقق وجود السائق أولاً
+        if ($this->offer->driver) {
+            $driverId = $this->offer->driver->id;
+            
+            // تحقق وجود المستخدم للسائق
+            if ($this->offer->driver->user) {
+                $driverName = $this->offer->driver->user->full_name 
+                    ?? $this->offer->driver->user->name 
+                    ?? 'غير معروف';
+                $driverPhone = $this->offer->driver->user->phone ?? null;
+            } else {
+                // إذا كان السائق موجود ولكن بدون بيانات مستخدم
+                $driverName = $this->offer->driver->name ?? 'سائق';
+            }
         }
 
         return [
             'offer' => [
-                'id' => $this->offer->id ?? null,
-                'driver_id' => $driver->id ?? null,
+                'id' => $this->offer->id,
+                'driver_id' => $driverId,
                 'driver_name' => $driverName,
                 'driver_phone' => $driverPhone,
                 'price' => $this->offer->price ?? 0,
                 'delivery_duration_minutes' => $this->offer->delivery_duration_minutes ?? 0,
                 'created_at' => $this->offer->created_at ? $this->offer->created_at->toDateTimeString() : now()->toDateTimeString(),
             ],
-            'order_id' => $this->offer->order_id ?? null,
+            'order_id' => $this->offer->order_id,
             'remaining_drivers_count' => $this->remainingDriversCount ?? 0,
         ];
     }
 
     private function getRemainingDriversCount()
     {
-        if (!$this->offer || !$this->offer->order_id) {
+        if (!$this->offer->order_id) {
             return 0;
         }
 
@@ -104,7 +110,7 @@ class DriverAcceptedOrder implements ShouldBroadcast
                 ->count();
         } catch (\Exception $e) {
             Log::error('DriverAcceptedOrder: Error counting remaining drivers', [
-                'offer_id' => $this->offer->id ?? 'unknown',
+                'offer_id' => $this->offer->id,
                 'error' => $e->getMessage(),
             ]);
             return 0;
