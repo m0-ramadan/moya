@@ -133,6 +133,7 @@ class OrderController extends Controller
     public function acceptOrder(Request $request, $orderId)
     {
         try {
+
             $validated = $request->validate([
                 'price' => 'required|numeric|min:0',
                 'delivery_duration_minutes' => 'required|integer|min:1',
@@ -153,7 +154,7 @@ class OrderController extends Controller
             if ($activeOrders > 0) {
                 return $this->errorResponse('لديك طلب نشط بالفعل. انتظر حتى يتم إنهاء الطلب الحالي.', 400);
             }
-
+            DB::beginTransaction();
             // التحقق من أن السائق لم يقدم بالفعل على هذا الطلب
             $existingOffer = OrderOffer::where('order_id', $orderId)
                 ->where('driver_id', $driver->id)
@@ -163,7 +164,6 @@ class OrderController extends Controller
                 return $this->errorResponse('لقد قدمت بالفعل على هذا الطلب', 400);
             }
 
-            DB::beginTransaction();
 
             $offer = OrderOffer::create([
                 'order_id' => $orderId,
