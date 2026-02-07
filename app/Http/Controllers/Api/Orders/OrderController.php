@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers\Api\Orders;
 
-use App\Events\Order\DriverAcceptedOrder;
-use App\Events\Order\NewOrderAvailable;
-use App\Events\Order\OfferCancelled;
-use App\Events\Order\UserConfirmedDriver;
-use App\Http\Controllers\Controller;
-use App\Http\Resources\WebsiteUser\OrderResource;
-use App\Jobs\ExpireOrderJob;
-use App\Models\Driver;
+use Carbon\Carbon;
 use App\Models\Order;
+use App\Models\Driver;
 use App\Models\OrderOffer;
 use App\Models\OrderStatus;
-use App\Services\FirebaseNotificationService;
-use App\Traits\ApiResponseTrait;
-use Carbon\Carbon;
+use App\Jobs\ExpireOrderJob;
 use Illuminate\Http\Request;
+use App\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Events\Order\OfferCancelled;
+use App\Http\Controllers\Controller;
+use App\Events\Order\DriverAcceptOrder;
+use App\Events\Order\NewOrderAvailable;
+use App\Events\Order\UserConfirmedDriver;
+use App\Services\FirebaseNotificationService;
+use App\Http\Resources\WebsiteUser\OrderResource;
 
 class OrderController extends Controller
 {
@@ -179,7 +179,7 @@ class OrderController extends Controller
             $this->notifyUserAboutNewOffer($offer);
             Log::info('--'.$orderId.'--'.$driver->id.$offer);
             // Broadcast Event
-            event(new DriverAcceptedOrder($offer));
+            event(new DriverAcceptOrder($offer));
 
             return $this->successResponse(
                 $offer,

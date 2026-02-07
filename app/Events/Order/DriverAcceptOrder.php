@@ -10,7 +10,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 
-class DriverAcceptedOrder implements ShouldBroadcastNow
+class DriverAcceptOrder implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets;
 
