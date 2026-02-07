@@ -19,15 +19,29 @@ class DriverAcceptedOrder implements ShouldBroadcast
 
     public function __construct(OrderOffer $offer)
     {
-        $this->offer = $offer;
+        // 🔴 لازم نحمل العلاقات صراحة (queue-safe)
+        $this->offer = $offer->load([
+            'driver.user',
+            'order',
+        ]);
+
         $this->remainingDriversCount = $this->getRemainingDriversCount();
+    }
+
+    /**
+     * ❌ امنع البث لو البيانات ناقصة
+     */
+    public function broadcastWhen(): bool
+    {
+        return
+            $this->offer?->driver !== null &&
+            $this->offer?->driver?->user !== null &&
+            $this->offer?->order !== null;
     }
 
     public function broadcastOn()
     {
-        Log::info("message".$this->offer?->order?->user_id);
-        // للـ User فقط
-        return new Channel('user.' . $this->offer?->order?->user_id);
+        return new Channel('user.' . $this->offer->order->user_id);
     }
 
     public function broadcastAs()
@@ -37,18 +51,26 @@ class DriverAcceptedOrder implements ShouldBroadcast
 
     public function broadcastWith()
     {
-        Log::info("message".$this->offer?->driver_id);
-        Log::info("message".$this->offer?->driver->user?->name);
-        Log::info("message".$this->offer?->driver?->user?->phon);
+        $driver = $this->offer->driver;
+        $user   = $driver?->user;
 
+        // 🧯 حماية إضافية (عمره ما يكسر production)
+        if (!$driver || !$user) {
+            Log::warning('DriverAcceptedOrder skipped بسبب بيانات ناقصة', [
+                'offer_id' => $this->offer->id,
+                'driver_exists' => (bool) $driver,
+                'user_exists' => (bool) $user,
+            ]);
 
+            return [];
+        }
 
         return [
             'offer' => [
                 'id' => $this->offer->id,
-                'driver_id' => $this->offer->driver_id,
-                'driver_name' => $this->offer->driver->user?->name,
-                'driver_phone' => $this->offer->driver?->user?->phone ?? null,
+                'driver_id' => $driver->id,
+                'driver_name' => $user->name,
+                'driver_phone' => $user->phone ?? null,
                 'price' => $this->offer->price,
                 'delivery_duration_minutes' => $this->offer->delivery_duration_minutes,
                 'created_at' => $this->offer->created_at,
