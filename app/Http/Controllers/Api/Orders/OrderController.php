@@ -17,6 +17,7 @@ use App\Http\Controllers\Controller;
 use App\Events\Order\DriverAcceptOrder;
 use App\Events\Order\NewOrderAvailable;
 use App\Events\Order\UserConfirmedDriver;
+use App\Events\Order\AcceptedOrderByDriver;
 use App\Services\FirebaseNotificationService;
 use App\Http\Resources\WebsiteUser\OrderResource;
 
@@ -179,7 +180,7 @@ class OrderController extends Controller
             $this->notifyUserAboutNewOffer($offer);
             Log::info('--'.$orderId.'--'.$driver->id.$offer);
             // Broadcast Event
-            event(new DriverAcceptOrder($offer));
+            event(new AcceptedOrderByDriver($offer));
 
             return $this->successResponse(
                 $offer,
