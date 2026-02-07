@@ -3,6 +3,7 @@
 namespace App\Events\Order;
 
 use App\Models\OrderOffer;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -40,6 +41,9 @@ class DriverAcceptedOrder implements ShouldBroadcast
     // }
     public function broadcastOn()
 {
+       Log::info('Broadcasting DriverAcceptedOrder', [
+        'channel' => 'user.' . $this->offer->order->user_id
+    ]);
     return new PrivateChannel('user.' . $this->offer->order->user_id);
 }
 
