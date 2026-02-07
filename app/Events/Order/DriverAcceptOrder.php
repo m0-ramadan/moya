@@ -16,6 +16,9 @@ class DriverAcceptOrder implements ShouldBroadcastNow
 
     public array $offerData;
     public int $orderId;
+
+    public int $userId;
+
     public int $remainingDriversCount;
 
 public function __construct(OrderOffer $offer)
@@ -26,7 +29,7 @@ public function __construct(OrderOffer $offer)
     
     $driver = $offer->driver;
     $user   = $driver?->user;
-
+$this->userId = $user->id;
     Log::info('Loaded driver and user', [
         'driver' => (bool) $driver,
         'user' => (bool) $user,
@@ -72,7 +75,7 @@ public function __construct(OrderOffer $offer)
             return [];
         }
 
-        return new Channel('user.' . $this->orderId);
+        return new Channel('user.' . $this->userId);
     }
 
     public function broadcastAs()
