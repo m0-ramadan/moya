@@ -1,0 +1,14 @@
+Command 'app' not found, did you mean:
+  command 'pp' from deb libpar-packer-perl
+  command 'apt' from deb apt
+  command 'cpp' from deb cpp
+  command 'apg' from deb apg
+  command 'arp' from deb net-tools
+  command 'gpp' from deb gpp
+  command 'yapp' from deb libparse-yapp-perl
+  command 'tpp' from deb tpp
+  command 'pap' from deb papd
+Try: sudo apt install <deb name>
+
+   INFO  Broadcasting queue restart signal.  
+

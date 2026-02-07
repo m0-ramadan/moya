@@ -1,0 +1,21 @@
+nohup: ignoring input
+  2026-02-07 15:26:11 App\Events\Order\NewOrderAvailable ............. RUNNING
+  2026-02-07 15:26:12 App\Events\Order\NewOrderAvailable ............. 1s DONE
+  2026-02-07 15:30:01 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 15:30:01 App\Jobs\ExpireOrderJob ................... 18.17ms FAIL
+  2026-02-07 15:32:13 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 15:32:13 App\Jobs\ExpireOrderJob ................... 23.78ms FAIL
+  2026-02-07 15:32:13 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 15:32:13 App\Jobs\ExpireOrderJob ................... 22.71ms FAIL
+  2026-02-07 15:32:13 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 15:32:13 App\Jobs\ExpireOrderJob ................... 27.08ms FAIL
+  2026-02-07 15:32:40 App\Events\Order\NewOrderAvailable ............. RUNNING
+  2026-02-07 15:32:41 App\Events\Order\NewOrderAvailable ....... 568.43ms DONE
+  2026-02-07 15:32:50 App\Events\Order\DriverAcceptedOrder ........... RUNNING
+  2026-02-07 15:32:50 App\Events\Order\DriverAcceptedOrder ..... 249.34ms DONE
+  2026-02-07 15:37:38 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 15:37:38 App\Jobs\ExpireOrderJob ................... 23.46ms FAIL
+  2026-02-07 15:37:38 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 15:37:38 App\Jobs\ExpireOrderJob ................... 21.87ms FAIL
+  2026-02-07 15:37:38 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 15:37:38 App\Jobs\ExpireOrderJob ................... 26.39ms FAIL

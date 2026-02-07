@@ -4,10 +4,11 @@ namespace App\Events\Order;
 
 use App\Models\OrderOffer;
 use Illuminate\Broadcasting\Channel;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
 class DriverAcceptedOrder implements ShouldBroadcast
 {
@@ -16,17 +17,31 @@ class DriverAcceptedOrder implements ShouldBroadcast
     public $offer;
     public $remainingDriversCount;
 
+    // public function __construct(OrderOffer $offer)
+    // {
+    //     $this->offer = $offer;
+    //     $this->remainingDriversCount = $this->getRemainingDriversCount();
+    // }
     public function __construct(OrderOffer $offer)
-    {
-        $this->offer = $offer;
-        $this->remainingDriversCount = $this->getRemainingDriversCount();
-    }
+{
+    $this->offer = $offer->loadMissing([
+        'order',
+        'driver.user'
+    ]);
 
+    $this->remainingDriversCount = $this->getRemainingDriversCount();
+}
+
+
+    // public function broadcastOn()
+    // {
+    //     // للـ User فقط
+    //     return new Channel('user.' . $this->offer->order->user_id);
+    // }
     public function broadcastOn()
-    {
-        // للـ User فقط
-        return new Channel('user.' . $this->offer->order->user_id);
-    }
+{
+    return new PrivateChannel('user.' . $this->offer->order->user_id);
+}
 
     public function broadcastAs()
     {
