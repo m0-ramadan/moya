@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 
 use App\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Events\Order\OfferCancelled;
 use App\Http\Controllers\Controller;
 use App\Events\Order\NewOrderAvailable;
@@ -174,7 +175,7 @@ class OrderController extends Controller
 
             // إرسال إشعار للمستخدم
             $this->notifyUserAboutNewOffer($offer);
-
+Log::info('--'. $orderId .'--'. $driver->id .$offer);
             // Broadcast Event
             event(new DriverAcceptedOrder($offer));
 
