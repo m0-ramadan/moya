@@ -4,7 +4,7 @@ namespace App\Events\Order;
 
 use App\Models\OrderOffer;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -25,23 +25,9 @@ class DriverAcceptedOrder implements ShouldBroadcast
 
     public function broadcastOn()
     {
-        if (!$this->offer->order) {
-            try {
-                $this->offer->load('order');
-            } catch (\Exception $e) {
-                Log::error('DriverAcceptedOrder: Failed to load order', [
-                    'offer_id' => $this->offer->id,
-                    'error' => $e->getMessage()
-                ]);
-                return [];
-            }
-        }
-
-        if (!$this->offer->order || !$this->offer->order->user_id) {
-            return [];
-        }
-
-        return new PrivateChannel('user.' . $this->offer->order->user_id);
+        Log::info("message".$this->offer->order->user_id);
+        // للـ User فقط
+        return new Channel('user.' . $this->offer->order->user_id);
     }
 
     public function broadcastAs()
@@ -51,68 +37,32 @@ class DriverAcceptedOrder implements ShouldBroadcast
 
     public function broadcastWith()
     {
-        // 🔴 الإصلاح النهائي للسطر 42
-        // استخدام الدالة المساعدة للحصول على بيانات السائق بشكل آمن
-        $driverData = $this->extractDriverDataSafely();
+        Log::info("message".$this->offer->driver_id);
+        Log::info("message".$this->offer->driver->user?->name);
+        Log::info("message".$this->offer->driver?->user?->phon);
+
+
 
         return [
             'offer' => [
                 'id' => $this->offer->id,
-                'driver_id' => $driverData['id'],
-                'driver_name' => $driverData['name'],
-                'driver_phone' => $driverData['phone'],
-                'price' => $this->offer->price ?? 0,
-                'delivery_duration_minutes' => $this->offer->delivery_duration_minutes ?? 0,
-                'created_at' => $this->offer->created_at ? $this->offer->created_at->toDateTimeString() : now()->toDateTimeString(),
+                'driver_id' => $this->offer->driver_id,
+                'driver_name' => $this->offer->driver->user?->name,
+                'driver_phone' => $this->offer->driver?->user?->phone ?? null,
+                'price' => $this->offer->price,
+                'delivery_duration_minutes' => $this->offer->delivery_duration_minutes,
+                'created_at' => $this->offer->created_at,
             ],
             'order_id' => $this->offer->order_id,
-            'remaining_drivers_count' => $this->remainingDriversCount ?? 0,
+            'remaining_drivers_count' => $this->remainingDriversCount,
         ];
-    }
-
-    /**
-     * استخراج بيانات السائق بشكل آمن
-     */
-    private function extractDriverDataSafely()
-    {
-        $id = null;
-        $name = 'غير معروف';
-        $phone = null;
-        
-        // هذا هو المفتاح: تحقق عميق متعدد المستويات
-        if ($this->offer->driver_id && $this->offer->driver) {
-            $id = $this->offer->driver->id;
-            
-            // تحقق وجود user object
-            $user = $this->offer->driver->user;
-            if ($user) {
-                $name = $user->full_name ?? $user->name ?? 'غير معروف';
-                $phone = $user->phone ?? null;
-            } else {
-                $name = $this->offer->driver->name ?? 'سائق';
-            }
-        }
-        
-        return ['id' => $id, 'name' => $name, 'phone' => $phone];
     }
 
     private function getRemainingDriversCount()
     {
-        if (!$this->offer->order_id) {
-            return 0;
-        }
-
-        try {
-            return OrderOffer::where('order_id', $this->offer->order_id)
-                ->where('id', '!=', $this->offer->id)
-                ->where('status', 'pending')
-                ->count();
-        } catch (\Exception $e) {
-            Log::error('DriverAcceptedOrder: Error counting remaining drivers', [
-                'offer_id' => $this->offer->id,
-                'error' => $e->getMessage(),
-            ]);
-            return 0;
-        }
+        return OrderOffer::where('order_id', $this->offer->order_id)
+            ->where('id', '!=', $this->offer->id)
+            ->where('status', 'pending')
+            ->count();
     }
 }
