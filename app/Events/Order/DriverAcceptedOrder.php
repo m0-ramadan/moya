@@ -25,9 +25,9 @@ class DriverAcceptedOrder implements ShouldBroadcast
 
     public function broadcastOn()
     {
-        Log::info("message".$this->offer->order->user_id);
+        Log::info("message".$this->offer?->order?->user_id);
         // للـ User فقط
-        return new Channel('user.' . $this->offer->order->user_id);
+        return new Channel('user.' . $this->offer?->order?->user_id);
     }
 
     public function broadcastAs()
@@ -37,9 +37,9 @@ class DriverAcceptedOrder implements ShouldBroadcast
 
     public function broadcastWith()
     {
-        Log::info("message".$this->offer->driver_id);
-        Log::info("message".$this->offer->driver->user?->name);
-        Log::info("message".$this->offer->driver?->user?->phon);
+        Log::info("message".$this->offer?->driver_id);
+        Log::info("message".$this->offer?->driver->user?->name);
+        Log::info("message".$this->offer?->driver?->user?->phon);
 
 
 
