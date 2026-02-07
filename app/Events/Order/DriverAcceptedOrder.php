@@ -72,7 +72,7 @@ public function __construct(OrderOffer $offer)
             return [];
         }
 
-        return new Channel('user.' . $this->orderId);
+        return new Channel('user.444444');
     }
 
     public function broadcastAs()
