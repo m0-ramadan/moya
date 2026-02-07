@@ -494,8 +494,8 @@ protected function sendFirebaseNotificationByToken($token, $notificationData)
             'device_model' => 'nullable|string',
             'app_version' => 'nullable|string',
         ]);
-
-        $user = auth()->user(); 
+        
+        $user = auth('sanctum')->user();
 
         $deviceToken = DeviceToken::updateOrCreate(
             [
