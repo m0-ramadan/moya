@@ -81,7 +81,7 @@ Route::prefix('v1')->group(function () {
 
             // للسائقين
             Route::middleware(['driver'])->group(function () {
-                Route::post('/{orderId}/accepted', [OrderController::class, 'acceptedOrder']);
+                Route::post('/{orderId}/accept', [OrderController::class, 'acceptOrder']);
                 Route::post('/offers/{offerId}/cancel', [OrderController::class, 'cancelOffer']);
                 Route::prefix('driver')->group(function () {
                     Route::get('/available', [DriverOrderController::class, 'getPendingOrders']);
