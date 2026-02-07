@@ -38,11 +38,6 @@ class DriverAcceptedOrder implements ShouldBroadcast
         }
 
         if (!$this->offer->order || !$this->offer->order->user_id) {
-            Log::warning('DriverAcceptedOrder: No order or user_id found', [
-                'offer_id' => $this->offer->id,
-                'has_order' => !empty($this->offer->order),
-                'user_id' => $this->offer->order->user_id ?? null
-            ]);
             return [];
         }
 
@@ -56,38 +51,16 @@ class DriverAcceptedOrder implements ShouldBroadcast
 
     public function broadcastWith()
     {
-        // تحميل العلاقات إذا لم تكن محملة
-        if (!$this->offer->relationLoaded('driver')) {
-            $this->offer->load('driver.user');
-        }
-
-        // تحقق آمن من السائق والمستخدم - هذا هو السطر 42 الآن
-        $driverName = 'غير معروف';
-        $driverPhone = null;
-        $driverId = null;
-        
-        // تحقق وجود السائق أولاً
-        if ($this->offer->driver) {
-            $driverId = $this->offer->driver->id;
-            
-            // تحقق وجود المستخدم للسائق
-            if ($this->offer->driver->user) {
-                $driverName = $this->offer->driver->user->full_name 
-                    ?? $this->offer->driver->user->name 
-                    ?? 'غير معروف';
-                $driverPhone = $this->offer->driver->user->phone ?? null;
-            } else {
-                // إذا كان السائق موجود ولكن بدون بيانات مستخدم
-                $driverName = $this->offer->driver->name ?? 'سائق';
-            }
-        }
+        // 🔴 الإصلاح النهائي للسطر 42
+        // استخدام الدالة المساعدة للحصول على بيانات السائق بشكل آمن
+        $driverData = $this->extractDriverDataSafely();
 
         return [
             'offer' => [
                 'id' => $this->offer->id,
-                'driver_id' => $driverId,
-                'driver_name' => $driverName,
-                'driver_phone' => $driverPhone,
+                'driver_id' => $driverData['id'],
+                'driver_name' => $driverData['name'],
+                'driver_phone' => $driverData['phone'],
                 'price' => $this->offer->price ?? 0,
                 'delivery_duration_minutes' => $this->offer->delivery_duration_minutes ?? 0,
                 'created_at' => $this->offer->created_at ? $this->offer->created_at->toDateTimeString() : now()->toDateTimeString(),
@@ -95,6 +68,32 @@ class DriverAcceptedOrder implements ShouldBroadcast
             'order_id' => $this->offer->order_id,
             'remaining_drivers_count' => $this->remainingDriversCount ?? 0,
         ];
+    }
+
+    /**
+     * استخراج بيانات السائق بشكل آمن
+     */
+    private function extractDriverDataSafely()
+    {
+        $id = null;
+        $name = 'غير معروف';
+        $phone = null;
+        
+        // هذا هو المفتاح: تحقق عميق متعدد المستويات
+        if ($this->offer->driver_id && $this->offer->driver) {
+            $id = $this->offer->driver->id;
+            
+            // تحقق وجود user object
+            $user = $this->offer->driver->user;
+            if ($user) {
+                $name = $user->full_name ?? $user->name ?? 'غير معروف';
+                $phone = $user->phone ?? null;
+            } else {
+                $name = $this->offer->driver->name ?? 'سائق';
+            }
+        }
+        
+        return ['id' => $id, 'name' => $name, 'phone' => $phone];
     }
 
     private function getRemainingDriversCount()
