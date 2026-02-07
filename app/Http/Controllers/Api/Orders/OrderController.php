@@ -193,7 +193,68 @@ class OrderController extends Controller
             return $this->errorResponse($e->getMessage(), 500);
         }
     }
+    public function acceptedOrder(Request $request, $orderId)
+    {
+        try {
 
+            $validated = $request->validate([
+                'price' => 'required|numeric|min:0',
+                'delivery_duration_minutes' => 'required|integer|min:1',
+            ]);
+            $user = auth()->user();
+
+            $driver = Driver::where('user_id', $user->id)->first();
+
+            if (! $driver) {
+                return $this->errorResponse('يجب أن تكون سائقاً', 403);
+            }
+
+            // التحقق من أن السائق ليس لديه طلبات نشطة
+            $activeOrders = Order::where('driver_id', $driver->id)
+                ->whereIn('order_status_id', [1, 2, 3, 4])
+                ->count();
+
+            if ($activeOrders > 0) {
+                return $this->errorResponse('لديك طلب نشط بالفعل. انتظر حتى يتم إنهاء الطلب الحالي.', 400);
+            }
+            DB::beginTransaction();
+            // التحقق من أن السائق لم يقدم بالفعل على هذا الطلب
+            $existingOffer = OrderOffer::where('order_id', $orderId)
+                ->where('driver_id', $driver->id)
+                ->first();
+
+            if ($existingOffer) {
+                return $this->errorResponse('لقد قدمت بالفعل على هذا الطلب', 400);
+            }
+
+
+            $offer = OrderOffer::create([
+                'order_id' => $orderId,
+                'driver_id' => $driver->id,
+                'price' => $validated['price'],
+                'delivery_duration_minutes' => $validated['delivery_duration_minutes'],
+                'status' => 'pending',
+            ]);
+
+            DB::commit();
+
+            // إرسال إشعار للمستخدم
+            $this->notifyUserAboutNewOffer($offer);
+            Log::info('--'.$orderId.'--'.$driver->id.$offer);
+            // Broadcast Event
+            event(new AcceptedOrderByDriver($offer));
+
+            return $this->successResponse(
+                $offer,
+                'تم تقديم العرض بنجاح',
+                201
+            );
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return $this->errorResponse($e->getMessage(), 500);
+        }
+    }
     /**
      * إشعار المستخدم بعرض جديد
      */
