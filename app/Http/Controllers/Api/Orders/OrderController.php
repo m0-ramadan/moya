@@ -2,29 +2,30 @@
 
 namespace App\Http\Controllers\Api\Orders;
 
-use Carbon\Carbon;
-use App\Models\Order;
+use App\Events\Order\DriverAcceptedOrder;
+use App\Events\Order\NewOrderAvailable;
+use App\Events\Order\OfferCancelled;
+use App\Events\Order\UserConfirmedDriver;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\WebsiteUser\OrderResource;
+use App\Jobs\ExpireOrderJob;
 use App\Models\Driver;
+use App\Models\Order;
 use App\Models\OrderOffer;
 use App\Models\OrderStatus;
-use App\Jobs\ExpireOrderJob;
-use Illuminate\Http\Request;
-
+use App\Services\FirebaseNotificationService;
 use App\Traits\ApiResponseTrait;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Events\Order\OfferCancelled;
-use App\Http\Controllers\Controller;
-use App\Events\Order\NewOrderAvailable;
-use App\Events\Order\DriverAcceptedOrder;
-use App\Events\Order\UserConfirmedDriver;
-use App\Services\FirebaseNotificationService;
-use App\Http\Resources\WebsiteUser\OrderResource;
 
 class OrderController extends Controller
 {
     use ApiResponseTrait;
+
     protected $firebaseService;
+
     /**
      * إنشاء طلب جديد
      */
@@ -39,11 +40,11 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'service_id'        => 'required|exists:services,id',
-            'water_type_id'     => 'nullable|exists:water_types,id',
-            'order_date'        => 'nullable|date',
+            'service_id' => 'required|exists:services,id',
+            'water_type_id' => 'nullable|exists:water_types,id',
+            'order_date' => 'nullable|date',
             'saved_location_id' => 'required|exists:saved_locations,id',
-            'notes'             => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
         try {
@@ -53,17 +54,17 @@ class OrderController extends Controller
             $savedLocation = \App\Models\SavedLocation::findOrFail($validated['saved_location_id']);
 
             $order = Order::create([
-                'user_id'           => auth()->id(),
-                'service_id'        => $validated['service_id'],
-                'water_type_id'     => $validated['water_type_id'] ?? null,
+                'user_id' => auth()->id(),
+                'service_id' => $validated['service_id'],
+                'water_type_id' => $validated['water_type_id'] ?? null,
                 'saved_location_id' => $validated['saved_location_id'],
-                'order_status_id'   => 1, // pending
-                'order_date'        => $validated['order_date'] ?? null,
-                'notes'             => $validated['notes'] ?? null,
-                'created_at'        => Carbon::now(),
-                'expires_at'        => Carbon::now()->addMinutes(env('ORDER_EXPIRATION_MINUTES', 5)),
+                'order_status_id' => 1, // pending
+                'order_date' => $validated['order_date'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'created_at' => Carbon::now(),
+                'expires_at' => Carbon::now()->addMinutes(env('ORDER_EXPIRATION_MINUTES', 5)),
                 // Add price if needed
-                'price'            => null, // Will be set when driver accepts
+                'price' => null, // Will be set when driver accepts
             ]);
 
             DB::commit();
@@ -72,7 +73,7 @@ class OrderController extends Controller
             $order->load(['user', 'service', 'waterType', 'location']);
 
             // إذا كان الطلب غير مجدول (فوري)
-            if (!$order->order_date) {
+            if (! $order->order_date) {
                 $this->notifyAvailableDrivers($order);
             }
 
@@ -83,6 +84,7 @@ class OrderController extends Controller
             );
         } catch (\Exception $e) {
             DB::rollBack();
+
             return $this->errorResponse($e->getMessage(), 500);
         }
     }
@@ -105,7 +107,7 @@ class OrderController extends Controller
         foreach ($availableDrivers as $driver) {
             $tokens = $driver->user->activeDeviceTokens->pluck('token')->toArray();
 
-            if (!empty($tokens)) {
+            if (! empty($tokens)) {
                 $this->firebaseService->sendToMultipleDevices($tokens, [
                     'title' => 'طلب توصيل جديد',
                     'body' => 'طلب توصيل مياه جديد متاح! اضغط للموافقة.',
@@ -130,37 +132,37 @@ class OrderController extends Controller
      */
     public function acceptOrder(Request $request, $orderId)
     {
-        $validated = $request->validate([
-            'price' => 'required|numeric|min:0',
-            'delivery_duration_minutes' => 'required|integer|min:1',
-        ]);
-        $user = auth()->user();
-
-        $driver = Driver::where('user_id', $user->id)->first();
-
-        if (!$driver) {
-            return $this->errorResponse('يجب أن تكون سائقاً', 403);
-        }
-
-        // التحقق من أن السائق ليس لديه طلبات نشطة
-        $activeOrders = Order::where('driver_id', $driver->id)
-            ->whereIn('order_status_id', [1, 2, 3, 4])
-            ->count();
-
-        if ($activeOrders > 0) {
-            return $this->errorResponse('لديك طلب نشط بالفعل. انتظر حتى يتم إنهاء الطلب الحالي.', 400);
-        }
-
-        // التحقق من أن السائق لم يقدم بالفعل على هذا الطلب
-        $existingOffer = OrderOffer::where('order_id', $orderId)
-            ->where('driver_id', $driver->id)
-            ->first();
-
-        if ($existingOffer) {
-            return $this->errorResponse('لقد قدمت بالفعل على هذا الطلب', 400);
-        }
-
         try {
+            $validated = $request->validate([
+                'price' => 'required|numeric|min:0',
+                'delivery_duration_minutes' => 'required|integer|min:1',
+            ]);
+            $user = auth()->user();
+
+            $driver = Driver::where('user_id', $user->id)->first();
+
+            if (! $driver) {
+                return $this->errorResponse('يجب أن تكون سائقاً', 403);
+            }
+
+            // التحقق من أن السائق ليس لديه طلبات نشطة
+            $activeOrders = Order::where('driver_id', $driver->id)
+                ->whereIn('order_status_id', [1, 2, 3, 4])
+                ->count();
+
+            if ($activeOrders > 0) {
+                return $this->errorResponse('لديك طلب نشط بالفعل. انتظر حتى يتم إنهاء الطلب الحالي.', 400);
+            }
+
+            // التحقق من أن السائق لم يقدم بالفعل على هذا الطلب
+            $existingOffer = OrderOffer::where('order_id', $orderId)
+                ->where('driver_id', $driver->id)
+                ->first();
+
+            if ($existingOffer) {
+                return $this->errorResponse('لقد قدمت بالفعل على هذا الطلب', 400);
+            }
+
             DB::beginTransaction();
 
             $offer = OrderOffer::create([
@@ -175,7 +177,7 @@ class OrderController extends Controller
 
             // إرسال إشعار للمستخدم
             $this->notifyUserAboutNewOffer($offer);
-Log::info('--'. $orderId .'--'. $driver->id .$offer);
+            Log::info('--'.$orderId.'--'.$driver->id.$offer);
             // Broadcast Event
             event(new DriverAcceptedOrder($offer));
 
@@ -186,6 +188,7 @@ Log::info('--'. $orderId .'--'. $driver->id .$offer);
             );
         } catch (\Exception $e) {
             DB::rollBack();
+
             return $this->errorResponse($e->getMessage(), 500);
         }
     }
@@ -198,7 +201,7 @@ Log::info('--'. $orderId .'--'. $driver->id .$offer);
         $user = $offer->order->user;
         $tokens = $user->activeDeviceTokens->pluck('token')->toArray();
 
-        if (!empty($tokens)) {
+        if (! empty($tokens)) {
             $this->firebaseService->sendToMultipleDevices($tokens, [
                 'title' => 'عرض جديد للطلب',
                 'body' => 'قام سائق بتقديم عرض لطلبك! اضغط لعرض العروض.',
@@ -278,7 +281,7 @@ Log::info('--'. $orderId .'--'. $driver->id .$offer);
         $driver = $order->driver;
         $tokens = $driver->user->activeDeviceTokens->pluck('token')->toArray();
 
-        if (!empty($tokens)) {
+        if (! empty($tokens)) {
             $this->firebaseService->sendToMultipleDevices($tokens, [
                 'title' => 'تم تأكيدك للطلب',
                 'body' => 'تم تأكيدك للطلب! ابدأ بالتوصيل الآن.',
@@ -305,7 +308,7 @@ Log::info('--'. $orderId .'--'. $driver->id .$offer);
         foreach ($otherDrivers as $offer) {
             $tokens = $offer->driver->user->activeDeviceTokens->pluck('token')->toArray();
 
-            if (!empty($tokens)) {
+            if (! empty($tokens)) {
                 $this->firebaseService->sendToMultipleDevices($tokens, [
                     'title' => 'طلب تم تأكيده',
                     'body' => 'تم اختيار سائق آخر لهذا الطلب. يمكنك البحث عن طلبات أخرى.',
@@ -351,6 +354,7 @@ Log::info('--'. $orderId .'--'. $driver->id .$offer);
             );
         } catch (\Exception $e) {
             DB::rollBack();
+
             return $this->errorResponse($e->getMessage(), 500);
         }
     }
@@ -395,9 +399,9 @@ Log::info('--'. $orderId .'--'. $driver->id .$offer);
     private function scheduleOrderExpiration(Order $order)
     {
         // Ensure expires_at is set
-        if (!$order->expires_at) {
+        if (! $order->expires_at) {
             $order->update([
-                'expires_at' => Carbon::now()->addMinutes(config('services.orders.expiration_minutes', 5))
+                'expires_at' => Carbon::now()->addMinutes(config('services.orders.expiration_minutes', 5)),
             ]);
         }
 
@@ -538,7 +542,7 @@ Log::info('--'. $orderId .'--'. $driver->id .$offer);
         }
 
         // التحقق من حالة الدفع
-        if (!$order->isPaid()) {
+        if (! $order->isPaid()) {
             return $this->errorResponse('يجب إتمام عملية الدفع أولاً', 402);
         }
 
@@ -578,6 +582,7 @@ Log::info('--'. $orderId .'--'. $driver->id .$offer);
             );
         } catch (\Exception $e) {
             DB::rollBack();
+
             return $this->errorResponse($e->getMessage(), 500);
         }
     }
