@@ -57,3 +57,17 @@ nohup: ignoring input
   2026-02-07 16:56:42 App\Jobs\ExpireOrderJob ................... 20.60ms FAIL
   2026-02-07 16:56:42 App\Jobs\ExpireOrderJob ........................ RUNNING
   2026-02-07 16:56:42 App\Jobs\ExpireOrderJob ................... 24.63ms FAIL
+  2026-02-07 17:00:45 App\Events\Order\NewOrderAvailable ............. RUNNING
+  2026-02-07 17:00:46 App\Events\Order\NewOrderAvailable ....... 727.49ms DONE
+  2026-02-07 17:05:07 App\Events\Order\NewOrderAvailable ............. RUNNING
+  2026-02-07 17:05:08 App\Events\Order\NewOrderAvailable ....... 609.60ms DONE
+  2026-02-07 17:05:44 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 17:05:44 App\Jobs\ExpireOrderJob ................... 30.19ms DONE
+  2026-02-07 17:05:44 App\Events\Order\OrderExpired .................. RUNNING
+  2026-02-07 17:05:44 App\Events\Order\OrderExpired ............ 113.40ms DONE
+  2026-02-07 17:10:06 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 17:10:06 App\Jobs\ExpireOrderJob ................... 22.96ms FAIL
+  2026-02-07 17:10:06 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 17:10:06 App\Jobs\ExpireOrderJob ................... 23.16ms FAIL
+  2026-02-07 17:10:06 App\Jobs\ExpireOrderJob ........................ RUNNING
+  2026-02-07 17:10:06 App\Jobs\ExpireOrderJob ................... 27.47ms FAIL
