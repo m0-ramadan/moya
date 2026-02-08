@@ -106,7 +106,7 @@ class RatingController extends Controller
         $existingRating = DriverRating::where('driver_id', $driverId)
             ->where('user_id', $user->id)
             ->whereNull('order_id')
-            ->where('rated_by', 'user')
+            //    ->where('rated_by', 'user')
             ->exists();
 
         if ($existingRating) {
