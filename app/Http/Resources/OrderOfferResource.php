@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\WebsiteUser\OrderResource;
 use App\Models\Driver;
 use App\Http\Resources\Driver\DriverResource;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -17,11 +18,12 @@ class OrderOfferResource extends JsonResource
      */
     public function toArray($request)
     {
-        $driver=Driver::findOrFail($this->driver_id);
+        $driver = Driver::findOrFail($this->driver_id);
 
         return [
             'id' => $this->id,
             'order_id' => $this->order_id,
+            'order' => new OrderResource($this->order),
             'driver_id' => $this->driver_id,
             'price' => $this->price,
             'status' => $this->status,
@@ -29,7 +31,7 @@ class OrderOfferResource extends JsonResource
             'created_at' => $this->created_at->toDateTimeString(),
             'updated_at' => $this->updated_at->toDateTimeString(),
             // Include related models if needed
-            'driver' =>new DriverShortResource($driver)  ,
+            'driver' => new DriverShortResource($driver),
         ];
     }
 }
