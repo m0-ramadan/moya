@@ -10,9 +10,10 @@ use App\Http\Controllers\Api\SliderController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\SupportController;
+
+
 use App\Http\Controllers\Api\ContractController;
-
-
 use App\Http\Controllers\Api\ContactUsController;
 use App\Http\Controllers\Api\StaticPagesController;
 use App\Http\Controllers\Api\NotificationController;
@@ -112,7 +113,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('driver')->group(function () {
             Route::post('/location/update', [DriverLocationController::class, 'updateLocation']);
             Route::get('/location/current', [DriverLocationController::class, 'getCurrentLocation']);
-            Route::get('/{id}', [DriverAuthController::class,'show']);
+            Route::get('/{id}', [DriverAuthController::class, 'show']);
         });
 
         Route::patch('/user/settings/notifications', [AuthController::class, 'updateNotifications']);
@@ -270,7 +271,6 @@ Route::prefix('v1')->group(function () {
         Route::post('/deposit', [UserWalletController::class, 'initiateDeposit']);
         Route::post('/withdraw', [UserWalletController::class, 'withdraw']);
         Route::post('/transfer', [UserWalletController::class, 'transfer']);
-
     });
 
 
@@ -322,4 +322,5 @@ Route::prefix('v1')->group(function () {
     // في routes/api.php
     //  Route::post('/paymob/webhook', [PaymentController::class, 'handleWebhook'])->name('paymob.webhook');
     Route::get('/payment-methods', [PaymentOrdersController::class, 'getPaymentMethods']);
+    Route::get('/available-support', [SupportController::class, 'available']);
 });
