@@ -120,7 +120,7 @@ class RatingController extends Controller
                 'order_id' => null,
                 'driver_id' => $driverId,
                 'user_id'  => $user->id,
-                'rated_by' => 'user',
+                //  'rated_by' => 'user',
                 'rating'   => $validated['rating'],
                 'comment'  => $validated['comment'] ?? null,
                 //'aspects'  => $validated['aspects'] ?? [],
