@@ -4,78 +4,79 @@ namespace App\Events\Order;
 
 use App\Http\Resources\Driver\DriverShortResource;
 use App\Models\OrderOffer;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Broadcasting\Channel;
-use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Support\Facades\Log;
 
 class DriverAcceptOrder implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets;
 
     public array $offerData;
+
     public int $orderId;
 
     public int $userId;
 
     public int $remainingDriversCount;
 
-public function __construct(OrderOffer $offer)
-{
-    Log::info('DriverAcceptedOrder __construct fired', ['offer_id' => $offer->id]);
+    public function __construct(OrderOffer $offer)
+    {
+        Log::info('DriverAcceptedOrder __construct fired', ['offer_id' => $offer->id]);
 
-    $offer->load(['driver.user', 'order']);
-    
-    $driver = $offer->driver;
-    $user   = $driver?->user;
-$this->userId = $user->id;
-    Log::info('Loaded driver and user', [
-        'driver' => (bool) $driver,
-        'user' => (bool) $user,
-    ]);
+        $offer->load(['driver.user', 'order']);
 
-    if (!$driver || !$user || !$offer->order) {
-        Log::warning('DriverAcceptedOrder: بيانات ناقصة، سيتم تخطي البث', [
-            'offer_id' => $offer->id,
+        $driver = $offer->driver;
+        $user = $driver?->user;
+        $this->userId = $offer->order?->user?->id;
+        Log::info('Loaded driver and user', [
             'driver' => (bool) $driver,
             'user' => (bool) $user,
-            'order' => (bool) $offer->order,
         ]);
 
-        $this->offerData = [];
-        $this->orderId = 0;
-        $this->remainingDriversCount = 0;
-        return;
+        if (! $driver || ! $user || ! $offer->order) {
+            Log::warning('DriverAcceptedOrder: بيانات ناقصة، سيتم تخطي البث', [
+                'offer_id' => $offer->id,
+                'driver' => (bool) $driver,
+                'user' => (bool) $user,
+                'order' => (bool) $offer->order,
+            ]);
+
+            $this->offerData = [];
+            $this->orderId = 0;
+            $this->remainingDriversCount = 0;
+
+            return;
+        }
+
+        $this->offerData = [
+            'id' => $offer->id,
+            'driver_id' => $driver->id,
+            'driver' =>new DriverShortResource($driver), // أو DriverShortResource لو ثابت
+            'driver_name' => $user->name,
+            'driver_phone' => $user->phone,
+            'price' => $offer->price,
+            'delivery_duration_minutes' => $offer->delivery_duration_minutes,
+            'created_at' => $offer->created_at->toDateTimeString(),
+        ];
+
+        $this->orderId = $offer->order_id;
+
+        $this->remainingDriversCount = OrderOffer::where('order_id', $offer->order_id)
+            ->where('id', '!=', $offer->id)
+            ->where('status', 'pending')
+            ->count();
     }
-
-    $this->offerData = [
-        'id' => $offer->id,
-        'driver_id' => $driver->id,
-        'driver' => null, // أو DriverShortResource لو ثابت
-        'driver_name' => $user->name,
-        'driver_phone' => $user->phone,
-        'price' => $offer->price,
-        'delivery_duration_minutes' => $offer->delivery_duration_minutes,
-        'created_at' => $offer->created_at->toDateTimeString(),
-    ];
-
-    $this->orderId = $offer->order_id;
-
-    $this->remainingDriversCount = OrderOffer::where('order_id', $offer->order_id)
-        ->where('id', '!=', $offer->id)
-        ->where('status', 'pending')
-        ->count();
-}
-
 
     public function broadcastOn()
     {
-        if (!$this->orderId) {
+        if (! $this->orderId) {
             return [];
         }
 
-        return new Channel('user.' . $this->userId);
+        return new Channel('user.'.$this->userId);
     }
 
     public function broadcastAs()
