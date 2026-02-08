@@ -127,10 +127,10 @@ class RatingController extends Controller
             ]);
 
             // تحديث متوسط تقييم السائق
-            $this->updateDriverAverageRating($driverId);
+            //     $this->updateDriverAverageRating($driverId);
 
             // تحديث إحصائيات السائق
-            $this->updateDriverStats($driverId);
+            //     $this->updateDriverStats($driverId);
 
             DB::commit();
 
