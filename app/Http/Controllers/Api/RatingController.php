@@ -143,7 +143,7 @@ class RatingController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
 
-            return $this->errorResponse('فشل إضافة التقييم', 500);
+            return $this->errorResponse('فشل إضافة التقييم' . $e->getMessage(), 500);
         }
     }
 
