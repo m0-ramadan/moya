@@ -60,6 +60,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/{id}', [OrderController::class, 'show']);
             Route::get('/{id}/status', [OrderController::class, 'checkOrderStatus']);
             Route::post('/{orderId}/rate', [RatingController::class, 'rateDriver']);
+            Route::post('/driver/{driverId}/rate', [RatingController::class, 'rateDriverWithoutOrder']);
+
             Route::get('/{orderId}/offers', [RatingController::class, 'getOrderOffers']);
             Route::get('/{orderId}/tracking', [DriverOrderController::class, 'getLiveTracking']);
 

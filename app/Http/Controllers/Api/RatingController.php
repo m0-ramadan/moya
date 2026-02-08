@@ -73,7 +73,7 @@ class RatingController extends Controller
             DB::commit();
 
             // Broadcast Event
-            event(new OrderRated($rating));
+            //   event(new OrderRated($rating));
 
             return $this->successResponse([
                 'rating' => $rating,
@@ -82,6 +82,67 @@ class RatingController extends Controller
             ], 'تم إضافة التقييم بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
+            return $this->errorResponse('فشل إضافة التقييم', 500);
+        }
+    }
+    /**
+     * تقييم السائق
+     */
+    public function rateDriverWithoutOrder(Request $request, $driverId)
+    {
+        $validated = $request->validate([
+            'rating'  => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
+            'aspects' => 'nullable|array',
+        ]);
+
+        $user = auth()->user();
+
+        // التأكد أن السائق موجود
+        $driver = Driver::findOrFail($driverId);
+
+        // التأكد أن المستخدم لم يقم بتقييم هذا السائق من قبل (بدون طلب)
+        $existingRating = OrderRating::where('driver_id', $driverId)
+            ->where('user_id', $user->id)
+            ->whereNull('order_id')
+            ->where('rated_by', 'user')
+            ->exists();
+
+        if ($existingRating) {
+            return $this->errorResponse('لقد قمت بتقييم هذا السائق مسبقاً', 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $rating = OrderRating::create([
+                'order_id' => null,
+                'driver_id' => $driverId,
+                'user_id'  => $user->id,
+                'rated_by' => 'user',
+                'rating'   => $validated['rating'],
+                'comment'  => $validated['comment'] ?? null,
+                'aspects'  => $validated['aspects'] ?? [],
+            ]);
+
+            // تحديث متوسط تقييم السائق
+            $this->updateDriverAverageRating($driverId);
+
+            // تحديث إحصائيات السائق
+            $this->updateDriverStats($driverId);
+
+            DB::commit();
+
+            // Broadcast Event (اختياري)
+            //   event(new OrderRated($rating));
+
+            return $this->successResponse([
+                'rating' => $rating,
+                'driver_avg_rating' => $driver->fresh()->average_rating,
+            ], 'تم إضافة التقييم بنجاح');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
             return $this->errorResponse('فشل إضافة التقييم', 500);
         }
     }
@@ -191,7 +252,7 @@ class RatingController extends Controller
             'total_offers' => $offers->count(),
             'active_offers' => $offers->where('status', 'pending')->count(),
             'accepted_offer' => $offers->where('status', 'accepted')->first(),
-            'offers' =>OrderOfferResource::collection($offers) ,
+            'offers' => OrderOfferResource::collection($offers),
         ], 'تم جلب العروض بنجاح');
     }
 
