@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use App\Services\GoogleMapsService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderOfferResource;
+use App\Models\DriverRating;
 
 class RatingController extends Controller
 {
@@ -102,7 +103,7 @@ class RatingController extends Controller
         $driver = Driver::findOrFail($driverId);
 
         // التأكد أن المستخدم لم يقم بتقييم هذا السائق من قبل (بدون طلب)
-        $existingRating = OrderRating::where('driver_id', $driverId)
+        $existingRating = DriverRating::where('driver_id', $driverId)
             ->where('user_id', $user->id)
             ->whereNull('order_id')
             ->where('rated_by', 'user')
@@ -115,14 +116,14 @@ class RatingController extends Controller
         try {
             DB::beginTransaction();
 
-            $rating = OrderRating::create([
+            $rating = DriverRating::create([
                 'order_id' => null,
                 'driver_id' => $driverId,
                 'user_id'  => $user->id,
                 'rated_by' => 'user',
                 'rating'   => $validated['rating'],
                 'comment'  => $validated['comment'] ?? null,
-                'aspects'  => $validated['aspects'] ?? [],
+                //'aspects'  => $validated['aspects'] ?? [],
             ]);
 
             // تحديث متوسط تقييم السائق
