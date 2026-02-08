@@ -2,13 +2,14 @@
 
 namespace App\Events\Order;
 
-use App\Http\Resources\Driver\DriverShortResource;
 use App\Models\OrderOffer;
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
-use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Foundation\Events\Dispatchable;
+use App\Http\Resources\WebsiteUser\OrderResource;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use App\Http\Resources\Driver\DriverShortResource;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 
 class DriverAcceptOrder implements ShouldBroadcastNow
 {
@@ -54,7 +55,8 @@ class DriverAcceptOrder implements ShouldBroadcastNow
         $this->offerData = [
             'id' => $offer->id,
             'driver_id' => $driver->id,
-            'driver' =>new DriverShortResource($driver), // أو DriverShortResource لو ثابت
+            'driver' => new DriverShortResource($driver), // أو DriverShortResource لو ثابت
+            'order' => new OrderResource($offer->order),
             'driver_name' => $user->name,
             'driver_phone' => $user->phone,
             'price' => $offer->price,
@@ -76,7 +78,7 @@ class DriverAcceptOrder implements ShouldBroadcastNow
             return [];
         }
 
-        return new Channel('user.'.$this->userId);
+        return new Channel('user.' . $this->userId);
     }
 
     public function broadcastAs()
