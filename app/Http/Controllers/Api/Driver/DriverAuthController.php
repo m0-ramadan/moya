@@ -74,7 +74,7 @@ class DriverAuthController extends Controller
             $user = $res['user'];
             if ($user->type == 'user') {
                 $user->type = 'driver';
-                $user->name = 'driver'.$drivers + 1;
+                $user->name = 'driver' . $drivers + 1;
                 $user->save();
             }
             // التحقق إذا كان المستخدم مسجل كسائق
@@ -105,199 +105,199 @@ class DriverAuthController extends Controller
      * تسجيل سائق جديد
      */
 
-public function register(Request $request)
-{
-    Log::info('Driver Register: request started');
+    public function register(Request $request)
+    {
+        Log::info('Driver Register: request started');
 
-    try {
-        // 1️⃣ المستخدم الحالي
-        $user = auth()->user();
-
-        if (!$user) {
-            return $this->errorResponse('يجب تسجيل الدخول أولاً', 401);
-        }
-
-        // 2️⃣ بيانات الريكوست (من غير الملفات)
-        Log::info('Driver Register: request data', [
-            'data' => $request->except([
-                'id_image',
-                'id_image_back',
-                'license_image',
-                'license_image_back',
-                'photo',
-                'vehicle_registration_image',
-            ]),
-        ]);
-
-        // 3️⃣ أسماء الملفات المرفوعة
-        Log::info('Driver Register: uploaded files', [
-            'files' => array_keys($request->allFiles()),
-        ]);
-
-        // 4️⃣ Validation
-        Log::info('Driver Register: validation started');
-
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:100',
-            'date_of_birth' => 'required|date',
-
-            'citizenship' => 'required|in:saudi,resident',
-            'country_id' => 'required_if:citizenship,resident|exists:countries,id',
-
-            'national_id' => 'required|string|max:20|unique:drivers,national_id',
-            'id_number' => 'required|string|max:20|unique:drivers,id_number',
-            'id_image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
-            'id_image_back' => 'required|image|mimes:jpg,jpeg,png|max:5120',
-
-            'license_number' => 'required|string|max:50|unique:drivers,license_number',
-            'issue_date' => 'required|date',
-            'expiry_date' => 'required|date',
-            'license_image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
-            'license_image_back' => 'required|image|mimes:jpg,jpeg,png|max:5120',
-
-            'photo' => 'required|image|mimes:jpg,jpeg,png|max:5120',
-
-            'vehicle_size' => 'required',
-            'is_vehicle_owner' => 'required',
-            'vehicle_plate_number' => 'required|string|max:20',
-            'vehicle_registration_number' => 'nullable|string|max:50',
-            'vehicle_registration_image' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
-
-            'emergency_contact_name' => 'nullable|string|max:100',
-            'emergency_contact_phone' => 'nullable|string|max:20',
-
-            'preferred_working_hours' => 'nullable|string',
-            'max_daily_orders' => 'nullable|integer|min:1|max:20',
-            'radius_km' => 'nullable|integer|min:5|max:100',
-
-            'bank_name' => 'nullable|string|max:100',
-            'iban_number' => 'nullable|string|max:34',
-
-            'status'=> 'nullable',
-        ]);
-
-        if ($validator->fails()) {
-            Log::warning('Driver Register: validation failed', [
-                'errors' => $validator->errors(),
-            ]);
-
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        Log::info('Driver Register: validation passed');
-
-        // 5️⃣ منع التكرار
-        if ($user->driver) {
-            Log::warning('Driver Register: user already driver', [
-                'user_id' => $user->id,
-            ]);
-
-            return $this->errorResponse('أنت مسجل كسائق بالفعل', 400);
-        }
-
-        // 6️⃣ بدء المعاملة
-        DB::beginTransaction();
-        Log::info('Driver Register: DB transaction started');
-
-        // 7️⃣ رفع الملفات
-        Log::info('Driver Register: uploading documents');
-
-        $uploadedFiles = $this->uploadDriverDocuments($request, $user->id);
-
-        Log::info('Driver Register: documents uploaded', [
-            'files' => array_keys($uploadedFiles),
-        ]);
-
-        // 8️⃣ إنشاء السائق
-        Log::info('Driver Register: creating driver');
-        $driver = Driver::create([
-            // الربط بالمستخدم
-            'user_id' => $user->id,
-
-            // الجنسية
-            'citizenship' => $validator->validated()['citizenship'] ?? null,
-            'country_id' => $validator->validated()['country_id'] ?? null,
-
-            // بيانات شخصية
-            'name' => $validator->validated()['name'] ?? null,
-            'date_of_birth' => $validator->validated()['date_of_birth'] ?? null,
-            'national_id' => $validator->validated()['national_id'] ?? null,
-            'id_number' => $validator->validated()['id_number'] ?? null,
-            'personal_photo' => $uploadedFiles['photo'] ?? null,
-            'id_image_front' => $uploadedFiles['id_image'] ?? null,
-            'id_image_back' => $uploadedFiles['id_image_back'] ?? null,
-
-            // رخصة القيادة
-            'license_number' => $validator->validated()['license_number'] ?? null,
-            'license_expiry_date' => $validator->validated()['expiry_date'] ?? null,
-            'license_issue_date' => $validator->validated()['issue_date'] ?? null,
-            'license_image_front' => $uploadedFiles['license_image'] ?? null,
-            'license_image_back' => $uploadedFiles['license_image_back'] ?? null,
-
-            // المركبة
-            'vehicle_size' => $validator->validated()['vehicle_size'] ?? null,
-            'is_vehicle_owner' => (bool) ($validator->validated()['is_vehicle_owner'] ?? false),
-            'vehicle_plate_number' => $validator->validated()['vehicle_plate_number'] ?? null,
-            'vehicle_registration_number' => $validator->validated()['vehicle_registration_number'] ?? null,
-            'vehicle_registration_image' => $uploadedFiles['vehicle_registration_image'] ?? null,
-
-            // جهات الاتصال للطوارئ
-            'emergency_contact_name' => $validator->validated()['emergency_contact_name'] ?? null,
-            'emergency_contact_phone' => $validator->validated()['emergency_contact_phone'] ?? null,
-
-            // تفضيلات العمل
-            'preferred_working_hours' => $validator->validated()['preferred_working_hours'] ?? null,
-            'max_daily_orders' => $validator->validated()['max_daily_orders'] ?? null,
-            'radius_km' => $validator->validated()['radius_km'] ?? null,
-
-            // بيانات البنك
-            'bank_name' => $validator->validated()['bank_name'] ?? null,
-            'iban_number' => $validator->validated()['iban_number'] ?? null,
-
-            // التحقق والحالة
-            'is_verified' => false,
-            'verified_at' => null,
-            'rejection_reason' => null,
-            'status' => $validator->validated()['status'] ?? null,
-            'is_active' => false,
-        ]);
-
-        // 9️⃣ تحديث المستخدم
-        $user->update([
-            'name' => $validator->validated()['name'],
-            'avatar' => $uploadedFiles['photo'] ?? null
-        ]);
-
-        DB::commit();
-
-        // 🔟 إشعار الأدمن
         try {
-            $this->sendAdminNotification($driver);
-            Log::info('Driver Register: admin notified');
-        } catch (\Exception $e) {
-            Log::error('Driver Register: admin notification failed', [
-                'error' => $e->getMessage(),
+            // 1️⃣ المستخدم الحالي
+            $user = auth()->user();
+
+            if (!$user) {
+                return $this->errorResponse('يجب تسجيل الدخول أولاً', 401);
+            }
+
+            // 2️⃣ بيانات الريكوست (من غير الملفات)
+            Log::info('Driver Register: request data', [
+                'data' => $request->except([
+                    'id_image',
+                    'id_image_back',
+                    'license_image',
+                    'license_image_back',
+                    'photo',
+                    'vehicle_registration_image',
+                ]),
             ]);
+
+            // 3️⃣ أسماء الملفات المرفوعة
+            Log::info('Driver Register: uploaded files', [
+                'files' => array_keys($request->allFiles()),
+            ]);
+
+            // 4️⃣ Validation
+            Log::info('Driver Register: validation started');
+
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:100',
+                'date_of_birth' => 'required|date',
+
+                'citizenship' => 'required|in:saudi,resident',
+                'country_id' => 'required_if:citizenship,resident|exists:countries,id',
+
+                'national_id' => 'required|string|max:20|unique:drivers,national_id',
+                'id_number' => 'required|string|max:20|unique:drivers,id_number',
+                'id_image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+                'id_image_back' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+
+                'license_number' => 'required|string|max:50|unique:drivers,license_number',
+                'issue_date' => 'required|date',
+                'expiry_date' => 'required|date',
+                'license_image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+                'license_image_back' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+
+                'photo' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+
+                'vehicle_size' => 'required',
+                'is_vehicle_owner' => 'required',
+                'vehicle_plate_number' => 'required|string|max:20',
+                'vehicle_registration_number' => 'nullable|string|max:50',
+                'vehicle_registration_image' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+
+                'emergency_contact_name' => 'nullable|string|max:100',
+                'emergency_contact_phone' => 'nullable|string|max:20',
+
+                'preferred_working_hours' => 'nullable|string',
+                'max_daily_orders' => 'nullable|integer|min:1|max:20',
+                'radius_km' => 'nullable|integer|min:5|max:100',
+
+                'bank_name' => 'nullable|string|max:100',
+                'iban_number' => 'nullable|string|max:34',
+
+                'status' => 'nullable',
+            ]);
+
+            if ($validator->fails()) {
+                Log::warning('Driver Register: validation failed', [
+                    'errors' => $validator->errors(),
+                ]);
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            Log::info('Driver Register: validation passed');
+
+            // 5️⃣ منع التكرار
+            if ($user->driver) {
+                Log::warning('Driver Register: user already driver', [
+                    'user_id' => $user->id,
+                ]);
+
+                return $this->errorResponse('أنت مسجل كسائق بالفعل', 400);
+            }
+
+            // 6️⃣ بدء المعاملة
+            DB::beginTransaction();
+            Log::info('Driver Register: DB transaction started');
+
+            // 7️⃣ رفع الملفات
+            Log::info('Driver Register: uploading documents');
+
+            $uploadedFiles = $this->uploadDriverDocuments($request, $user->id);
+
+            Log::info('Driver Register: documents uploaded', [
+                'files' => array_keys($uploadedFiles),
+            ]);
+
+            // 8️⃣ إنشاء السائق
+            Log::info('Driver Register: creating driver');
+            $driver = Driver::create([
+                // الربط بالمستخدم
+                'user_id' => $user->id,
+
+                // الجنسية
+                'citizenship' => $validator->validated()['citizenship'] ?? null,
+                'country_id' => $validator->validated()['country_id'] ?? null,
+
+                // بيانات شخصية
+                'name' => $validator->validated()['name'] ?? null,
+                'date_of_birth' => $validator->validated()['date_of_birth'] ?? null,
+                'national_id' => $validator->validated()['national_id'] ?? null,
+                'id_number' => $validator->validated()['id_number'] ?? null,
+                'personal_photo' => $uploadedFiles['photo'] ?? null,
+                'id_image_front' => $uploadedFiles['id_image'] ?? null,
+                'id_image_back' => $uploadedFiles['id_image_back'] ?? null,
+
+                // رخصة القيادة
+                'license_number' => $validator->validated()['license_number'] ?? null,
+                'license_expiry_date' => $validator->validated()['expiry_date'] ?? null,
+                'license_issue_date' => $validator->validated()['issue_date'] ?? null,
+                'license_image_front' => $uploadedFiles['license_image'] ?? null,
+                'license_image_back' => $uploadedFiles['license_image_back'] ?? null,
+
+                // المركبة
+                'vehicle_size' => $validator->validated()['vehicle_size'] ?? null,
+                'is_vehicle_owner' => (bool) ($validator->validated()['is_vehicle_owner'] ?? false),
+                'vehicle_plate_number' => $validator->validated()['vehicle_plate_number'] ?? null,
+                'vehicle_registration_number' => $validator->validated()['vehicle_registration_number'] ?? null,
+                'vehicle_registration_image' => $uploadedFiles['vehicle_registration_image'] ?? null,
+
+                // جهات الاتصال للطوارئ
+                'emergency_contact_name' => $validator->validated()['emergency_contact_name'] ?? null,
+                'emergency_contact_phone' => $validator->validated()['emergency_contact_phone'] ?? null,
+
+                // تفضيلات العمل
+                'preferred_working_hours' => $validator->validated()['preferred_working_hours'] ?? null,
+                'max_daily_orders' => $validator->validated()['max_daily_orders'] ?? null,
+                'radius_km' => $validator->validated()['radius_km'] ?? null,
+
+                // بيانات البنك
+                'bank_name' => $validator->validated()['bank_name'] ?? null,
+                'iban_number' => $validator->validated()['iban_number'] ?? null,
+
+                // التحقق والحالة
+                'is_verified' => false,
+                'verified_at' => null,
+                'rejection_reason' => null,
+                'status' => $validator->validated()['status'] ?? null,
+                'is_active' => false,
+            ]);
+
+            // 9️⃣ تحديث المستخدم
+            $user->update([
+                'name' => $validator->validated()['name'],
+                'avatar' => $uploadedFiles['photo'] ?? null
+            ]);
+
+            DB::commit();
+
+            // 🔟 إشعار الأدمن
+            try {
+                $this->sendAdminNotification($driver);
+                Log::info('Driver Register: admin notified');
+            } catch (\Exception $e) {
+                Log::error('Driver Register: admin notification failed', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            return $this->successResponse([
+                'driver' => new DriverResource($driver),
+            ], 'تم تسجيل طلبك بنجاح وسيتم مراجعته خلال 24 ساعة');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Driver Register: exception occurred', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return $this->errorResponse('فشل تسجيل السائق', 500);
         }
-
-        return $this->successResponse([
-            'driver' =>new DriverResource($driver) ,
-        ], 'تم تسجيل طلبك بنجاح وسيتم مراجعته خلال 24 ساعة');
-    } catch (\Exception $e) {
-        DB::rollBack();
-
-        Log::error('Driver Register: exception occurred', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ]);
-
-        return $this->errorResponse('فشل تسجيل السائق', 500);
     }
-}
 
     /**
      * إكمال ملف السائق (للسائقين المسجلين)
@@ -352,88 +352,93 @@ public function register(Request $request)
     //         return $this->errorResponse('فشل تحديث الملف الشخصي: '.$e->getMessage(), 500);
     //     }
     // }
-public function completeProfile(CompleteProfileRequest $request)
-{
-    try {
-        $user = $request->user();
-        $driver = $user->driver;
+    public function completeProfile(CompleteProfileRequest $request)
+    {
+        try {
+            $user = $request->user();
+            $driver = $user->driver;
 
-        if (!$driver) {
-            return $this->errorResponse('لم يتم العثور على بيانات السائق', 404);
-        }
+            if (!$driver) {
+                return $this->errorResponse('لم يتم العثور على بيانات السائق', 404);
+            }
 
-        DB::beginTransaction();
+            DB::beginTransaction();
 
-        $data = $request->validated();
+            $data = $request->validated();
 
-        // رفع الصور المحدثة
-        if ($request->hasFile('photo')) {
-            $this->deleteOldFile($driver->personal_photo);
-            $data['personal_photo'] = $this->uploadProfilePhoto($request->file('photo'), intval($driver->id));
-            
-            // تحديث صورة المستخدم أيضًا
-            $this->deleteOldFile($user->avatar);
-            $user->avatar = $data['personal_photo'];
-        }
+            // رفع الصور المحدثة
+            if ($request->hasFile('photo')) {
+                $this->deleteOldFile($driver->personal_photo);
+                $data['personal_photo'] = $this->uploadProfilePhoto($request->file('photo'), intval($driver->id));
 
-        if ($request->hasFile('id_image')) {
-            $this->deleteOldFile($driver->id_image_front);
-            $data['id_image_front'] = $this->uploadIdImage($request->file('id_image'), $driver->id, 'front');
-        }
+                // تحديث صورة المستخدم أيضًا
+                $this->deleteOldFile($user->avatar);
+                $user->avatar = $data['personal_photo'];
+            }
 
-        if ($request->hasFile('id_image_back')) {
-            $this->deleteOldFile($driver->id_image_back);
-            $data['id_image_back'] = $this->uploadIdImage($request->file('id_image_back'), $driver->id, 'back');
-        }
+            if ($request->hasFile('id_image')) {
+                $this->deleteOldFile($driver->id_image_front);
+                $data['id_image_front'] = $this->uploadIdImage($request->file('id_image'), $driver->id, 'front');
+            }
 
-        if ($request->hasFile('license_image')) {
-            $this->deleteOldFile($driver->license_image_front);
-            $data['license_image_front'] = $this->uploadLicenseImage($request->file('license_image'), $driver->id, 'front');
-        }
+            if ($request->hasFile('id_image_back')) {
+                $this->deleteOldFile($driver->id_image_back);
+                $data['id_image_back'] = $this->uploadIdImage($request->file('id_image_back'), $driver->id, 'back');
+            }
 
-        if ($request->hasFile('license_image_back')) {
-            $this->deleteOldFile($driver->license_image_back);
-            $data['license_image_back'] = $this->uploadLicenseImage($request->file('license_image_back'), $driver->id, 'back');
-        }
+            if ($request->hasFile('license_image')) {
+                $this->deleteOldFile($driver->license_image_front);
+                $data['license_image_front'] = $this->uploadLicenseImage($request->file('license_image'), $driver->id, 'front');
+            }
 
-        if ($request->hasFile('vehicle_registration_image')) {
-            $this->deleteOldFile($driver->vehicle_registration_image);
-            $data['vehicle_registration_image'] = $this->uploadVehicleRegistrationImage(
-                $request->file('vehicle_registration_image'),
-                $driver->id
+            if ($request->hasFile('license_image_back')) {
+                $this->deleteOldFile($driver->license_image_back);
+                $data['license_image_back'] = $this->uploadLicenseImage($request->file('license_image_back'), $driver->id, 'back');
+            }
+
+            if ($request->hasFile('vehicle_registration_image')) {
+                $this->deleteOldFile($driver->vehicle_registration_image);
+                $data['vehicle_registration_image'] = $this->uploadVehicleRegistrationImage(
+                    $request->file('vehicle_registration_image'),
+                    $driver->id
+                );
+            }
+
+            // تحديث اسم المستخدم إذا تم إرساله
+            if ($request->has('name')) {
+                $user->name = $request->name;
+                //  $data['name'] = $request->name; // تحديث اسم السائق أيضًا في جدول drivers
+            }
+
+            // تحديث بيانات المستخدم إذا تم تعديلها
+            if ($request->has('name') || $request->hasFile('photo')) {
+                $user->save();
+            }
+
+            // إزالة الملفات من البيانات لأنها تمت معالجتها
+            unset(
+                $data['photo'],
+                $data['id_image'],
+                $data['id_image_back'],
+                $data['license_image'],
+                $data['license_image_back'],
+                $data['vehicle_registration_image']
             );
+
+            // تحديث بيانات السائق
+            $driver->update($data);
+
+            DB::commit();
+
+            return $this->successResponse([
+                'driver' => new DriverResource($driver),
+            ], 'تم تحديث الملف الشخصي بنجاح');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return $this->errorResponse('فشل تحديث الملف الشخصي: ' . $e->getMessage(), 500);
         }
-
-        // تحديث اسم المستخدم إذا تم إرساله
-        if ($request->has('name')) {
-            $user->name = $request->name;
-          //  $data['name'] = $request->name; // تحديث اسم السائق أيضًا في جدول drivers
-        }
-
-        // تحديث بيانات المستخدم إذا تم تعديلها
-        if ($request->has('name') || $request->hasFile('photo')) {
-            $user->save();
-        }
-
-        // إزالة الملفات من البيانات لأنها تمت معالجتها
-        unset($data['photo'], $data['id_image'], $data['id_image_back'], 
-              $data['license_image'], $data['license_image_back'], 
-              $data['vehicle_registration_image']);
-
-        // تحديث بيانات السائق
-        $driver->update($data);
-
-        DB::commit();
-
-        return $this->successResponse([
-            'driver' => new DriverResource($driver),
-        ], 'تم تحديث الملف الشخصي بنجاح');
-    } catch (\Exception $e) {
-        DB::rollBack();
-
-        return $this->errorResponse('فشل تحديث الملف الشخصي: ' . $e->getMessage(), 500);
     }
-}
     /**
      * جلب ملف السائق
      */
@@ -460,6 +465,7 @@ public function completeProfile(CompleteProfileRequest $request)
      */
     public function countries()
     {
+
         $countries = Country::active()->ordered()->get();
 
         return $this->successResponse(CountryResource::collection($countries));
@@ -498,57 +504,58 @@ public function completeProfile(CompleteProfileRequest $request)
         ]);
     }
 
-    public function show($id){
-        $driver=Driver::find($id);
-        if(! $driver) {
-          return $this->successResponse(null,' لا يوجد سائق بهذا ال id ');
+    public function show($id)
+    {
+        $driver = Driver::find($id);
+        if (! $driver) {
+            return $this->successResponse(null, ' لا يوجد سائق بهذا ال id ');
         }
-        return $this->successResponse(new DriverWithRatingResource($driver),'');
+        return $this->successResponse(new DriverWithRatingResource($driver), '');
     }
     // ========== الدوال المساعدة ==========
 
     /**
      * رفع وثائق السائق
      */
- private function uploadDriverDocuments($request, $userId)
-{
-    $uploads = [];
+    private function uploadDriverDocuments($request, $userId)
+    {
+        $uploads = [];
 
-    // رفع الصورة الشخصية
-    if ($request->hasFile('photo')) {
-        $uploads['photo'] = $this->uploadProfilePhoto($request->file('photo'), $userId);
+        // رفع الصورة الشخصية
+        if ($request->hasFile('photo')) {
+            $uploads['photo'] = $this->uploadProfilePhoto($request->file('photo'), $userId);
+        }
+
+        // رفع صورة الهوية (الوجه الأمامي)
+        if ($request->hasFile('id_image')) {
+            $uploads['id_image'] = $this->uploadIdImage($request->file('id_image'), $userId, 'front');
+        }
+
+        // رفع صورة الهوية (الوجه الخلفي)
+        if ($request->hasFile('id_image_back')) {
+            $uploads['id_image_back'] = $this->uploadIdImage($request->file('id_image_back'), $userId, 'back');
+        }
+
+        // رفع رخصة القيادة (الوجه الأمامي)
+        if ($request->hasFile('license_image')) {
+            $uploads['license_image'] = $this->uploadLicenseImage($request->file('license_image'), $userId, 'front');
+        }
+
+        // رفع رخصة القيادة (الوجه الخلفي)
+        if ($request->hasFile('license_image_back')) {
+            $uploads['license_image_back'] = $this->uploadLicenseImage($request->file('license_image_back'), $userId, 'back');
+        }
+
+        // رفع رخصة السيارة
+        if ($request->hasFile('vehicle_registration_image')) {
+            $uploads['vehicle_registration_image'] = $this->uploadVehicleRegistrationImage(
+                $request->file('vehicle_registration_image'),
+                $userId
+            );
+        }
+
+        return $uploads;
     }
-
-    // رفع صورة الهوية (الوجه الأمامي)
-    if ($request->hasFile('id_image')) {
-        $uploads['id_image'] = $this->uploadIdImage($request->file('id_image'), $userId, 'front');
-    }
-
-    // رفع صورة الهوية (الوجه الخلفي)
-    if ($request->hasFile('id_image_back')) {
-        $uploads['id_image_back'] = $this->uploadIdImage($request->file('id_image_back'), $userId, 'back');
-    }
-
-    // رفع رخصة القيادة (الوجه الأمامي)
-    if ($request->hasFile('license_image')) {
-        $uploads['license_image'] = $this->uploadLicenseImage($request->file('license_image'), $userId, 'front');
-    }
-
-    // رفع رخصة القيادة (الوجه الخلفي)
-    if ($request->hasFile('license_image_back')) {
-        $uploads['license_image_back'] = $this->uploadLicenseImage($request->file('license_image_back'), $userId, 'back');
-    }
-
-    // رفع رخصة السيارة
-    if ($request->hasFile('vehicle_registration_image')) {
-        $uploads['vehicle_registration_image'] = $this->uploadVehicleRegistrationImage(
-            $request->file('vehicle_registration_image'),
-            $userId
-        );
-    }
-
-    return $uploads;
-}
 
 
     /**
@@ -570,7 +577,7 @@ public function completeProfile(CompleteProfileRequest $request)
 
                 $firebaseService->sendToMultipleDevices($adminTokens, [
                     'title' => 'طلب تسجيل سائق جديد',
-                    'body' => 'تم تقديم طلب تسجيل سائق جديد: '.$driver->user?->name,
+                    'body' => 'تم تقديم طلب تسجيل سائق جديد: ' . $driver->user?->name,
                     'image' => null,
                 ], [
                     'driver_id' => $driver->id,
@@ -582,14 +589,14 @@ public function completeProfile(CompleteProfileRequest $request)
             // تسجيل في قاعدة البيانات
             DB::table('admin_notifications')->insert([
                 'title' => 'طلب تسجيل سائق جديد',
-                'message' => 'تم تقديم طلب تسجيل سائق جديد: '.$driver->user?->name,
+                'message' => 'تم تقديم طلب تسجيل سائق جديد: ' . $driver->user?->name,
                 'type' => 'driver_registration',
                 'data' => json_encode(['driver_id' => $driver->id]),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to send admin notification: '.$e->getMessage());
+            Log::error('Failed to send admin notification: ' . $e->getMessage());
         }
     }
 

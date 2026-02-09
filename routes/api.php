@@ -324,5 +324,5 @@ Route::prefix('v1')->group(function () {
     //  Route::post('/paymob/webhook', [PaymentController::class, 'handleWebhook'])->name('paymob.webhook');
     Route::get('/payment-methods', [PaymentOrdersController::class, 'getPaymentMethods']);
     Route::get('/available-support', [SupportController::class, 'available']);
-    Route::get('driver/countries', [DriverAuthController::class, 'countries']);
+    Route::get('/countries', [DriverAuthController::class, 'countries']);
 });
