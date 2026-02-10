@@ -13,6 +13,7 @@ class DriverShortResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+
         $driver=Driver::findOrFail($this->id);
         return [
             'id' => $driver->id,

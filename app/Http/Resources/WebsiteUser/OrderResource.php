@@ -11,6 +11,7 @@ class OrderResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+     
         return [
             'id' => $this->id,
 
@@ -40,7 +41,8 @@ class OrderResource extends JsonResource
                 'label' => $this->status->label,
             ] : null,
 
-            'driver' => new DriverShortResource($this->driver) ,
+            'driver' => $this->driver? new DriverShortResource($this->driver->driver): null,
+
 
             'user' => $this->user ? [
                 'id'    => $this->user->id,
