@@ -218,6 +218,7 @@ class OrderController extends Controller
     /**
      * تأكيد المستخدم على سائق
      */
+    
     // public function confirmDriver(Request $request, $orderId)
     // {
     //     $validated = $request->validate([

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\WebsiteUser;
 
+use App\Http\Resources\Driver\DriverShortResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -39,11 +40,7 @@ class OrderResource extends JsonResource
                 'label' => $this->status->label,
             ] : null,
 
-            'driver' => $this->driver ? [
-                'id'    => $this->driver->id,
-                'name'  => $this->driver->name,
-                'phone' => $this->driver->phone,
-            ] : null,
+            'driver' => new DriverShortResource($this->driver) ,
 
             'user' => $this->user ? [
                 'id'    => $this->user->id,
