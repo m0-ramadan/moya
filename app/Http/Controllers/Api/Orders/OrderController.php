@@ -51,14 +51,14 @@ class OrderController extends Controller
             DB::beginTransaction();
 
             // Get saved location details
-            $savedLocation = \App\Models\SavedLocation::findOrFail($validated['saved_location_id']);
-
+            //    $savedLocation = \App\Models\SavedLocation::findOrFail($validated['saved_location_id']);
+            $statusOrder = OrderStatus::where('name', 'pendding')->first();
             $order = Order::create([
                 'user_id' => auth()->id(),
                 'service_id' => $validated['service_id'],
                 'water_type_id' => $validated['water_type_id'] ?? null,
                 'saved_location_id' => $validated['saved_location_id'],
-                'order_status_id' => 1, // pending
+                'order_status_id' => $statusOrder->id, // pending
                 'order_date' => $validated['order_date'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'created_at' => Carbon::now(),
@@ -145,13 +145,27 @@ class OrderController extends Controller
             if (! $driver) {
                 return $this->errorResponse('يجب أن تكون سائقاً', 403);
             }
+            // 1️⃣ نجيب IDs حالات الطلب النشطة
+            $activeStatusIds = OrderStatus::whereIn('name', ['pendding', 'in-road'])
+                ->pluck('id')
+                ->toArray();
 
-            // التحقق من أن السائق ليس لديه طلبات نشطة
-            $activeOrders = Order::where('driver_id', $driver->id)
-                ->whereIn('order_status_id', [1, 2, 3, 4])
-                ->count();
 
-            if ($activeOrders > 0) {
+            // 2️⃣ هل عنده طلب نشط؟
+            $hasActiveOrders = Order::where('driver_id', $driver->id)
+                ->whereIn('order_status_id', $activeStatusIds)
+                ->exists();
+
+
+            // 3️⃣ هل عنده عرض نشط مرتبط بطلب مفتوح؟
+            $hasActiveOffers = OrderOffer::where('driver_id', $driver->id)
+                ->whereIn('status', ['pending', 'accepted'])
+                ->whereHas('order', function ($query) use ($activeStatusIds) {
+                    $query->whereIn('order_status_id', $activeStatusIds);
+                })
+                ->exists();
+
+            if ($hasActiveOrders || $hasActiveOffers) {
                 return $this->errorResponse('لديك طلب نشط بالفعل. انتظر حتى يتم إنهاء الطلب الحالي.', 400);
             }
             DB::beginTransaction();
@@ -177,7 +191,7 @@ class OrderController extends Controller
 
             // إرسال إشعار للمستخدم
             $this->notifyUserAboutNewOffer($offer);
-            Log::info('--'.$orderId.'--'.$driver->id.$offer);
+            Log::info('--' . $orderId . '--' . $driver->id . $offer);
             // Broadcast Event
             event(new DriverAcceptOrder($offer));
 

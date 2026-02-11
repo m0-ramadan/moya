@@ -28,6 +28,8 @@ class Order extends Model
     const PAYMENT_GATEWAY_PAYMOB = 'paymob';
     const PAYMENT_GATEWAY_TAMARA = 'tamara';
     const PAYMENT_GATEWAY_TABBY = 'tabby';
+
+    const STATUS_IN_ROAD = 'in-road';
     // الحقول القابلة للتعبئة
     protected $fillable = [
         'user_id',

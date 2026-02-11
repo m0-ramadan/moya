@@ -288,12 +288,6 @@ Route::prefix('v1')->group(function () {
     Route::post('/payment/callback', [PaymentCallbackController::class, 'handle'])->name('payment.callback.handle');
 
     // Callback URLs
-    Route::prefix('orders/payment/callback')->group(function () {
-        Route::get('/paymob', [PaymentOrdersController::class, 'paymentCallbackPaymob'])->name('payment.callback.paymob');
-        Route::get('/success/{gateway}', [PaymentOrdersController::class, 'paymentSuccess'])->name('payment.callback.success');
-        Route::get('/failure/{gateway}', [PaymentOrdersController::class, 'paymentFailure'])->name('payment.callback.failure');
-        Route::get('/cancel/{gateway}', [PaymentOrdersController::class, 'paymentCancel'])->name('payment.callback.cancel');
-    });
 
     // إضافة Routes للسائقين
     Route::prefix('driver')->group(function () {
@@ -325,4 +319,17 @@ Route::prefix('v1')->group(function () {
     Route::get('/payment-methods', [PaymentOrdersController::class, 'getPaymentMethods']);
     Route::get('/available-support', [SupportController::class, 'available']);
     Route::get('/countries', [DriverAuthController::class, 'countries']);
+    Route::prefix('orders/payment/callback')->group(function () {
+        Route::match(['get', 'post'], '/success/{gateway}', [PaymentOrdersController::class, 'paymentSuccess'])
+            ->name('payment.callback.success');
+
+        Route::match(['get', 'post'], '/failure/{gateway}', [PaymentOrdersController::class, 'paymentFailure'])
+            ->name('payment.callback.failure');
+
+        Route::match(['get', 'post'], '/cancel/{gateway}', [PaymentOrdersController::class, 'paymentCancel'])
+            ->name('payment.callback.cancel');
+
+        Route::post('/webhook/{gateway}', [PaymentOrdersController::class, 'handleWebhook'])
+            ->name('payment.callback.webhook');
+    });
 });

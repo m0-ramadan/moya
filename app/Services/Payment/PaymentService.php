@@ -42,7 +42,6 @@ class PaymentService
             $amount = $offer->price;
             $orderData = $this->prepareOrderData($order, $offer, $user, $gateway, $additionalData);
 
-
             // اختيار Gateway المناسب
             if ($gateway === 'wallet') {
                 $result = $this->processWalletPayment($user, $order, $amount);
@@ -52,6 +51,7 @@ class PaymentService
 
                 $result = $paymentGateway->initiatePayment($orderData);
             }
+
 
             if (!$result['success']) {
                 throw new \Exception($result['error'] ?? 'Payment failed');
@@ -91,9 +91,9 @@ class PaymentService
             throw new \Exception(message: 'Order is already paid');
         }
 
-        if ($offer->status !== 'pending') {
-            throw new \Exception('Offer is not available for payment');
-        }
+        // if ($offer->status !== 'pending') {
+        //     throw new \Exception('Offer is not available for payment');
+        // }
 
         // if ($order->driver_id !== $offer->driver_id) {
         //     throw new \Exception('Offer does not belong to the selected driver');
@@ -203,7 +203,7 @@ class PaymentService
             'payment_gateway' => $gateway,
             'payment_transaction_id' => $paymentResult['payment_id'] ?? null,
             'payment_details' => array_merge(
-                $order->payment_details ?? [],
+                is_array($order->payment_details) ? $order->payment_details : [],
                 [
                     'gateway' => $gateway,
                     'method' => $paymentMethod,
@@ -211,6 +211,7 @@ class PaymentService
                     'payment_data' => $paymentResult,
                 ]
             ),
+
         ]);
 
         // تحديث حالة العرض إلى "قيد الدفع"
@@ -234,7 +235,6 @@ class PaymentService
             }
 
             $paymentGateway = $this->gatewayFactory->make($order->payment_gateway);
-
             $verificationData = [
                 'payment_id' => $order->payment_transaction_id,
                 'order_id' => $order->id,

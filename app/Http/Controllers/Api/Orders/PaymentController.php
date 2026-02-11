@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers\Api\Orders;
 
-use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Services\Payment\PaymentService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use App\Http\Resources\WebsiteUser\OrderResource;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Route;
+use App\Notifications\PaymentSuccessful;
+use App\Services\Payment\PaymentService;
+use App\Http\Resources\WebsiteUser\OrderResource;
+use App\Models\OrderStatus;
 
 class PaymentController extends Controller
 {
@@ -24,6 +28,8 @@ class PaymentController extends Controller
     /**
      * بدء عملية الدفع
      */
+
+
     public function initiatePayment(Request $request, Order $order)
     {
         $request->validate([
@@ -34,33 +40,105 @@ class PaymentController extends Controller
         ]);
 
         try {
+
             $user = $request->user();
-            $offer = $order->offers()->findOrFail($request->input('offer_id'));
 
-            $additionalData = [
-                'save_card' => $request->input('save_card', false),
-                'installments' => $request->input('installments'),
-                'metadata' => $request->only(['device_id', 'ip_address']),
-            ];
+            $result = DB::transaction(function () use ($request, $order, $user) {
 
-            $result = $this->paymentService->processOrderPayment(
-                $user,
-                $order,
-                $offer,
-                $request->input('gateway'),
-                $request->input('payment_method'),
-                $additionalData
-            );
+                $offer = $order->offers()
+                    ->where('id', $request->offer_id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-            if (!$result['success']) {
-                return $this->errorResponse($result['message'], 400, $result['error_code'] ?? null);
-            }
+                if (!in_array($offer->status, ['accepted', 'payment_pending'])) {
+                    throw new \Exception('Offer must be accepted before payment');
+                }
+
+
+                /*
+            |--------------------------------------------------------------------------
+            | 1️⃣ لو الطلب already paid
+            |--------------------------------------------------------------------------
+            */
+                if ($order->payment_status === Order::PAYMENT_STATUS_PAID) {
+                    throw new \Exception('Order already paid');
+                }
+
+                /*
+|--------------------------------------------------------------------------
+| 2️⃣ لو فيه session قديمة ولسه صالحة → رجعها
+|--------------------------------------------------------------------------
+*/
+                if (
+                    $order->payment_status === Order::PAYMENT_STATUS_PROCESSING &&
+                    $order->expires_at &&
+                    now()->lt($order->expires_at)
+                ) {
+                    $paymentData = json_decode($order->payment_details, true)['payment_data'] ?? null;
+
+                    // تأكد من نفس بوابة الدفع والطريقة
+                    if (
+                        $paymentData &&
+                        $paymentData['gateway'] === $request->gateway &&
+                        $paymentData['method'] === $request->payment_method
+                    ) {
+                        return [
+                            'success' => true,
+                            'payment' => $paymentData
+                        ];
+                    }
+                }
+
+
+                /*
+            |--------------------------------------------------------------------------
+            | 3️⃣ اعمل session جديدة
+            |--------------------------------------------------------------------------
+            */
+                $additionalData = [
+                    'save_card' => $request->boolean('save_card'),
+                    'installments' => $request->input('installments'),
+                    'metadata' => $request->only(['device_id', 'ip_address']),
+                ];
+
+                $paymentResult = $this->paymentService->processOrderPayment(
+                    $user,
+                    $order,
+                    $offer,
+                    $request->gateway,
+                    $request->payment_method,
+                    $additionalData
+                );
+
+                if (!$paymentResult['success']) {
+                    throw new \Exception($paymentResult['message']);
+                }
+
+                $paymentData = $paymentResult['payment'];
+
+                /*
+            |--------------------------------------------------------------------------
+            | تحديث الطلب
+            |--------------------------------------------------------------------------
+            */
+                $order->update([
+                    'payment_status' => Order::PAYMENT_STATUS_PROCESSING,
+                    'payment_method' => $request->payment_method,
+                    'payment_gateway' => $request->gateway,
+                    'payment_transaction_id' => $paymentData['payment_id'] ?? null,
+                    'payment_details' => json_encode($paymentResult),
+                    'expires_at' => $paymentData['expires_at'] ?? null,
+                ]);
+
+                return $paymentResult;
+            });
 
             return $this->successResponse([
                 'order' => new OrderResource($order->fresh()),
-                'payment' => $result['payment'],
+                'payment' => json_decode($order->payment_details),
             ], 'Payment initiated successfully');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
             Log::channel('payment')->error('Payment initiation failed', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
@@ -69,6 +147,7 @@ class PaymentController extends Controller
             return $this->errorResponse($e->getMessage(), 500);
         }
     }
+
 
     /**
      * التحقق من حالة الدفع
@@ -198,33 +277,55 @@ class PaymentController extends Controller
      */
     public function paymentSuccess(Request $request, string $gateway)
     {
-        $orderId = $request->input('order_id') ?? $request->input('order_reference_id');
+        $orderId = $request->input('payment_id');
 
         if (!$orderId) {
-            return redirect()->route('orders.index')
-                ->with('error', 'بيانات الدفع غير صحيحة');
+            return response()->json([
+                'status' => false,
+                'message' => 'بيانات الدفع غير صحيحة'
+            ], 400);
         }
 
-        $order = Order::where('id', $orderId)
-            ->orWhere('order_number', $orderId)
-            ->first();
+        $order = Order::where('payment_transaction_id', $orderId)->first();
 
         if (!$order) {
-            return redirect()->route('orders.index')
-                ->with('error', 'الطلب غير موجود');
+            return response()->json([
+                'status' => false,
+                'message' => 'الطلب غير موجود'
+            ], 404);
         }
 
         try {
             // التحقق من الدفع
             $this->paymentService->verifyPayment($order);
+            $status = OrderStatus::where('name', 'in-road')->first();
+            // تحديث الطلب
+            $order->update([
+                'order_status_id' => $status->id,
+                'payment_status' => Order::PAYMENT_STATUS_PAID,
+                'paid_at' => now(),
+            ]);
 
-            return redirect()->route('orders.show', $order)
-                ->with('success', 'تم الدفع بنجاح وتأكيد الطلب مع السائق');
+            // رفض كل العروض ما عدا المقبول
+            $order->offers()->where('status', '!=', 'accepted')->update([
+                'status' => 'rejected',
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'تم الدفع بنجاح، الطلب قيد التوصيل، وباقي العروض تم رفضها',
+                'order' => new OrderResource($order->fresh())
+            ]);
         } catch (\Exception $e) {
-            return redirect()->route('orders.show', $order)
-                ->with('warning', 'جاري معالجة الدفع، سيتم تحديث الحالة قريباً');
+            return response()->json([
+                'status' => false,
+                'message' => 'جاري معالجة الدفع، سيتم تحديث الحالة قريباً',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
+
+
 
     /**
      * صفحة فشل الدفع
@@ -274,7 +375,7 @@ class PaymentController extends Controller
 
             // جمع البيانات من query parameters
             $callbackData = $request->query();
-            
+
             // تسجيل البيانات الكاملة للفحص
             Log::info('Paymob Callback Full Data', $callbackData);
 
@@ -332,19 +433,13 @@ class PaymentController extends Controller
             if ($success && $isCapture) {
                 // الدفع ناجح ومستلم
                 $this->processSuccessfulPayment($order, $verificationData);
- 
-                    
             } elseif ($success && !$isCapture && $pending) {
                 // الدفع معلق (لم يتم الاستلام بعد)
                 $this->processPendingPayment($order, $verificationData);
-                
-                    
             } else {
                 // الدفع فاشل
                 $this->processFailedPayment($order, $verificationData);
-
             }
-
         } catch (\Exception $e) {
             Log::channel('payment')->error('Paymob callback processing failed', [
                 'error' => $e->getMessage(),
@@ -353,7 +448,7 @@ class PaymentController extends Controller
             ]);
         }
     }
- 
+
     /**
      * معالجة الدفع الناجح
      */
@@ -377,7 +472,7 @@ class PaymentController extends Controller
                     ]
                 ),
             ]);
- 
+
             // إرسال إشعار بالدفع الناجح
             $this->sendPaymentSuccessNotification($order);
 
@@ -386,7 +481,6 @@ class PaymentController extends Controller
                 'transaction_id' => $paymentData['id'],
                 'amount' => $paymentData['amount'],
             ]);
-
         } catch (\Exception $e) {
             Log::channel('payment')->error('Failed to process successful payment', [
                 'order_id' => $order->id,
@@ -422,7 +516,6 @@ class PaymentController extends Controller
                 'order_id' => $order->id,
                 'transaction_id' => $paymentData['id'],
             ]);
-
         } catch (\Exception $e) {
             Log::channel('payment')->error('Failed to process pending payment', [
                 'order_id' => $order->id,
@@ -454,7 +547,6 @@ class PaymentController extends Controller
                 'order_id' => $order->id,
                 'payment_data' => $paymentData,
             ]);
-
         } catch (\Exception $e) {
             Log::channel('payment')->error('Failed to process failed payment', [
                 'order_id' => $order->id,
@@ -472,7 +564,7 @@ class PaymentController extends Controller
             if ($order->user) {
                 // إرسال إشعار داخلي
                 // $order->user->notify(new PaymentSuccessful($order));
-                
+
                 // يمكنك إضافة إشعار Firebase هنا إذا كان متوفراً
                 // $this->firebaseService->sendToDevice(...)
             }
@@ -481,7 +573,6 @@ class PaymentController extends Controller
                 'order_id' => $order->id,
                 'user_id' => $order->user_id,
             ]);
-
         } catch (\Exception $e) {
             Log::channel('payment')->error('Failed to send payment success notification', [
                 'order_id' => $order->id,

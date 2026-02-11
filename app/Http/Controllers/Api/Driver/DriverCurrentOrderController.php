@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\Driver;
 
 use App\Models\Order;
+use App\Models\OrderOffer;
+use App\Models\OrderStatus;
 use Illuminate\Http\Request;
 use App\Models\DriverLocation;
 use App\Traits\ApiResponseTrait;
@@ -29,151 +31,114 @@ class DriverCurrentOrderController extends Controller
             return $this->errorResponse('يجب أن تكون سائقاً', 403);
         }
 
-        // جلب الطلب النشط للسائق
+        // حالات الطلب النشطة (عدل الأسماء حسب جدولك)
+        $activeStatusIds = OrderStatus::whereIn('name', ['pendding', 'in-road'])
+            ->pluck('id')
+            ->toArray();
+
+        /*
+    |--------------------------------------------------------------------------
+    | أولاً: نبحث عن Order نشط
+    |--------------------------------------------------------------------------
+    */
         $activeOrder = Order::with([
-            'service',
-            'waterType',
-            // 'location',
-            // 'status',
-            // 'user',
-            // 'acceptedOffer',
-            'driverLocations' => function ($query) {
-                $query->orderBy('created_at', 'desc')->limit(10);
-            },
+            'service:id,name',
+            'waterType:id,name',
+            'status:id,name',
+            'user:id,name,phone',
+            'location:id,address_details,latitude,longitude',
+            'acceptedOffer:id,order_id,price,delivery_duration_minutes,status'
         ])
             ->where('driver_id', $driver->id)
-            ->whereIn('order_status_id', [1, 2]) // الطلبات النشطة
-            ->orderBy('created_at', 'desc')
+            ->whereIn('order_status_id', $activeStatusIds)
+            ->latest()
             ->first();
 
-
-        if (!$activeOrder) {
-            return $this->successResponse(
-                null,
-                'لا يوجد طلب نشط حالياً',
-                200
-            );
-        }
-
-        // حساب معلومات إضافية
-        $currentLocation = $activeOrder->driverLocations->first();
-        $distanceInfo = null;
-        $estimatedArrival = null;
-        $nextSteps = [];
-
-        if ($currentLocation && $activeOrder->location) {
-            $distanceInfo = $this->googleMapsService->calculateDistanceAndTime(
-                $currentLocation->latitude,
-                $currentLocation->longitude,
-                $activeOrder->location->latitude,
-                $activeOrder->location->longitude
-            );
-
-            if ($distanceInfo) {
-                $estimatedArrival = now()->addSeconds($distanceInfo['duration']['value']);
-            }
-        }
-
-        // تحديد الخطوات التالية بناءً على حالة الطلب
-        $nextSteps = $this->getNextStepsForOrder($activeOrder);
-
-        // إضافة إحصائيات السائق
-        $driverStats = [
-            'total_orders' => $driver->total_orders,
-            'average_rating' => $driver->average_rating,
-            'total_earnings' => $driver->total_earnings ?? 0,
-            'completed_today' => $driver->orders()
-                ->where('order_status_id', 4)
-                ->whereDate('updated_at', today())
-                ->count(),
-        ];
-
-        // تجميع البيانات للاستجابة
-        $orderData = [
-            'order' => [
-                'id' => $activeOrder->id,
-                'order_number' => $activeOrder->order_number,
-                'service' => $activeOrder->service?->name,
-                'water_type' => $activeOrder->waterType?->name,
-                'status' => [
-                    'id' => $activeOrder->order_status_id,
-                    'name' => $activeOrder->status->name,
-                    'color' => $this->getStatusColor($activeOrder->order_status_id),
-                ],
-                'user' => [
-                    'id' => $activeOrder->user->id,
-                    'name' => $activeOrder->user->name,
-                    'phone' => $activeOrder->user->phone,
-                    'profile_picture' => $activeOrder->user->profile_picture,
-                    'rating' => $activeOrder->user->rating ?? 0,
-                    'total_orders' => $activeOrder->user->total_orders ?? 0,
-                ],
-                'location' => [
-                    'address' => $activeOrder->location->address_details,
-                    'latitude' => $activeOrder->location->latitude,
-                    'longitude' => $activeOrder->location->longitude,
-                    'building_number' => $activeOrder->location->building_number,
-                    'apartment_number' => $activeOrder->location->apartment_number,
-                    'floor' => $activeOrder->location->floor,
-                    'notes' => $activeOrder->location->notes,
-                ],
-                'price' => [
-                    'amount' => $activeOrder->price,
-                    'formatted' => number_format($activeOrder->price) . ' ريال',
-                    'is_paid' => $activeOrder->is_paid,
-                    'payment_method' => $activeOrder->payment_method,
-                ],
-                'dates' => [
+        if ($activeOrder) {
+            return $this->successResponse([
+                'type' => 'order',
+                'order' => [
+                    'id' => $activeOrder->id,
+                    'service' => $activeOrder->service?->name,
+                    'water_type' => $activeOrder->waterType?->name,
+                    'status' => $activeOrder->status?->name,
+                    'price' => $activeOrder->getPaymentAmount(),
+                    'payment_status' => $activeOrder->payment_status,
+                    'user' => [
+                        'name' => $activeOrder->user?->name,
+                        'phone' => $activeOrder->user?->phone,
+                    ],
+                    'location' => [
+                        'address' => $activeOrder->location?->address_details,
+                        'latitude' => $activeOrder->location?->latitude,
+                        'longitude' => $activeOrder->location?->longitude,
+                    ],
+                    'offer' => $activeOrder->acceptedOffer ? [
+                        'price' => $activeOrder->acceptedOffer->price,
+                        'delivery_duration_minutes' => $activeOrder->acceptedOffer->delivery_duration_minutes,
+                    ] : null,
                     'created_at' => $activeOrder->created_at->format('Y-m-d H:i:s'),
-                    'created_at_human' => $activeOrder->created_at->diffForHumans(),
-                    'order_date' => $activeOrder->order_date ? $activeOrder->order_date->format('Y-m-d H:i:s') : null,
-                    'order_date_human' => $activeOrder->order_date ? $activeOrder->order_date->diffForHumans() : null,
-                ],
-                'notes' => $activeOrder->notes,
-                'offer' => $activeOrder->acceptedOffer ? [
-                    'id' => $activeOrder->acceptedOffer->id,
-                    'price' => $activeOrder->acceptedOffer->price,
-                    'delivery_duration_minutes' => $activeOrder->acceptedOffer->delivery_duration_minutes,
-                    'created_at' => $activeOrder->acceptedOffer->created_at->format('H:i'),
-                ] : null,
-                'tracking' => [
-                    'has_live_tracking' => $activeOrder->order_status_id >= 2,
-                    'last_location' => $currentLocation ? [
-                        'latitude' => $currentLocation->latitude,
-                        'longitude' => $currentLocation->longitude,
-                        'address' => $currentLocation->address,
-                        'speed' => $currentLocation->speed,
-                        'heading' => $currentLocation->heading,
-                        'is_moving' => $currentLocation->is_moving,
-                        'updated_at' => $currentLocation->created_at->format('H:i:s'),
-                        'updated_at_human' => $currentLocation->created_at->diffForHumans(),
-                    ] : null,
-                    'distance_info' => $distanceInfo ? [
-                        'distance' => $distanceInfo['distance']['text'],
-                        'distance_meters' => $distanceInfo['distance']['value'],
-                        'duration' => $distanceInfo['duration']['text'],
-                        'duration_seconds' => $distanceInfo['duration']['value'],
-                    ] : null,
-                    'estimated_arrival' => $estimatedArrival ? [
-                        'time' => $estimatedArrival->format('H:i'),
-                        'human' => $estimatedArrival->diffForHumans(),
-                    ] : null,
-                ],
-                'actions' => $nextSteps,
-                'can_update_location' => in_array($activeOrder->order_status_id, [2, 5]), // مقبول أو جاري التوصيل
-                'can_update_status' => true,
-                'can_contact_user' => true,
-                'has_chat' => $activeOrder->order_status_id >= 2,
-            ],
-            'driver_stats' => $driverStats,
-            'quick_actions' => $this->getQuickActions($activeOrder),
-        ];
+                ]
+            ], 'تم جلب الطلب النشط');
+        }
 
+        /*
+    |--------------------------------------------------------------------------
+    | ثانياً: نبحث عن Offer نشط
+    |--------------------------------------------------------------------------
+    */
+
+        $activeOffer = OrderOffer::with([
+            'order.service:id,name',
+            'order.waterType:id,name',
+            'order.status:id,name',
+        ])
+            ->where('driver_id', $driver->id)
+            ->whereIn('status', ['pending', 'accepted'])
+            ->whereHas('order', function ($q) use ($activeStatusIds) {
+                $q->whereIn('order_status_id', $activeStatusIds);
+            })
+            ->latest()
+            ->first();
+        if ($activeOffer) {
+            return $this->successResponse([
+                'type' => 'offer',
+                'offer' => [
+                    'id' => $activeOffer->id,
+                    'price' => $activeOffer->price,
+                    'status' => $activeOffer->status,
+                    'delivery_duration_minutes' => $activeOffer->delivery_duration_minutes,
+                    'created_at' => $activeOffer->created_at->format('Y-m-d H:i:s'),
+                ],
+                'order' => [
+                    'id' => $activeOffer->order?->id,
+                    'service' => $activeOffer->order?->service?->name,
+                    'water_type' => $activeOffer->order?->waterType?->name,
+                    'status' => $activeOffer->order?->status?->name,
+                    'user' => [
+                        'name' => $activeOffer->order?->user?->name,
+                        'phone' => $activeOffer->order?->user?->phone,
+                    ],
+                    'location' => [
+                        'address' => $activeOffer->order?->location?->address_details,
+                        'latitude' => $activeOffer->order?->location?->latitude,
+                        'longitude' => $activeOffer->order?->location?->longitude,
+                    ],
+                ]
+            ], 'يوجد عرض نشط حالياً');
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | لا يوجد أي شيء
+    |--------------------------------------------------------------------------
+    */
         return $this->successResponse(
-            $orderData,
-            'تم جلب الطلب الحالي بنجاح'
+            null,
+            'لا يوجد طلب أو عرض نشط حالياً'
         );
     }
+
 
     /**
      * تحديد الخطوات التالية للطلب
