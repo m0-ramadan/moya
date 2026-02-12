@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers\Api\Orders;
 
-use App\Models\Order;
-use Illuminate\Http\Request;
-use App\Traits\ApiResponseTrait;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Events\Order\TripStartedForDriver;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Route;
+use App\Http\Resources\WebsiteUser\OrderResource;
+use App\Models\Order;
+use App\Models\OrderStatus;
 use App\Notifications\PaymentSuccessful;
 use App\Services\Payment\PaymentService;
-use App\Http\Resources\WebsiteUser\OrderResource;
-use App\Models\OrderStatus;
+use App\Traits\ApiResponseTrait;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 
 class PaymentController extends Controller
 {
@@ -49,6 +50,7 @@ class PaymentController extends Controller
                     ->where('id', $request->offer_id)
                     ->lockForUpdate()
                     ->firstOrFail();
+                $offer->update(['status' => 'accepted']);
 
                 if (!in_array($offer->status, ['accepted', 'payment_pending'])) {
                     throw new \Exception('Offer must be accepted before payment');
@@ -299,17 +301,31 @@ class PaymentController extends Controller
             // التحقق من الدفع
             $this->paymentService->verifyPayment($order);
             $status = OrderStatus::where('name', 'in-road')->first();
-            // تحديث الطلب
-            $order->update([
-                'order_status_id' => $status->id,
-                'payment_status' => Order::PAYMENT_STATUS_PAID,
-                'paid_at' => now(),
-            ]);
 
-            // رفض كل العروض ما عدا المقبول
-            $order->offers()->where('status', '!=', 'accepted')->update([
-                'status' => 'rejected',
-            ]);
+            DB::transaction(function () use ($order, $status) {
+
+                // جلب العرض المقبول أو المعلق للدفع
+                $acceptedOffer = $order->offers()
+                    ->whereIn('status', ['accepted', 'payment_pending'])
+                    ->first();
+
+                // تحديث الطلب
+                $order->update([
+                    'order_status_id' => $status->id,
+                    'payment_status'  => Order::PAYMENT_STATUS_PAID,
+                    'paid_at'         => now(),
+                    'driver_id'       => $acceptedOffer?->driver_id,
+                ]);
+
+                // رفض كل العروض ما عدا المقبول أو المعلق للدفع
+                $order->offers()
+                    ->whereNotIn('status', ['accepted', 'payment_pending'])
+                    ->update([
+                        'status' => 'rejected',
+                    ]);
+            });
+
+            event(new TripStartedForDriver($order));
 
             return response()->json([
                 'status' => true,

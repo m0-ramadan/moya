@@ -54,7 +54,7 @@ class NewOrderAvailable implements ShouldBroadcast
                 'service_name' => $this->order->service->name,
                 'water_type' => $this->order->waterType ? $this->order->waterType->name : 'غير محدد', // Fix null case
                 'location' => [
-                    'address' => $savedLocation ? $savedLocation->address_details : null,
+                    'address' => $savedLocation ? $savedLocation->address : null,
                     'latitude' => $savedLocation ? $savedLocation->latitude : null,
                     'longitude' => $savedLocation ? $savedLocation->longitude : null,
                 ],

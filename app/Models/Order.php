@@ -93,7 +93,10 @@ class Order extends Model
     {
         return $this->belongsTo(User::class, 'driver_id');
     }
-
+    public function driverOrder()
+    {
+        return $this->belongsTo(Driver::class, 'driver_id');
+    }
     // الخدمة المطلوبة
     public function service()
     {

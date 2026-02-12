@@ -11,7 +11,7 @@ class OrderResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-     
+
         return [
             'id' => $this->id,
 
@@ -41,7 +41,7 @@ class OrderResource extends JsonResource
                 'label' => $this->status->label,
             ] : null,
 
-            'driver' => $this->driver? new DriverShortResource($this->driver->driver): null,
+            'driver' => $this->driverOrder ? new DriverShortResource($this->driverOrder) : null,
 
 
             'user' => $this->user ? [
@@ -54,11 +54,11 @@ class OrderResource extends JsonResource
 
             'order_date' => $this->order_date,
 
-            'payment_status'=> $this->payment_status,
+            'payment_status' => $this->payment_status,
 
             'created_at' => $this->created_at->format('Y-m-d H:i'),
 
-            'expires_at'=> $this->expires_at,
+            'expires_at' => $this->expires_at,
         ];
     }
 }
