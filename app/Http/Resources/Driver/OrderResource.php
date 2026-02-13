@@ -15,6 +15,7 @@ class OrderResource extends JsonResource
                 'id' => $this->user->id,
                 'name' => $this->user->name,
                 'phone' => $this->user->phone,
+                'avatar'       => get_user_image($this->user->avatar),
             ],
             'service' => $this->service->name,
             'water_type' => $this->waterType->name ?? null,
