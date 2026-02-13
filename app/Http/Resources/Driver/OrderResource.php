@@ -23,7 +23,7 @@ class OrderResource extends JsonResource
                 'name' => $this->status?->name,
                 'color' => $this->getStatusColor($this->status?->id),
             ],
-            'price' => $this->price,
+            'price' => optional($this->acceptedOffer)->price,
             'location' => [
                 'address' => $this->location->address,
                 'latitude' => $this->location->latitude,
