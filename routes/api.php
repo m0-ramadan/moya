@@ -104,6 +104,7 @@ Route::prefix('v1')->group(function () {
                     Route::post('/{orderId}/update-status', [DriverOrderController::class, 'updateStatus']);
                     Route::post('/{orderId}/update-location', [DriverOrderController::class, 'updateLocation']);
                     Route::get('/{orderId}/path', [DriverOrderController::class, 'getDriverPath']);
+                    Route::get('order/{orderId}', [DriverOrderController::class, 'getOrder']);
                     Route::post('/{orderId}/rate-user', [RatingController::class, 'rateUser']);
                 });
             });

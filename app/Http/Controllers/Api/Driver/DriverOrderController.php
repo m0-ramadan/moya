@@ -381,6 +381,11 @@ class DriverOrderController extends Controller
         }
     }
 
+    public function getOrder($orderId)
+    {
+        $order = Order::findOrFail($orderId);
+        return $this->successResponse(new OrderResource($order), 'تم جلب الطلب بنجاح');
+    }
     /**
      * جلب مسار السائق للطلب
      */

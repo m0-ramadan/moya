@@ -25,7 +25,7 @@ class OrderResource extends JsonResource
             ],
             'price' => $this->price,
             'location' => [
-                'address' => $this->location->address_details,
+                'address' => $this->location->address,
                 'latitude' => $this->location->latitude,
                 'longitude' => $this->location->longitude,
                 'city' => $this->location->city,
