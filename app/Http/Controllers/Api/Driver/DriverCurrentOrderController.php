@@ -45,8 +45,8 @@ class DriverCurrentOrderController extends Controller
             'service:id,name',
             'waterType:id,name',
             'status:id,name',
-            'user:id,name,phone',
-            'location:id,address_details,latitude,longitude',
+            //'user:id,name,phone',
+            'location:id,address,latitude,longitude',
             'acceptedOffer:id,order_id,price,delivery_duration_minutes,status'
         ])
             ->where('driver_id', $driver->id)

@@ -250,9 +250,9 @@ class DriverOrderController extends Controller
             $this->logStatusChange($order, $oldStatus, $validated['status_id'], $validated['notes'] ?? null);
 
             // إذا كانت هناك إحداثيات، تسجيل الموقع
-            if (!empty($validated['location_lat']) && !empty($validated['location_lng'])) {
-                $this->updateDriverLocation($driver, $order, $validated['location_lat'], $validated['location_lng']);
-            }
+            // if (!empty($validated['location_lat']) && !empty($validated['location_lng'])) {
+            //     $this->updateDriverLocation($driver, $order, $validated['location_lat'], $validated['location_lng']);
+            // }
 
             // إذا كانت الحالة "جاري التوصيل"، حساب وقت الوصول المتوقع
             if ($status->name == 'in-road') { // جاري التوصيل
@@ -609,7 +609,7 @@ class DriverOrderController extends Controller
     {
         try {
             // تحديث إحصائيات السائق
-            $driver = $order->driver;
+            $driver = $order->driverOrder;
             $driver->increment('total_orders');
             $driver->update([
                 'last_order_completed_at' => now(),
@@ -618,15 +618,15 @@ class DriverOrderController extends Controller
 
             // تحديث إحصائيات المستخدم
             $user = $order->user;
-            $user->increment('total_orders');
+            // $user->increment('total_orders');
 
             // حساب متوسط إنفاق المستخدم
-            $totalSpent = $user->orders()->where('order_status_id', 4)->sum('price');
-            $user->update([
-                'total_spent' => $totalSpent,
-                'average_order_value' => $user->total_orders > 0 ? round($totalSpent / $user->total_orders, 2) : 0,
-            ]);
+            // $totalSpent = $user->orders()->where('order_status_id', 4)->sum('price');
 
+            // $user->update([
+            //     'total_spent' => $totalSpent,
+            //     'average_order_value' => $user->total_orders > 0 ? round($totalSpent / $user->total_orders, 2) : 0,
+            // ]);
             // إشعار المستخدم بأن الطلب اكتمل
             $this->sendOrderCompletedAlert($order);
 
@@ -665,20 +665,41 @@ class DriverOrderController extends Controller
         ]);
     }
 
+
     private function logOrderCompletion($order)
     {
-        DB::table('order_completion_logs')->insert([
-            'order_id' => $order->id,
-            'driver_id' => $order->driver_id,
-            'user_id' => $order->user_id,
-            'completed_at' => now(),
-            'delivery_duration_minutes' => $this->calculateDeliveryDuration($order),
-            'total_distance_km' => $this->calculateTotalDistance($order),
-            'final_price' => $order->price,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        try {
+
+            DB::table('order_completion_logs')->insert([
+                'order_id' => $order->id,
+                'driver_id' => $order->driver_id,
+                'user_id' => $order->user_id,
+                'completed_at' => now(),
+                'delivery_duration_minutes' => $this->calculateDeliveryDuration($order),
+                'total_distance_km' => $this->calculateTotalDistance($order),
+                'final_price' => $order->price,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            Log::info('Order completion logged successfully', [
+                'order_id' => $order->id
+            ]);
+        } catch (\Throwable $e) {
+
+            Log::error('Failed to log order completion', [
+                'order_id' => $order->id ?? null,
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+            ]);
+
+            // لو عايز ترجع error
+            throw $e;
+
+            // أو لو مش عايز يوقف التنفيذ احذف throw
+        }
     }
+
 
     private function calculateDeliveryDuration($order)
     {
@@ -781,8 +802,8 @@ class DriverOrderController extends Controller
 
     private function sendOrderCompletedAlert($order)
     {
-        $userTokens = $order->user->activeDeviceTokens->pluck('token')->toArray();
 
+        $userTokens = $order->user->activeDeviceTokens->pluck('token')->toArray();
         if (!empty($userTokens)) {
             app(\App\Services\FirebaseNotificationService::class)
                 ->sendToMultipleDevices($userTokens, [
