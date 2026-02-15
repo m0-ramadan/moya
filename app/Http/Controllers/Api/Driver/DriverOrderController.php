@@ -813,10 +813,4 @@ class DriverOrderController extends Controller
             return [$location->latitude, $location->longitude];
         })->toArray();
     }
-
-    public function getOrderStatus()
-    {
-        $statuses = OrderStatus::all();
-        return $this->successResponse($statuses, 'تم جلب حالات الطلبات بنجاح');
-    }
 }

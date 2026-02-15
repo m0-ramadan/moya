@@ -601,4 +601,9 @@ class OrderController extends Controller
             return $this->errorResponse($e->getMessage(), 500);
         }
     }
+    public function getOrderStatus()
+    {
+        $statuses = OrderStatus::all();
+        return $this->successResponse($statuses, 'تم جلب حالات الطلبات بنجاح');
+    }
 }
