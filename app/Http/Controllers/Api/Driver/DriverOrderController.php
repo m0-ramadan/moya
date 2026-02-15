@@ -212,13 +212,13 @@ class DriverOrderController extends Controller
     public function updateStatus(Request $request, $orderId)
     {
         $validated = $request->validate([
-            'status_id' => 'required|integer', // الحالات المسموحة
+            'status_id' => 'required', // الحالات المسموحة
             'location_lat' => 'nullable|numeric',
             'location_lng' => 'nullable|numeric',
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $driver = auth()->user()->driver;
+        $driver = auth('sanctum')->user()->driver;
 
         if (!$driver) {
             return $this->errorResponse('يجب أن تكون سائقاً', 403);

@@ -86,6 +86,7 @@ Route::prefix('v1')->group(function () {
             Route::middleware(['driver'])->group(function () {
                 Route::post('/{orderId}/accept', [OrderController::class, 'acceptOrder']);
                 Route::post('/offers/{offerId}/cancel', [OrderController::class, 'cancelOffer']);
+                Route::post('/{orderId}/update-status', [DriverOrderController::class, 'updateStatus']);
                 Route::prefix('driver')->group(function () {
                     Route::get('/available', [DriverOrderController::class, 'getPendingOrders']);
                     Route::get('/available/count', [DriverOrderController::class, 'countPendingOrders']);
@@ -101,7 +102,6 @@ Route::prefix('v1')->group(function () {
                     Route::get('/active/last-location', [DriverCurrentOrderController::class, 'getLastLocation']);
 
                     Route::get('/pending-orders', [DriverOrderController::class, 'getPendingOrders']);
-                    Route::post('/{orderId}/update-status', [DriverOrderController::class, 'updateStatus']);
                     Route::post('/{orderId}/update-location', [DriverOrderController::class, 'updateLocation']);
                     Route::get('/{orderId}/path', [DriverOrderController::class, 'getDriverPath']);
                     Route::get('order/{orderId}', [DriverOrderController::class, 'getOrder']);
