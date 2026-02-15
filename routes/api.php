@@ -204,7 +204,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/banners', [SliderController::class, 'banners']);
 
-    Route::get('orders/status', [DriverOrderController::class, 'getOrderStatus']);
+    Route::get('orders/all-status', [DriverOrderController::class, 'getOrderStatus']);
 
 
     Route::get('home', [HomeController::class, 'index']);
