@@ -333,4 +333,5 @@ Route::prefix('v1')->group(function () {
         Route::post('/webhook/{gateway}', [PaymentOrdersController::class, 'handleWebhook'])
             ->name('payment.callback.webhook');
     });
+    Route::get('delete/account/{phone_number}', [AuthController::class, 'deleteAccount']);
 });

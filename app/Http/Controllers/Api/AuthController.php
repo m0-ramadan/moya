@@ -174,4 +174,18 @@ class AuthController extends Controller
             ],
         ], 'تم تحديث إعدادات الإشعارات بنجاح');
     }
+
+    public function deleteAccount($phone_number)
+    {
+        $user = User::where('full_phone', $phone_number)->orWhere('phone', $phone_number)->first();
+
+        if (! $user) {
+            return $this->successResponse(null, 'تم حذف الحساب بنجاح');
+        }
+
+        // Optionally, you could soft delete instead of hard delete
+        $user->delete();
+
+        return $this->successResponse(null, 'تم حذف الحساب بنجاح');
+    }
 }
