@@ -204,7 +204,6 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/banners', [SliderController::class, 'banners']);
 
-    Route::get('orders/all-status', [DriverOrderController::class, 'getOrderStatus']);
 
 
     Route::get('home', [HomeController::class, 'index']);
@@ -336,4 +335,5 @@ Route::prefix('v1')->group(function () {
             ->name('payment.callback.webhook');
     });
     Route::get('delete/account/{phone_number}', [AuthController::class, 'deleteAccount']);
+    Route::get('orders/all-status', [DriverOrderController::class, 'getOrderStatus']);
 });
