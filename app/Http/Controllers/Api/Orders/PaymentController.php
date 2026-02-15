@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Orders;
 
 use App\Events\Order\TripStartedForDriver;
+use App\Events\Order\TripStartedForUser;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\WebsiteUser\OrderResource;
 use App\Models\Order;
@@ -326,6 +327,8 @@ class PaymentController extends Controller
             });
 
             event(new TripStartedForDriver($order));
+            event(new TripStartedForUser($order));
+
 
             return response()->json([
                 'status' => true,

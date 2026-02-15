@@ -87,32 +87,33 @@ class TwilioService
      | WhatsApp Messages
      ======================= */
 
-    public function sendWhatsappOtp(string $to, string $code): array
-    {
-        try {
-            $msg = $this->client->messages->create(
-                "whatsapp:$to",
-                [
-                    'from' => 'whatsapp:+14155238886', // أو config
-                    'contentSid' => 'HX229f5a04fd0510ce1b071852155d3e75',
-                    'contentVariables' => json_encode([
-                        '1' => $code
-                    ]),
-                ]
-            );
+public function sendWhatsappOtp(string $to, string $code): array
+{
+    try {
+        $msg = $this->client->messages->create(
+            "whatsapp:$to",
+            [
+                'from' => 'whatsapp:+17656663382',
+                'contentSid' => 'HX229f5a04fd0510ce1b071852155d3e75',
+                'contentVariables' => json_encode([
+                    '1' => $code
+                ]),
+            ]
+        );
 
-            return [
-                'success' => true,
-                'sid' => $msg->sid,
-                'status' => $msg->status,
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'success' => false,
-                'error' => $e->getMessage(),
-            ];
-        }
+        return [
+            'success' => true,
+            'sid' => $msg->sid,
+            'status' => $msg->status,
+        ];
+    } catch (\Throwable $e) {
+        return [
+            'success' => false,
+            'error' => $e->getMessage(),
+        ];
     }
+}
+
 
 
     /* =======================

@@ -69,7 +69,7 @@ class AuthService
      | Try WhatsApp OTP
      ========================== */
         $whatsapp = $this->twilio->sendWhatsappOtp($data->full_phone, $otp);
-
+// dd($whatsapp);
         if (!empty($whatsapp['success']) && $whatsapp['success'] === true) {
             return [
                 'method' => 'whatsapp_verify',
