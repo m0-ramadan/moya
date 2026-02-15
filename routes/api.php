@@ -86,6 +86,7 @@ Route::prefix('v1')->group(function () {
             Route::middleware(['driver'])->group(function () {
                 Route::post('/{orderId}/accept', [OrderController::class, 'acceptOrder']);
                 Route::post('/offers/{offerId}/cancel', [OrderController::class, 'cancelOffer']);
+                Route::get('/status', [DriverOrderController::class, 'getOrderStatus']);
                 Route::prefix('driver')->group(function () {
                     Route::get('/available', [DriverOrderController::class, 'getPendingOrders']);
                     Route::get('/available/count', [DriverOrderController::class, 'countPendingOrders']);
@@ -105,6 +106,7 @@ Route::prefix('v1')->group(function () {
                     Route::post('/{orderId}/update-location', [DriverOrderController::class, 'updateLocation']);
                     Route::get('/{orderId}/path', [DriverOrderController::class, 'getDriverPath']);
                     Route::get('order/{orderId}', [DriverOrderController::class, 'getOrder']);
+
                     Route::post('/{orderId}/rate-user', [RatingController::class, 'rateUser']);
                 });
             });

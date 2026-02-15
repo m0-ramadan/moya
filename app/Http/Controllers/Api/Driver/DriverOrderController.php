@@ -2,19 +2,21 @@
 
 namespace App\Http\Controllers\Api\Driver;
 
-use Carbon\Carbon;
-use App\Models\Order;
-use Illuminate\Http\Request;
+use App\Events\DriverLocationUpdated;
+use App\Events\OrderStatusUpdated;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\Driver\OrderResource as DriverOrderResource;
+use App\Http\Resources\Driver\OrderResource;
 use App\Jobs\RequestRatingJob;
 use App\Models\DriverLocation;
-use App\Traits\ApiResponseTrait;
-use App\Events\OrderStatusUpdated;
-use Illuminate\Support\Facades\DB;
+use App\Models\Order;
+use App\Models\OrderStatus;
 use App\Services\GoogleMapsService;
+use App\Traits\ApiResponseTrait;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
-use App\Events\DriverLocationUpdated;
-use App\Http\Resources\Driver\OrderResource;
 
 class DriverOrderController extends Controller
 {
@@ -210,7 +212,7 @@ class DriverOrderController extends Controller
     public function updateStatus(Request $request, $orderId)
     {
         $validated = $request->validate([
-            'status_id' => 'required|integer|in:1,2,3,4,5,6', // الحالات المسموحة
+            'status_id' => 'required|integer', // الحالات المسموحة
             'location_lat' => 'nullable|numeric',
             'location_lng' => 'nullable|numeric',
             'notes' => 'nullable|string|max:500',
@@ -224,7 +226,7 @@ class DriverOrderController extends Controller
 
         $order = Order::where('driver_id', $driver->id)
             ->where('id', $orderId)
-            ->with(['location', 'user'])
+            //  ->with(['location', 'user'])
             ->firstOrFail();
 
         // التحقق من تسلسل الحالات
@@ -237,6 +239,8 @@ class DriverOrderController extends Controller
             DB::beginTransaction();
 
             $oldStatus = $order->order_status_id;
+            $status = OrderStatus::find($validated['status_id']);
+
             $order->update([
                 'order_status_id' => $validated['status_id'],
                 'status_updated_at' => now(),
@@ -251,12 +255,12 @@ class DriverOrderController extends Controller
             }
 
             // إذا كانت الحالة "جاري التوصيل"، حساب وقت الوصول المتوقع
-            if ($validated['status_id'] == 3) { // جاري التوصيل
+            if ($status->name == 'in-road') { // جاري التوصيل
                 $this->calculateAndUpdateETA($driver, $order);
             }
 
             // إذا كانت الحالة "تم التسليم"، انهاء الطلب
-            if ($validated['status_id'] == 4) { // تم التسليم
+            if ($status->name == 'delivered') { // تم التسليم
                 $this->completeOrder($order);
             }
 
@@ -274,7 +278,7 @@ class DriverOrderController extends Controller
 
             return $this->successResponse(
                 [
-                    'order' => $order->fresh(['status', 'location', 'user']),
+                    'order' => new DriverOrderResource($order),
                     'new_status' => $order->status,
                     'estimated_arrival_time' => $order->driverLocations()->latest()->first()->estimated_arrival_time ?? null,
                 ],
@@ -808,5 +812,11 @@ class DriverOrderController extends Controller
         return $locations->map(function ($location) {
             return [$location->latitude, $location->longitude];
         })->toArray();
+    }
+
+    public function getOrderStatus()
+    {
+        $statuses = OrderStatus::all();
+        return $this->successResponse($statuses, 'تم جلب حالات الطلبات بنجاح');
     }
 }
