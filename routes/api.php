@@ -86,7 +86,6 @@ Route::prefix('v1')->group(function () {
             Route::middleware(['driver'])->group(function () {
                 Route::post('/{orderId}/accept', [OrderController::class, 'acceptOrder']);
                 Route::post('/offers/{offerId}/cancel', [OrderController::class, 'cancelOffer']);
-                Route::get('/status', [DriverOrderController::class, 'getOrderStatus']);
                 Route::prefix('driver')->group(function () {
                     Route::get('/available', [DriverOrderController::class, 'getPendingOrders']);
                     Route::get('/available/count', [DriverOrderController::class, 'countPendingOrders']);
@@ -205,6 +204,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/banners', [SliderController::class, 'banners']);
 
+    Route::get('orders/status', [DriverOrderController::class, 'getOrderStatus']);
 
 
     Route::get('home', [HomeController::class, 'index']);
