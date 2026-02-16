@@ -48,6 +48,8 @@ class OrderResource extends JsonResource
                 'id'    => $this->user->id,
                 'name'  => $this->user->name,
                 'phone' => $this->user->full_phone,
+                'image' => get_user_image($this->user->avatar),
+
             ] : null,
 
             'price' => optional($this->acceptedOffer)->price,

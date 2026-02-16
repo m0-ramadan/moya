@@ -436,6 +436,8 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
+        $user = auth()->user();
+
         $query = Order::with([
             'service',
             'waterType',
@@ -443,7 +445,17 @@ class OrderController extends Controller
             'status',
             'driver',
             'acceptedOffer',
-        ])->where('user_id', auth()->id());
+        ]);
+
+        // 👇 هنا الفرق
+        if ($user->driver) {
+            // 🚚 لو سواق
+            $query->where('driver_id', $user->driver->id);
+        } else {
+            // 👤 لو مستخدم عادي
+            $query->where('user_id', $user->id);
+        }
+
 
         // 🔍 فلترة الحالات (أكثر من حالة)
         if ($request->filled('status_ids')) {
