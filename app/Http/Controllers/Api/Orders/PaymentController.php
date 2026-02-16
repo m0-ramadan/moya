@@ -323,6 +323,7 @@ private function extractPaymentUrl(array $paymentData, string $gateway): ?string
                 $availableMethods[] = [
                     'id' => $gatewayKey,
                     'name' => $gatewayInfo['name'],
+                    'image' => $gatewayInfo['image'] ?? null,
                     'description' => $gatewayInfo['description'],
                     'methods' => $gatewayInfo['methods'],
                     'icon' => $gatewayInfo['icon'],
