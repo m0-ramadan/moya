@@ -30,190 +30,188 @@ class PaymentController extends Controller
     /**
      * بدء عملية الدفع
      */
-public function initiatePayment(Request $request, Order $order)
-{
-    $request->validate([
-        'offer_id' => 'required|exists:order_offers,id',
-        'gateway' => 'required|in:wallet,paymob,tamara,tabby,cash_on_delivery',
-        'payment_method' => 'required|string',
-        'save_card' => 'nullable|boolean',
-    ]);
-
-    try {
-        $user = $request->user();
-        $paymentUrl = null;
-
-        $result = DB::transaction(function () use ($request, $order, $user, &$paymentUrl) {
-
-            $offer = $order->offers()
-                ->where('id', $request->offer_id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $offer->update(['status' => 'accepted']);
-
-            if (!in_array($offer->status, ['accepted', 'payment_pending'])) {
-                throw new \Exception('Offer must be accepted before payment');
-            }
-
-            if ($order->payment_status === Order::PAYMENT_STATUS_PAID) {
-                throw new \Exception('Order already paid');
-            }
-
-            $gateway = $request->gateway;
-
-            // الدفع عند الاستلام
-            if ($gateway === 'cash_on_delivery') {
-            $status = OrderStatus::where('name', 'in-road')->first();
-
-                $order->update([
-                    'payment_status' => Order::PAYMENT_STATUS_PENDING,
-                    'order_status_id' => $status->id,
-                    'payment_method' => 'cash_on_delivery',
-                    'payment_gateway' => 'cash_on_delivery',
-                    'payment_transaction_id' => null,
-                    'payment_details' => json_encode([
-                        'success' => true,
-                        'gateway' => 'cash_on_delivery',
-                        'method' => 'cash_on_delivery',
-                        'message' => 'Payment will be collected on delivery'
-                    ]),
-                    'expires_at' => null,
-                ]);
-              $order->offers()
-                    ->whereIn('status', ['accepted', 'payment_pending'])
-                    ->update([
-                        'status' => 'accepted',
-                    ]);
-                // رفض كل العروض ما عدا المقبول أو المعلق للدفع
-                $order->offers()
-                    ->whereNotIn('status', ['accepted', 'payment_pending'])
-                    ->update([
-                        'status' => 'rejected',
-                    ]);
-                    
-                                event(new TripStartedForDriver($order));
-            event(new TripStartedForUser($order));
-                $paymentUrl = null;
-
-                return [
-                    'success' => true,
-                    'payment' => json_decode($order->payment_details, true),
-                ];
-            }
-
-            // إعادة استخدام session قديمة إذا كانت صالحة
-            if (
-                $order->payment_status === Order::PAYMENT_STATUS_PROCESSING &&
-                $order->expires_at &&
-                now()->lt($order->expires_at)
-            ) {
-                $paymentData = json_decode($order->payment_details, true)['payment_data'] ?? null;
-
-                if ($paymentData &&
-                    $paymentData['gateway'] === $gateway &&
-                    $paymentData['method'] === $request->payment_method
-                ) {
-                    $paymentUrl = $this->extractPaymentUrl($paymentData,$request->gateway);
-                    return [
-                        'success' => true,
-                        'payment' => $paymentData,
-                    ];
-                }
-            }
-
-            // بيانات إضافية للبوابة
-            $additionalData = [
-                'save_card' => $request->boolean('save_card'),
-                'installments' => $request->input('installments'),
-                'metadata' => $request->only(['device_id', 'ip_address']),
-            ];
-
-            // معالجة الدفع عبر service
-            $paymentResult = $this->paymentService->processOrderPayment(
-                $user,
-                $order,
-                $offer,
-                $gateway,
-                $request->payment_method,
-                $additionalData
-            );
-
-            if (!$paymentResult['success']) {
-                throw new \Exception($paymentResult['message']);
-            }
-
-            $paymentData = $paymentResult['payment'];
-
-            // استخراج رابط الدفع حسب البوابة
-            $paymentUrl = $this->extractPaymentUrl($paymentData,$request->gateway);
-
-            // تحديث الطلب
-            $order->update([
-                'payment_status' => Order::PAYMENT_STATUS_PROCESSING,
-                'payment_method' => $request->payment_method,
-                'payment_gateway' => $gateway,
-                'payment_transaction_id' => $paymentData['payment_id'] ?? null,
-                'payment_details' => json_encode($paymentResult),
-                'expires_at' => $paymentData['expires_at'] ?? null,
-            ]);
-
-            return $paymentResult;
-        });
-
-        return $this->successResponse([
-            'order' => new OrderResource($order->fresh()),
-            'payment_url' => $paymentUrl,
-            'payment' => $result,
-        ], 'Payment initiated successfully');
-
-    } catch (\Throwable $e) {
-        Log::channel('payment')->error('Payment initiation failed', [
-            'order_id' => $order->id,
-            'error' => $e->getMessage(),
+    public function initiatePayment(Request $request, Order $order)
+    {
+        $request->validate([
+            'offer_id' => 'required|exists:order_offers,id',
+            'gateway' => 'required|in:wallet,paymob,tamara,tabby,cash_on_delivery',
+            'payment_method' => 'required|string',
+            'save_card' => 'nullable|boolean',
         ]);
 
-        return $this->errorResponse($e->getMessage(), 500);
+        try {
+            $user = $request->user();
+            $paymentUrl = null;
+
+            $result = DB::transaction(function () use ($request, $order, $user, &$paymentUrl) {
+
+                $offer = $order->offers()
+                    ->where('id', $request->offer_id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $offer->update(['status' => 'payment_pending']);
+
+                if (! in_array($offer->status, ['accepted', 'payment_pending'])) {
+                    throw new \Exception('Offer must be accepted before payment');
+                }
+
+                if ($order->payment_status === Order::PAYMENT_STATUS_PAID) {
+                    throw new \Exception('Order already paid');
+                }
+
+                $gateway = $request->gateway;
+
+                // الدفع عند الاستلام
+                if ($gateway === 'cash_on_delivery') {
+                    $status = OrderStatus::where('name', 'in-road')->first();
+
+                    $order->update([
+                        'payment_status' => Order::PAYMENT_STATUS_PENDING,
+                        'order_status_id' => $status->id,
+                        'payment_method' => 'cash_on_delivery',
+                        'payment_gateway' => 'cash_on_delivery',
+                        'payment_transaction_id' => null,
+                        'driver_id' => $offer->driver_id,
+                        'payment_details' => json_encode([
+                            'success' => true,
+                            'gateway' => 'cash_on_delivery',
+                            'method' => 'cash_on_delivery',
+                            'message' => 'Payment will be collected on delivery',
+                        ]),
+                        'expires_at' => null,
+                    ]);
+                    $order->offers()
+                        ->whereIn('status', ['accepted', 'payment_pending'])
+                        ->update([
+                            'status' => 'accepted',
+                        ]);
+                    // رفض كل العروض ما عدا المقبول أو المعلق للدفع
+                    $order->offers()
+                        ->whereNotIn('status', ['accepted', 'payment_pending'])
+                        ->update([
+                            'status' => 'rejected',
+                        ]);
+
+                    event(new TripStartedForDriver($order));
+
+                    event(new TripStartedForUser($order));
+                    $paymentUrl = null;
+
+                    return [
+                        'success' => true,
+                        'payment' => json_decode($order->payment_details, true),
+                    ];
+                }
+
+                // إعادة استخدام session قديمة إذا كانت صالحة
+                if (
+                    $order->payment_status === Order::PAYMENT_STATUS_PROCESSING &&
+                    $order->expires_at &&
+                    now()->lt($order->expires_at)
+                ) {
+                    $paymentData = json_decode($order->payment_details, true)['payment_data'] ?? null;
+
+                    if ($paymentData &&
+                        $paymentData['gateway'] === $gateway &&
+                        $paymentData['method'] === $request->payment_method
+                    ) {
+                        $paymentUrl = $this->extractPaymentUrl($paymentData, $request->gateway);
+
+                        return [
+                            'success' => true,
+                            'payment' => $paymentData,
+                        ];
+                    }
+                }
+
+                // بيانات إضافية للبوابة
+                $additionalData = [
+                    'save_card' => $request->boolean('save_card'),
+                    'installments' => $request->input('installments'),
+                    'metadata' => $request->only(['device_id', 'ip_address']),
+                ];
+
+                // معالجة الدفع عبر service
+                $paymentResult = $this->paymentService->processOrderPayment(
+                    $user,
+                    $order,
+                    $offer,
+                    $gateway,
+                    $request->payment_method,
+                    $additionalData
+                );
+
+                if (! $paymentResult['success']) {
+                    throw new \Exception($paymentResult['message']);
+                }
+
+                $paymentData = $paymentResult['payment'];
+
+                // استخراج رابط الدفع حسب البوابة
+                $paymentUrl = $this->extractPaymentUrl($paymentData, $request->gateway);
+
+                // تحديث الطلب
+                $order->update([
+                    'payment_status' => Order::PAYMENT_STATUS_PROCESSING,
+                    'payment_method' => $request->payment_method,
+                    'payment_gateway' => $gateway,
+                    'payment_transaction_id' => $paymentData['payment_id'] ?? null,
+                    'payment_details' => json_encode($paymentResult),
+                    'expires_at' => $paymentData['expires_at'] ?? null,
+                ]);
+
+                return $paymentResult;
+            });
+
+            return $this->successResponse([
+                'order' => new OrderResource($order->fresh()),
+                'payment_url' => $paymentUrl,
+                'payment' => $result,
+            ], 'Payment initiated successfully');
+
+        } catch (\Throwable $e) {
+            Log::channel('payment')->error('Payment initiation failed', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->errorResponse($e->getMessage(), 500);
+        }
     }
-}
 
-/**
- * استخراج رابط الدفع حسب بوابة الدفع
- */
-private function extractPaymentUrl(array $paymentData, string $gateway): ?string
-{
-   
-    // حاول الحصول على الـ gateway من أي مكان
+    /**
+     * استخراج رابط الدفع حسب بوابة الدفع
+     */
+    private function extractPaymentUrl(array $paymentData, string $gateway): ?string
+    {
 
-    // Tamara
-    if ($gateway === 'tamara') {
-        return $paymentData['checkout_url'] 
-            ?? $paymentData['payment']['checkout_url'] 
-            ?? $paymentData['payment_data']['checkout_url'] 
-            ?? null;
+        // حاول الحصول على الـ gateway من أي مكان
+
+        // Tamara
+        if ($gateway === 'tamara') {
+            return $paymentData['checkout_url']
+                ?? $paymentData['payment']['checkout_url']
+                ?? $paymentData['payment_data']['checkout_url']
+                ?? null;
+        }
+
+        // Tabby
+        if ($gateway === 'tabby') {
+            return $paymentData['raw_response']['configuration']['available_products']['installments'][0]['web_url']
+                ?? null;
+        }
+
+        // Paymob
+        if ($gateway === 'paymob') {
+            return $paymentData['payment_url']
+                ?? $paymentData['payment']['payment_url']
+                ?? $paymentData['payment_data']['payment_url']
+                ?? null;
+        }
+
+        return null;
     }
-
-    // Tabby
-    if ($gateway === 'tabby') {
-        return$paymentData['raw_response']['configuration']['available_products']['installments'][0]['web_url']
-            ?? null;
-    }
-
-    // Paymob
-    if ($gateway === 'paymob') {
-        return $paymentData['payment_url'] 
-            ?? $paymentData['payment']['payment_url'] 
-            ?? $paymentData['payment_data']['payment_url'] 
-            ?? null;
-    }
-
-    return null;
-}
-
-
-
-
-
 
     /**
      * التحقق من حالة الدفع
@@ -288,7 +286,7 @@ private function extractPaymentUrl(array $paymentData, string $gateway): ?string
         ]);
 
         try {
-            if (!$order->isPaid()) {
+            if (! $order->isPaid()) {
                 return $this->errorResponse('Order is not paid', 400);
             }
 
@@ -297,7 +295,7 @@ private function extractPaymentUrl(array $paymentData, string $gateway): ?string
                 $request->input('reason')
             );
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 return $this->errorResponse($result['error'], 400, $result['error_code'] ?? null);
             }
 
@@ -346,19 +344,19 @@ private function extractPaymentUrl(array $paymentData, string $gateway): ?string
     {
         $orderId = $request->input('payment_id');
 
-        if (!$orderId) {
+        if (! $orderId) {
             return response()->json([
                 'status' => false,
-                'message' => 'بيانات الدفع غير صحيحة'
+                'message' => 'بيانات الدفع غير صحيحة',
             ], 400);
         }
 
         $order = Order::where('payment_transaction_id', $orderId)->first();
 
-        if (!$order) {
+        if (! $order) {
             return response()->json([
                 'status' => false,
-                'message' => 'الطلب غير موجود'
+                'message' => 'الطلب غير موجود',
             ], 404);
         }
 
@@ -377,11 +375,12 @@ private function extractPaymentUrl(array $paymentData, string $gateway): ?string
                 // تحديث الطلب
                 $order->update([
                     'order_status_id' => $status->id,
-                    'payment_status'  => Order::PAYMENT_STATUS_PAID,
-                    'paid_at'         => now(),
-                    'driver_id'       => $acceptedOffer?->driver_id,
+
+                    'payment_status' => Order::PAYMENT_STATUS_PAID,
+                    'paid_at' => now(),
+                    'driver_id' => $acceptedOffer?->driver_id,
                 ]);
-              $order->offers()
+                $order->offers()
                     ->whereIn('status', ['accepted', 'payment_pending'])
                     ->update([
                         'status' => 'accepted',
@@ -397,22 +396,19 @@ private function extractPaymentUrl(array $paymentData, string $gateway): ?string
             event(new TripStartedForDriver($order));
             event(new TripStartedForUser($order));
 
-
             return response()->json([
                 'status' => true,
                 'message' => 'تم الدفع بنجاح، الطلب قيد التوصيل، وباقي العروض تم رفضها',
-                'order' => new OrderResource($order->fresh())
+                'order' => new OrderResource($order->fresh()),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'جاري معالجة الدفع، سيتم تحديث الحالة قريباً',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
-
-
 
     /**
      * صفحة فشل الدفع
@@ -477,13 +473,13 @@ private function extractPaymentUrl(array $paymentData, string $gateway): ?string
             $amount = $amountCents / 100; // تحويل من سنتس إلى العملة
 
             // التحقق من وجود معرف الطلب
-            if (!$merchantOrderId) {
+            if (! $merchantOrderId) {
                 Log::channel('payment')->error('Missing merchant_order_id in Paymob callback', $callbackData);
             }
 
             // البحث عن الطلب
             $order = Order::find($merchantOrderId);
-            if (!$order) {
+            if (! $order) {
                 Log::channel('payment')->error('Order not found for Paymob callback', [
                     'merchant_order_id' => $merchantOrderId,
                 ]);
@@ -520,7 +516,7 @@ private function extractPaymentUrl(array $paymentData, string $gateway): ?string
             if ($success && $isCapture) {
                 // الدفع ناجح ومستلم
                 $this->processSuccessfulPayment($order, $verificationData);
-            } elseif ($success && !$isCapture && $pending) {
+            } elseif ($success && ! $isCapture && $pending) {
                 // الدفع معلق (لم يتم الاستلام بعد)
                 $this->processPendingPayment($order, $verificationData);
             } else {
@@ -670,13 +666,13 @@ private function extractPaymentUrl(array $paymentData, string $gateway): ?string
 
     /**
      * إضافة route لهذا الـ callback في routes/api.php:
-     * 
+     *
      * Route::get('/payment/callback/paymob', [PaymentController::class, 'paymentCallbackPaymob'])
      *     ->name('payment.callback.paymob');
-     * 
+     *
      * وفي Paymob dashboard، اضبط Callback URL ليكون:
      * https://yourdomain.com/api/v1/payment/callback/paymob
-     * 
+     *
      * أو للـ success/cancel URLs:
      * Success URL: https://yourdomain.com/api/v1/payment/success/paymob
      * Cancel URL: https://yourdomain.com/api/v1/payment/cancel/paymob

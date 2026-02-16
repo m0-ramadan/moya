@@ -23,7 +23,7 @@ class TripStartedForUser implements ShouldBroadcastNow
     public function __construct(Order $order)
     {
         Log::info('TripStartedForUser fired', ['order_id' => $order->id]);
-        $order->load(['driver.user']);
+        //$order->load(['driver.user']);
         $this->orderId = $order->id;
         $driver = $order->driverOrder;
 

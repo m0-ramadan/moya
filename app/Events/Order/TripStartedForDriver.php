@@ -22,7 +22,7 @@ class TripStartedForDriver implements ShouldBroadcastNow
     {
         Log::info('TripStartedForDriver fired', ['order_id' => $order->id]);
 
-        $order->load(['driver.user']);
+       // $order->load(['driver.user']);
 
         $driver = $order->driverOrder;
 

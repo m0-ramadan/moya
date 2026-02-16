@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api\Driver;
 use App\Events\DriverLocationUpdated;
 use App\Events\OrderStatusUpdated;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Driver\OrderResource as DriverOrderResource;
 use App\Http\Resources\Driver\OrderResource;
+use App\Http\Resources\Driver\OrderResource as DriverOrderResource;
 use App\Jobs\RequestRatingJob;
 use App\Models\DriverLocation;
 use App\Models\Order;
@@ -38,7 +38,7 @@ class DriverOrderController extends Controller
     {
         $driver = auth()->user()->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return $this->errorResponse('يجب أن تكون سائقاً', 403);
         }
 
@@ -60,7 +60,7 @@ class DriverOrderController extends Controller
             'user',
             'offers' => function ($query) use ($driver) {
                 $query->where('driver_id', $driver->id);
-            }
+            },
         ])
             ->where('order_status_id', 1)->whereNull('order_date')
             ->whereNull('driver_id') // ليس له سائق بعد
@@ -75,13 +75,13 @@ class DriverOrderController extends Controller
 
             // الطلبات في نطاق 50 كيلومتر (يمكن تعديل المسافة)
             $query->whereHas('location', function ($q) use ($latitude, $longitude) {
-                $q->whereRaw("
+                $q->whereRaw('
                     (6371 * acos(
                         cos(radians(?)) * cos(radians(latitude)) * 
                         cos(radians(longitude) - radians(?)) + 
                         sin(radians(?)) * sin(radians(latitude))
                     )) <= ?
-                ", [$latitude, $longitude, $latitude, 50]); // 50 كم
+                ', [$latitude, $longitude, $latitude, 50]); // 50 كم
             });
         }
 
@@ -146,7 +146,7 @@ class DriverOrderController extends Controller
                 'water_type_id' => $request->water_type_id,
                 'has_location_filter' => $request->has(['latitude', 'longitude']),
                 'total_available' => $orders->count(),
-            ]
+            ],
         ], 'تم جلب الطلبات المنتظرة بنجاح');
     }
 
@@ -171,7 +171,7 @@ class DriverOrderController extends Controller
     {
         $driver = auth()->user()->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return $this->errorResponse('يجب أن تكون سائقاً', 403);
         }
 
@@ -184,7 +184,7 @@ class DriverOrderController extends Controller
             return $this->successResponse([
                 'count' => 0,
                 'has_active_order' => true,
-                'message' => 'لديك طلب نشط بالفعل'
+                'message' => 'لديك طلب نشط بالفعل',
             ]);
         }
 
@@ -203,9 +203,10 @@ class DriverOrderController extends Controller
         return $this->successResponse([
             'count' => $count,
             'has_active_order' => false,
-            'last_updated' => now()->toDateTimeString()
+            'last_updated' => now()->toDateTimeString(),
         ]);
     }
+
     /**
      * تحديث حالة الطلب
      */
@@ -220,18 +221,21 @@ class DriverOrderController extends Controller
 
         $driver = auth('sanctum')->user()->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return $this->errorResponse('يجب أن تكون سائقاً', 403);
         }
 
         $order = Order::where('driver_id', $driver->id)
             ->where('id', $orderId)
             //  ->with(['location', 'user'])
-            ->firstOrFail();
+            ->first();
+        if (! $order) {
+            return $this->errorResponse('الطلب غير موجود أو لا يخصك', 404);
+        }
 
         // التحقق من تسلسل الحالات
         $allowedStatuses = $this->getAllowedNextStatuses($order->order_status_id);
-        if (!in_array($validated['status_id'], $allowedStatuses)) {
+        if (! in_array($validated['status_id'], $allowedStatuses)) {
             return $this->errorResponse('تسلسل الحالات غير صحيح', 400);
         }
 
@@ -240,7 +244,6 @@ class DriverOrderController extends Controller
 
             $oldStatus = $order->order_status_id;
             $status = OrderStatus::find($validated['status_id']);
-
             $order->update([
                 'order_status_id' => $validated['status_id'],
                 'status_updated_at' => now(),
@@ -272,7 +275,7 @@ class DriverOrderController extends Controller
             // Broadcast Events
             event(new OrderStatusUpdated($order, $oldStatus));
 
-            if (!empty($validated['location_lat']) && !empty($validated['location_lng'])) {
+            if (! empty($validated['location_lat']) && ! empty($validated['location_lng'])) {
                 event(new DriverLocationUpdated($driver, $order, $validated['location_lat'], $validated['location_lng']));
             }
 
@@ -286,7 +289,8 @@ class DriverOrderController extends Controller
             );
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Update order status failed: ' . $e->getMessage());
+            Log::error('Update order status failed: '.$e->getMessage());
+
             return $this->errorResponse('فشل تحديث حالة الطلب', 500);
         }
     }
@@ -310,7 +314,7 @@ class DriverOrderController extends Controller
 
         $driver = auth()->user()->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return $this->errorResponse('يجب أن تكون سائقاً', 403);
         }
 
@@ -380,7 +384,8 @@ class DriverOrderController extends Controller
                 'order_status' => $order->status->name,
             ], 'تم تحديث الموقع بنجاح');
         } catch (\Exception $e) {
-            Log::error('Update driver location failed: ' . $e->getMessage());
+            Log::error('Update driver location failed: '.$e->getMessage());
+
             return $this->errorResponse('فشل تحديث الموقع', 500);
         }
     }
@@ -388,8 +393,10 @@ class DriverOrderController extends Controller
     public function getOrder($orderId)
     {
         $order = Order::findOrFail($orderId);
+
         return $this->successResponse(new OrderResource($order), 'تم جلب الطلب بنجاح');
     }
+
     /**
      * جلب مسار السائق للطلب
      */
@@ -397,7 +404,7 @@ class DriverOrderController extends Controller
     {
         $driver = auth()->user()->driver;
 
-        if (!$driver) {
+        if (! $driver) {
             return $this->errorResponse('يجب أن تكون سائقاً', 403);
         }
 
@@ -464,7 +471,7 @@ class DriverOrderController extends Controller
             ->latest()
             ->first();
 
-        if (!$latestLocation) {
+        if (! $latestLocation) {
             return $this->errorResponse('لا توجد بيانات تتبع لهذا الطلب', 404);
         }
 
@@ -642,7 +649,7 @@ class DriverOrderController extends Controller
                 'user_id' => $user->id,
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to complete order process: ' . $e->getMessage(), [
+            Log::error('Failed to complete order process: '.$e->getMessage(), [
                 'order_id' => $order->id,
             ]);
             throw $e;
@@ -665,7 +672,6 @@ class DriverOrderController extends Controller
         ]);
     }
 
-
     private function logOrderCompletion($order)
     {
         try {
@@ -677,13 +683,13 @@ class DriverOrderController extends Controller
                 'completed_at' => now(),
                 'delivery_duration_minutes' => $this->calculateDeliveryDuration($order),
                 'total_distance_km' => $this->calculateTotalDistance($order),
-                'final_price' => $order->price,
+                'final_price' => (float)$order->price,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
             Log::info('Order completion logged successfully', [
-                'order_id' => $order->id
+                'order_id' => $order->id,
             ]);
         } catch (\Throwable $e) {
 
@@ -695,15 +701,14 @@ class DriverOrderController extends Controller
 
             // لو عايز ترجع error
             throw $e;
-
             // أو لو مش عايز يوقف التنفيذ احذف throw
         }
     }
 
-
     private function calculateDeliveryDuration($order)
     {
         $acceptedAt = $order->acceptedOffer->created_at ?? $order->updated_at;
+
         return $acceptedAt->diffInMinutes(now());
     }
 
@@ -730,6 +735,7 @@ class DriverOrderController extends Controller
 
         return round($totalDistance, 2);
     }
+
     private function sendStatusNotifications($order, $oldStatus, $newStatus)
     {
         $statusNames = [
@@ -743,7 +749,7 @@ class DriverOrderController extends Controller
 
         $userTokens = $order->user->activeDeviceTokens->pluck('token')->toArray();
 
-        if (!empty($userTokens)) {
+        if (! empty($userTokens)) {
             $notificationData = [
                 'title' => 'تحديث حالة الطلب',
                 'body' => "تم تغيير حالة طلبك من {$statusNames[$oldStatus]} إلى {$statusNames[$newStatus]}",
@@ -765,7 +771,7 @@ class DriverOrderController extends Controller
         if ($distanceInfo && $distanceInfo['duration']['value'] <= 300) { // 5 دقائق
             $userTokens = $order->user->activeDeviceTokens->pluck('token')->toArray();
 
-            if (!empty($userTokens)) {
+            if (! empty($userTokens)) {
                 app(\App\Services\FirebaseNotificationService::class)
                     ->sendToMultipleDevices($userTokens, [
                         'title' => 'وصول السائق قريباً',
@@ -786,7 +792,7 @@ class DriverOrderController extends Controller
 
         $userTokens = $order->user->activeDeviceTokens->pluck('token')->toArray();
 
-        if (!empty($userTokens)) {
+        if (! empty($userTokens)) {
             app(\App\Services\FirebaseNotificationService::class)
                 ->sendToMultipleDevices($userTokens, [
                     'title' => 'وقت الوصول المتوقع',
@@ -804,7 +810,7 @@ class DriverOrderController extends Controller
     {
 
         $userTokens = $order->user->activeDeviceTokens->pluck('token')->toArray();
-        if (!empty($userTokens)) {
+        if (! empty($userTokens)) {
             app(\App\Services\FirebaseNotificationService::class)
                 ->sendToMultipleDevices($userTokens, [
                     'title' => 'تم تسليم الطلب',
