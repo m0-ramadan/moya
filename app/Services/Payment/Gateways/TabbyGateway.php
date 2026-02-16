@@ -44,6 +44,7 @@ protected function getBaseUrl(): string
     public function initiatePayment(array $data): array
     {
         try {
+           
             $authToken = $this->getAuthToken('tabby');
             if (!$authToken) {
                 throw new \Exception('Tabby authentication failed');
@@ -51,6 +52,7 @@ protected function getBaseUrl(): string
 
             // التحضير للبيانات المطلوبة من Tabby
             $sessionData = $this->prepareTabbySessionData($data);
+
             Log::channel('payment')->debug('Tabby session payload', [
                 'payload' => $sessionData,
                 'auth_token_prefix' => substr($authToken, 0, 10) . '...',
@@ -65,7 +67,6 @@ protected function getBaseUrl(): string
                     'Authorization' => "Bearer {$authToken}",
                 ]
             );
-
             if (!$response['success']) {
                 Log::channel('payment')->error('Tabby API Error Response', [
                     'error' => $response['error'] ?? 'Unknown error',

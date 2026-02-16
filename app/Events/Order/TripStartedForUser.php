@@ -2,14 +2,13 @@
 
 namespace App\Events\Order;
 
+use App\Http\Resources\WebsiteUser\OrderResource;
 use App\Models\Order;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Broadcasting\Channel;
-use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
-use App\Http\Resources\Driver\OrderResource as DriverOrderResource;
-use App\Http\Resources\WebsiteUser\OrderResource;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Support\Facades\Log;
 
 class TripStartedForUser implements ShouldBroadcastNow
 {
@@ -18,14 +17,14 @@ class TripStartedForUser implements ShouldBroadcastNow
     public array $orderData;
 
     public int $userId;
-    public int $orderId;
 
+    public int $orderId;
 
     public function __construct(Order $order)
     {
         Log::info('TripStartedForUser fired', ['order_id' => $order->id]);
         $order->load(['driver.user']);
-$this->orderId = $order->id;
+        $this->orderId = $order->id;
         $driver = $order->driverOrder;
 
         if (! $driver) {
@@ -35,6 +34,7 @@ $this->orderId = $order->id;
 
             $this->orderData = [];
             $this->userId = 0;
+
             return;
         }
 
@@ -53,7 +53,7 @@ $this->orderId = $order->id;
             return [];
         }
 
-        return new Channel('order.' . $this->orderId);
+        return new Channel('order.'.$this->orderId);
     }
 
     public function broadcastAs()

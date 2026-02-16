@@ -2,18 +2,22 @@
 
 namespace App\Services\Payment\Gateways;
 
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
-use App\Services\Wallet\ExchangeRateService;
 use App\Contracts\Payment\PaymentGatewayInterface;
+use App\Models\PaymentAttempt;
+use App\Services\Wallet\ExchangeRateService;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class PaymobGateway extends BaseGateway
 {
-
     private string $apiKey;
+
     private string $integrationId;
+
     private string $iframeId;
+
     private string $hmacSecret;
+
     private ExchangeRateService $exchangeRateService;
 
     public function __construct(ExchangeRateService $exchangeRateService)
@@ -57,7 +61,7 @@ class PaymobGateway extends BaseGateway
             $user = $data['user'] ?? null;
             $amount = $data['amount'] ?? 0;
             $walletCurrency = $data['wallet_currency'] ?? $this->currency;
-            $orderId = $data['order_id'] ?? 'ORD-' . time();
+            $orderId = $data['order_id'] ?? 'ORD-'.time();
 
             // Convert currency if needed
             if ($walletCurrency !== $this->currency) {
@@ -73,24 +77,52 @@ class PaymobGateway extends BaseGateway
 
             $authToken = $this->getAuthToken('paymob');
 
-            if (!$authToken) {
+            if (! $authToken) {
                 throw new \Exception('Paymob authentication failed');
             }
+
+            // 🔹 Check if there is an existing pending attempt
+            $existingAttempt = PaymentAttempt::where('order_id', $orderId)
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
+
+            if ($existingAttempt) {
+                return [
+                    'success' => true,
+                    'payment_url' => $existingAttempt->payment_url,
+                    'shorten_url' => $existingAttempt->shorten_url ?? null,
+                    'order_id' => $orderId,
+                    'reused' => true, // Optional flag
+                ];
+            }
+
+            // 🔹 Create new reference ID
+            $referenceId = 'ORD-'.$orderId.'-'.now()->timestamp;
 
             $paymentLink = $this->createPaymentLink(
                 $authToken,
                 $amountCents,
-                $orderId,
+                $referenceId,
                 $user,
                 $data['callback_url'] ?? null
             );
 
-            if (!$paymentLink['success']) {
+            if (! $paymentLink['success']) {
                 throw new \Exception($paymentLink['error'] ?? 'Failed to create payment link');
             }
+
+            // 🔹 Save new attempt
+            PaymentAttempt::create([
+                'order_id' => $orderId,
+                'reference_id' => $referenceId,
+                'payment_url' => $paymentLink['payment_url'] ?? $paymentLink['data']['client_url'] ?? null,
+                'status' => 'pending',
+            ]);
+
             return [
                 'success' => true,
-                'payment_url' => $paymentLink['payment_url'],
+                'payment_url' => $paymentLink['payment_url'] ?? $paymentLink['data']['client_url'] ?? null,
                 'shorten_url' => $paymentLink['shorten_url'] ?? null,
                 'order_id' => $orderId,
             ];
@@ -98,12 +130,12 @@ class PaymobGateway extends BaseGateway
         } catch (\Exception $e) {
             Log::error('Paymob payment creation failed', [
                 'data' => $data,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -111,7 +143,7 @@ class PaymobGateway extends BaseGateway
     public function verifyTransaction(array $data): array
     {
         try {
-            if (!$this->validateHmac($data)) {
+            if (! $this->validateHmac($data)) {
                 throw new \Exception('Invalid HMAC');
             }
 
@@ -119,23 +151,23 @@ class PaymobGateway extends BaseGateway
             $success = $obj['success'] ?? false;
             $isCapture = $obj['is_capture'] ?? false;
 
-            if (!$success || !$isCapture) {
+            if (! $success || ! $isCapture) {
                 return [
                     'success' => false,
-                    'error' => 'Payment not completed'
+                    'error' => 'Payment not completed',
                 ];
             }
 
             return [
                 'success' => true,
                 'transaction_id' => $obj['id'] ?? null,
-                'order_id' => $obj['merchant_reference'] ?? null
+                'order_id' => $obj['merchant_reference'] ?? null,
             ];
 
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -144,15 +176,15 @@ class PaymobGateway extends BaseGateway
     {
         // Implementation for refund
         $authToken = $this->getAuthToken('paymob');
-        if (!$authToken) {
+        if (! $authToken) {
             return ['success' => false, 'error' => 'Auth failed'];
         }
 
         try {
             $amountCents = round($amount * 100);
-            
+
             $response = Http::withToken($authToken)
-                ->post($this->baseUrl . "/api/acceptance/void_refund/refund", [
+                ->post($this->baseUrl.'/api/acceptance/void_refund/refund', [
                     'transaction_id' => $transactionId,
                     'amount_cents' => $amountCents,
                 ]);
@@ -161,20 +193,20 @@ class PaymobGateway extends BaseGateway
                 return [
                     'success' => true,
                     'refund_id' => $response->json('id'),
-                    'message' => 'Refund processed successfully'
+                    'message' => 'Refund processed successfully',
                 ];
             }
 
             return [
                 'success' => false,
                 'error' => $response->json('message') ?? 'Refund failed',
-                'details' => $response->json()
+                'details' => $response->json(),
             ];
 
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -182,13 +214,15 @@ class PaymobGateway extends BaseGateway
     public function getTransactionStatus(string $transactionId): array
     {
         $authToken = $this->getAuthToken('paymob');
-        if (!$authToken) return ['success' => false, 'error' => 'Auth failed'];
+        if (! $authToken) {
+            return ['success' => false, 'error' => 'Auth failed'];
+        }
 
         try {
             $response = Http::withToken($authToken)
-                ->get($this->baseUrl . "/api/acceptance/transactions/{$transactionId}");
+                ->get($this->baseUrl."/api/acceptance/transactions/{$transactionId}");
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return ['success' => false, 'error' => 'Failed to fetch status'];
             }
 
@@ -197,7 +231,7 @@ class PaymobGateway extends BaseGateway
             return [
                 'success' => true,
                 'status' => $data['success'] ? 'success' : 'failed',
-                'data' => $data
+                'data' => $data,
             ];
         } catch (\Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
@@ -245,7 +279,7 @@ class PaymobGateway extends BaseGateway
 
     private function createPaymentLink(string $authToken, int $amountCents, string $orderId, $user, ?string $callbackUrl = null): array
     {
-  
+
         try {
             $payload = [
                 'amount_cents' => $amountCents,
@@ -264,12 +298,12 @@ class PaymobGateway extends BaseGateway
             }
             $response = Http::withToken($authToken)
                 ->asForm()
-                ->post($this->baseUrl . '/api/ecommerce/payment-links', $payload);
+                ->post($this->baseUrl.'/api/ecommerce/payment-links', $payload);
             if ($response->failed()) {
                 return [
                     'success' => false,
                     'error' => 'Payment link creation failed',
-                    'details' => $response->json()
+                    'details' => $response->json(),
                 ];
             }
             $data = $response->json();
@@ -278,20 +312,22 @@ class PaymobGateway extends BaseGateway
                 'success' => true,
                 'payment_url' => $data['client_url'] ?? null,
                 'shorten_url' => $data['shorten_url'] ?? null,
-               // 'token' => $data['token'] ?? null
+                // 'token' => $data['token'] ?? null
             ];
 
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
 
     private function validateHmac(array $data): bool
     {
-        if (!isset($data['hmac'])) return false;
+        if (! isset($data['hmac'])) {
+            return false;
+        }
 
         $hmac = $data['hmac'];
         unset($data['hmac']);
