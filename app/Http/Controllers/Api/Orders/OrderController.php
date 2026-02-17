@@ -618,4 +618,14 @@ class OrderController extends Controller
         $statuses = OrderStatus::all();
         return $this->successResponse($statuses, 'تم جلب حالات الطلبات بنجاح');
     }
+    public function showPaymentStatus($id)
+    {
+        $order = Order::where('id', $id)->firstOrFail();
+
+        return $this->successResponse([
+            'payment_status' => $order->isPaid() ? 'paid' : 'unpaid',
+            'payment_method' => $order->payment_method??null,
+            'payment_gateway' => $order->payment_gateway??null,
+        ], 'تم جلب حالة الدفع بنجاح');
+    }
 }

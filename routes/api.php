@@ -58,6 +58,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/', [OrderController::class, 'index']);
             Route::get('/statuses', [OrderController::class, 'statuses']);
             Route::get('/{id}', [OrderController::class, 'show']);
+            Route::get('/status-payment/{id}', [OrderController::class, 'showPaymentStatus']);
             Route::get('/{id}/status', [OrderController::class, 'checkOrderStatus']);
             Route::post('/{orderId}/rate', [RatingController::class, 'rateDriver']);
             Route::post('/driver/{driverId}/rate', [RatingController::class, 'rateDriverWithoutOrder']);
