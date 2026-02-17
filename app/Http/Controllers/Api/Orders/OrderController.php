@@ -448,7 +448,7 @@ class OrderController extends Controller
         ]);
 
         // 👇 هنا الفرق
-        if ($user->driver) {
+        if (!empty($user->driver)) {
             // 🚚 لو سواق
             $query->where('driver_id', $user->driver->id);
         } else {
