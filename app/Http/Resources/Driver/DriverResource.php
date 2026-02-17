@@ -31,7 +31,7 @@ class DriverResource extends JsonResource
             'date_of_birth' => $this->date_of_birth ?? null,
 
             /* ================= Identity ================= */
-            'national_id' => $this->national_id ?? null,
+            'national_id' =>(int) $this->national_id ?? null,
             'id_number' => $this->id_number ?? null,
             'iqama_number' => $this->iqama_number ?? null,
             'iqama_expiry_date' => $this->iqama_expiry_date ?? null,
@@ -42,7 +42,7 @@ class DriverResource extends JsonResource
             'id_image_back' => $this->id_image_back ? $this->image($this->id_image_back) : null,
 
             /* ================= License ================= */
-            'license_number' => $this->license_number ?? null,
+            'license_number' => (int)$this->license_number ?? null,
             'license_issue_date' => $this->license_issue_date ?? null,
             'license_expiry_date' => $this->license_expiry_date ?? null,
             'license_image_front' => $this->license_image_front ? $this->image($this->license_image_front) : null,
@@ -51,7 +51,7 @@ class DriverResource extends JsonResource
             /* ================= Vehicle ================= */
             'vehicle_size' => $this->vehicle_size ?? null,
             'is_vehicle_owner' => (bool) $this->is_vehicle_owner,
-            'vehicle_plate_number' => $this->vehicle_plate_number ?? null,
+            'vehicle_plate_number' =>(int) $this->vehicle_plate_number ?? null,
             'vehicle_registration_number' => $this->vehicle_registration_number ?? null,
             'vehicle_residency_number' => $this->vehicle_residency_number ?? null,
             'vehicle_registration_image' => $this->vehicle_registration_image ? $this->image($this->vehicle_registration_image) : null,
