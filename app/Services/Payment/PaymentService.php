@@ -2,19 +2,21 @@
 
 namespace App\Services\Payment;
 
-use App\Models\User;
 use App\Models\Order;
 use App\Models\OrderOffer;
-use App\Services\Wallet\UserWalletService;
+use App\Models\OrderStatus;
+use App\Models\User;
+use App\Notifications\OrderPaid;
+use App\Notifications\PaymentSuccessful;
 use App\Services\Payment\Factories\PaymentGatewayFactory;
+use App\Services\Wallet\UserWalletService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Notifications\PaymentSuccessful;
-use App\Notifications\OrderPaid;
 
 class PaymentService
 {
     private PaymentGatewayFactory $gatewayFactory;
+
     private UserWalletService $walletService;
 
     public function __construct(
@@ -24,7 +26,6 @@ class PaymentService
         $this->gatewayFactory = $gatewayFactory;
         $this->walletService = $walletService;
     }
-
 
     public function processOrderPayment(
         User $user,
@@ -53,8 +54,7 @@ class PaymentService
                 $result = $paymentGateway->initiatePayment($orderData);
             }
 
-
-            if (!$result['success']) {
+            if (! $result['success']) {
                 throw new \Exception($result['error'] ?? 'Payment failed');
             }
             // حفظ بيانات الدفع
@@ -146,8 +146,8 @@ class PaymentService
                 'quantity' => 1,
                 'unit_price' => $offer->price,
                 'total_price' => $offer->price,
-                'sku' => 'SERVICE-' . $order->service_id,
-            ]
+                'sku' => 'SERVICE-'.$order->service_id,
+            ],
         ];
     }
 
@@ -175,16 +175,48 @@ class PaymentService
     private function processWalletPayment(User $user, Order $order, float $amount): array
     {
         $walletEntry = $this->walletService->withdraw($user, $amount, [
-            'description' => 'Payment for Order #' . $order->order_number,
+            'description' => 'Payment for Order #'.$order->order_number,
             'metadata' => [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
-            ]
+            ],
         ]);
+        $status = OrderStatus::where('name', 'in-road')->first();
+        // جلب العرض المقبول أو المعلق للدفع
+        $acceptedOffer = $order->offers()
+            ->whereIn('status', ['accepted', 'payment_pending'])
+            ->first();
+
+        $order->update([
+            'payment_status' => Order::PAYMENT_STATUS_PENDING,
+            'order_status_id' => $status->id,
+            'payment_method' => Order::PAYMENT_STATUS_PAID,
+            'payment_gateway' => 'wallet',
+            'payment_transaction_id' => null,
+            'driver_id' => $acceptedOffer?->driver_id,
+            'payment_details' => json_encode([
+                'success' => true,
+                'gateway' => 'wallet',
+                'method' => 'wallet',
+                'message' => 'Payment processed from wallet',
+            ]),
+            'expires_at' => null,
+        ]);
+        $order->offers()
+            ->whereIn('status', ['accepted', 'payment_pending'])
+            ->update([
+                'status' => 'accepted',
+            ]);
+        // رفض كل العروض ما عدا المقبول أو المعلق للدفع
+        $order->offers()
+            ->whereNotIn('status', ['accepted', 'payment_pending'])
+            ->update([
+                'status' => 'rejected',
+            ]);
 
         return [
             'success' => true,
-            'transaction_id' => 'WALLET-' . $walletEntry->id,
+            'transaction_id' => 'WALLET-'.$walletEntry->id,
             'amount' => $amount,
             'gateway' => 'wallet',
             'message' => 'Payment processed from wallet',
@@ -222,7 +254,7 @@ class PaymentService
     public function verifyPayment(Order $order): array
     {
         try {
-            if (!$order->payment_gateway || !$order->payment_transaction_id) {
+            if (! $order->payment_gateway || ! $order->payment_transaction_id) {
                 throw new \Exception('No payment information found');
             }
 
@@ -308,7 +340,7 @@ class PaymentService
         try {
             $paymentGateway = $this->gatewayFactory->make($gateway);
 
-            if (!$paymentGateway->isWebhookValid($data)) {
+            if (! $paymentGateway->isWebhookValid($data)) {
                 throw new \Exception('Invalid webhook signature');
             }
 
@@ -339,16 +371,17 @@ class PaymentService
         $orderId = $webhookData['order_id'] ?? null;
         $status = $webhookData['status'] ?? null;
 
-        if (!$orderId) {
+        if (! $orderId) {
             return;
         }
 
         $order = Order::find($orderId);
-        if (!$order) {
+        if (! $order) {
             Log::channel('payment')->warning('Order not found for webhook', [
                 'order_id' => $orderId,
                 'gateway' => $gateway,
             ]);
+
             return;
         }
 
@@ -391,7 +424,7 @@ class PaymentService
     public function refundPayment(Order $order, string $reason = ''): array
     {
         try {
-            if (!$order->isPaid()) {
+            if (! $order->isPaid()) {
                 throw new \Exception('Order is not paid');
             }
 
@@ -438,17 +471,17 @@ class PaymentService
     private function refundWalletPayment(Order $order, string $reason)
     {
         $walletEntry = $this->walletService->deposit($order->user, $order->getPaymentAmount(), [
-            'description' => 'Refund for Order #' . $order->order_number,
+            'description' => 'Refund for Order #'.$order->order_number,
             'metadata' => [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'refund_reason' => $reason,
-            ]
+            ],
         ]);
 
         return [
             'success' => true,
-            'transaction_id' => 'REFUND-WALLET-' . $walletEntry->id,
+            'transaction_id' => 'REFUND-WALLET-'.$walletEntry->id,
             'amount' => $order->getPaymentAmount(),
             'gateway' => 'wallet',
             'message' => 'Refund processed to wallet',
