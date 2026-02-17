@@ -12,6 +12,8 @@ return [
         'https://talaaljazeera.com',
         'https://www.talaaljazeera.com',
         'https://moy2.vercel.app',
+        'https://waytmiah.com',
+        'http://waytmiah.com',
     ],
 
     'allowed_origins_patterns' => [],
