@@ -53,7 +53,7 @@ class OrderController extends Controller
             // Get saved location details
             //    $savedLocation = \App\Models\SavedLocation::findOrFail($validated['saved_location_id']);
             $statusOrder = null;
-            if ( !empty($validated['order_date'])) {
+            if (! empty($validated['order_date'])) {
                 $statusOrder = OrderStatus::where('name', 'scheduled')->first();
             } else {
                 $statusOrder = OrderStatus::where('name', 'pendding')->first();
@@ -631,5 +631,63 @@ class OrderController extends Controller
             'payment_method' => $order->payment_method ?? null,
             'payment_gateway' => $order->payment_gateway ?? null,
         ], 'تم جلب حالة الدفع بنجاح');
+    }
+
+    public function cancelOrder(Request $request, $orderId)
+    {
+        $validated = $request->validate([
+            'reason' => 'required|string|max:255',
+            'notes' => 'nullable|string',
+        ]);
+
+        $user = auth()->user();
+
+        $order = Order::where('id', $orderId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $allowedStatuses = OrderStatus::whereIn('name', [
+            'pendding',
+            'scheduled',
+        ])->pluck('id')->toArray();
+
+        if (! in_array($order->order_status_id, $allowedStatuses)) {
+            return $this->errorResponse('لا يمكن إلغاء هذا الطلب', 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $cancelledStatus = OrderStatus::where('name', 'cancelled')->first();
+
+            $order->update([
+                'order_status_id' => $cancelledStatus->id,
+            ]);
+
+            // حفظ سبب الإلغاء
+            \App\Models\OrderCancellation::create([
+                'order_id' => $order->id,
+                'cancelled_by_user_id' => $user->id,
+                'reason' => $validated['reason'],
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            // إلغاء العروض
+            OrderOffer::where('order_id', $order->id)
+                ->where('status', 'pending')
+                ->update(['status' => 'cancelled']);
+
+            DB::commit();
+
+            return $this->successResponse(
+                new OrderResource($order),
+                'تم إلغاء الطلب بنجاح'
+            );
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return $this->errorResponse($e->getMessage(), 500);
+        }
     }
 }

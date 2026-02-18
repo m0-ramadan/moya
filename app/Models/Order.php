@@ -191,4 +191,9 @@ class Order extends Model
 
         return $this->price ?? 0;
     }
+    public function cancellation()
+{
+    return $this->hasOne(OrderCancellation::class);
+}
+
 }

@@ -56,6 +56,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('orders')->group(function () {
             Route::post('/', [OrderController::class, 'store']);
             Route::get('/', [OrderController::class, 'index']);
+            Route::post('/{orderId}/cancel', [OrderController::class, 'cancelOrder']);
             Route::get('/statuses', [OrderController::class, 'statuses']);
             Route::get('/{id}', [OrderController::class, 'show']);
             Route::get('/status-payment/{id}', [OrderController::class, 'showPaymentStatus']);
