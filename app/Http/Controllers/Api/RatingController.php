@@ -16,6 +16,7 @@ use App\Services\GoogleMapsService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderOfferResource;
 use App\Models\DriverRating;
+use App\Models\OrderStatus;
 
 class RatingController extends Controller
 {
@@ -26,6 +27,7 @@ class RatingController extends Controller
      */
     public function rateDriver(Request $request, $orderId)
     {
+
         $validated = $request->validate([
             'rating' => 'required|integer|min:1|max:5',
             'comment' => 'nullable|string|max:1000',
@@ -37,12 +39,14 @@ class RatingController extends Controller
         ]);
 
         $user = auth()->user();
+        $status=OrderStatus::where('name','delivered')->first();
         $order = Order::where('user_id', $user->id)
             ->where('id', $orderId)
-            ->where('order_status_id', 4) // تم التسليم
-            ->with('driver')
-            ->firstOrFail();
-
+            ->where('order_status_id', $status->id) // تم التسليم
+            ->first();
+        if (!$order) {
+            return $this->errorResponse('الطلب غير موجود أو لم يتم تسليمه', 404);
+        }
         // التحقق من أن المستخدم لم يقم بالتقييم من قبل
         $existingRating = OrderRating::where('order_id', $orderId)
             ->where('rated_by', 'user')
