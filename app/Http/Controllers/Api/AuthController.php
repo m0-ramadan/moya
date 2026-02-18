@@ -175,6 +175,7 @@ class AuthController extends Controller
         ], 'تم تحديث إعدادات الإشعارات بنجاح');
     }
 
+    
     public function deleteAccount($phone_number)
     {
         $user = User::where('full_phone', $phone_number)->orWhere('phone_number', $phone_number)->first();
