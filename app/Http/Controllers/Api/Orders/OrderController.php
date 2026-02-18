@@ -58,7 +58,7 @@ class OrderController extends Controller
                 'service_id' => $validated['service_id'],
                 'water_type_id' => $validated['water_type_id'] ?? null,
                 'saved_location_id' => $validated['saved_location_id'],
-                'order_status_id' => $statusOrder->id, // pending
+                'order_status_id' =>$validated['order_date'] ? OrderStatus::where('name', 'scheduled')->first()->id : $statusOrder->id, // pending
                 'order_date' => $validated['order_date'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'created_at' => Carbon::now(),
