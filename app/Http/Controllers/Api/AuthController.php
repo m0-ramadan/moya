@@ -177,7 +177,7 @@ class AuthController extends Controller
 
     public function deleteAccount($phone_number)
     {
-        $user = User::where('full_phone', $phone_number)->orWhere('phone', $phone_number)->first();
+        $user = User::where('full_phone', $phone_number)->orWhere('phone_number', $phone_number)->first();
 
         if (! $user) {
             return $this->successResponse(null, 'تم حذف الحساب بنجاح');
