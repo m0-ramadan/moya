@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers\Api\Orders;
 
-use Carbon\Carbon;
-use App\Models\Order;
-use App\Models\Driver;
-use App\Models\OrderOffer;
-use App\Models\OrderStatus;
-use App\Jobs\ExpireOrderJob;
-use Illuminate\Http\Request;
-use App\Traits\ApiResponseTrait;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use App\Events\Order\OfferCancelled;
-use App\Http\Controllers\Controller;
 use App\Events\Order\DriverAcceptOrder;
 use App\Events\Order\NewOrderAvailable;
+use App\Events\Order\OfferCancelled;
 use App\Events\Order\UserConfirmedDriver;
-use App\Services\FirebaseNotificationService;
+use App\Http\Controllers\Controller;
 use App\Http\Resources\WebsiteUser\OrderResource;
+use App\Jobs\ExpireOrderJob;
+use App\Models\Driver;
+use App\Models\Order;
+use App\Models\OrderOffer;
+use App\Models\OrderStatus;
+use App\Services\FirebaseNotificationService;
+use App\Traits\ApiResponseTrait;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -52,13 +52,18 @@ class OrderController extends Controller
 
             // Get saved location details
             //    $savedLocation = \App\Models\SavedLocation::findOrFail($validated['saved_location_id']);
-            $statusOrder = OrderStatus::where('name', 'pendding')->first();
+            $statusOrder = null;
+            if ($validated['order_date']) {
+                $statusOrder = OrderStatus::where('name', 'scheduled')->first();
+            } else {
+                $statusOrder = OrderStatus::where('name', 'pendding')->first();
+            }
             $order = Order::create([
                 'user_id' => auth()->id(),
                 'service_id' => $validated['service_id'],
                 'water_type_id' => $validated['water_type_id'] ?? null,
                 'saved_location_id' => $validated['saved_location_id'],
-                'order_status_id' =>$validated['order_date'] ? OrderStatus::where('name', 'scheduled')->first()->id : $statusOrder->id, // pending
+                'order_status_id' => $statusOrder->id ?? null,
                 'order_date' => $validated['order_date'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'created_at' => Carbon::now(),
@@ -150,12 +155,10 @@ class OrderController extends Controller
                 ->pluck('id')
                 ->toArray();
 
-
             // 2️⃣ هل عنده طلب نشط؟
             $hasActiveOrders = Order::where('driver_id', $driver->id)
                 ->whereIn('order_status_id', $activeStatusIds)
                 ->exists();
-
 
             // 3️⃣ هل عنده عرض نشط مرتبط بطلب مفتوح؟
             $hasActiveOffers = OrderOffer::where('driver_id', $driver->id)
@@ -178,7 +181,6 @@ class OrderController extends Controller
                 return $this->errorResponse('لقد قدمت بالفعل على هذا الطلب', 400);
             }
 
-
             $offer = OrderOffer::create([
                 'order_id' => $orderId,
                 'driver_id' => $driver->id,
@@ -191,7 +193,7 @@ class OrderController extends Controller
 
             // إرسال إشعار للمستخدم
             $this->notifyUserAboutNewOffer($offer);
-            Log::info('--' . $orderId . '--' . $driver->id . $offer);
+            Log::info('--'.$orderId.'--'.$driver->id.$offer);
             // Broadcast Event
             event(new DriverAcceptOrder($offer));
 
@@ -448,14 +450,13 @@ class OrderController extends Controller
         ]);
 
         // 👇 هنا الفرق
-        if (!empty($user->driver)) {
+        if (! empty($user->driver)) {
             // 🚚 لو سواق
             $query->where('driver_id', $user->driver->id);
         } else {
             // 👤 لو مستخدم عادي
             $query->where('user_id', $user->id);
         }
-
 
         // 🔍 فلترة الحالات (أكثر من حالة)
         if ($request->filled('status_ids')) {
@@ -613,19 +614,22 @@ class OrderController extends Controller
             return $this->errorResponse($e->getMessage(), 500);
         }
     }
+
     public function getOrderStatus()
     {
         $statuses = OrderStatus::all();
+
         return $this->successResponse($statuses, 'تم جلب حالات الطلبات بنجاح');
     }
+
     public function showPaymentStatus($id)
     {
         $order = Order::where('id', $id)->firstOrFail();
 
         return $this->successResponse([
             'payment_status' => $order->isPaid() ? 'paid' : 'unpaid',
-            'payment_method' => $order->payment_method??null,
-            'payment_gateway' => $order->payment_gateway??null,
+            'payment_method' => $order->payment_method ?? null,
+            'payment_gateway' => $order->payment_gateway ?? null,
         ], 'تم جلب حالة الدفع بنجاح');
     }
 }
