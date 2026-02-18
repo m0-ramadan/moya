@@ -675,7 +675,7 @@ class OrderController extends Controller
             // إلغاء العروض
             OrderOffer::where('order_id', $order->id)
                 ->where('status', 'pending')
-                ->update(['status' => 'cancelled']);
+                ->update(['status' => 'rejected']);
 
             DB::commit();
 
