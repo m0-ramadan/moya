@@ -53,7 +53,7 @@ class OrderController extends Controller
             // Get saved location details
             //    $savedLocation = \App\Models\SavedLocation::findOrFail($validated['saved_location_id']);
             $statusOrder = null;
-            if ($validated['order_date']) {
+            if ( !empty($validated['order_date'])) {
                 $statusOrder = OrderStatus::where('name', 'scheduled')->first();
             } else {
                 $statusOrder = OrderStatus::where('name', 'pendding')->first();
