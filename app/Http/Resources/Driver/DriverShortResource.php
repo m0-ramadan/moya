@@ -14,7 +14,7 @@ class DriverShortResource extends JsonResource
     public function toArray(Request $request): array
     {
 
-        $driver=Driver::findOrFail($this->id);
+        $driver = Driver::findOrFail($this->id);
         return [
             'id' => $driver->id,
 
@@ -29,7 +29,7 @@ class DriverShortResource extends JsonResource
 
             /* ================= Personal ================= */
             'citizenship' => $driver->citizenship ?? null,
-            'country_id' => $driver->country_id ?? null,
+            'country_id' => (int) $driver->country_id ?? null,
             'date_of_birth' => $driver->date_of_birth ?? null,
 
             /* ================= Identity ================= */
@@ -61,7 +61,7 @@ class DriverShortResource extends JsonResource
             'verified_at' => $driver->verified_at,
             'rejection_reason' => $driver->rejection_reason,
 
-            'currect_location'=>$driver->currectLocation??null,
+            'currect_location' => $driver->currectLocation ?? null,
 
             /* ================= Meta ================= */
             'created_at' => $driver->created_at?->toDateTimeString(),

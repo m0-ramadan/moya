@@ -33,7 +33,7 @@ class DriverDetailResource extends JsonResource
             /* ================= Personal ================= */
             'name' => $this->name ?? null,
             'citizenship' => $this->citizenship ?? null,
-            'country_id' => $this->country_id ?? null,
+            'country_id' => (int) $this->country_id ?? null,
             'date_of_birth' => $this->date_of_birth ?? null,
             'age' => $this->date_of_birth ? now()->diffInYears($this->date_of_birth) : null,
 
@@ -211,8 +211,17 @@ class DriverDetailResource extends JsonResource
                     $q->latest()->with('user');
                 },
                 'orders' => function ($q) {
-                    $q->latest()->select(['id', 'driver_id', 'order_number', 'status', 'total_amount', 
-                                         'pickup_address', 'delivery_address', 'created_at', 'completed_at']);
+                    $q->latest()->select([
+                        'id',
+                        'driver_id',
+                        'order_number',
+                        'status',
+                        'total_amount',
+                        'pickup_address',
+                        'delivery_address',
+                        'created_at',
+                        'completed_at'
+                    ]);
                 },
                 'latestLocation',
             ])->withCount([

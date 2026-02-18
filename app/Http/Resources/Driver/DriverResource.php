@@ -27,7 +27,7 @@ class DriverResource extends JsonResource
             /* ================= Personal ================= */
             'name' => $this->name ?? null,
             'citizenship' => $this->citizenship ?? null,
-            'country_id' => $this->country_id ?? null,
+            'country_id' => (int) $this->country_id ?? null,
             'date_of_birth' => $this->date_of_birth ?? null,
 
             /* ================= Identity ================= */
