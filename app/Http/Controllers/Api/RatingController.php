@@ -82,7 +82,7 @@ class RatingController extends Controller
 
             return $this->successResponse([
                 'rating' => $rating,
-                'driver_avg_rating' => $order->driver->fresh()->average_rating,
+                'driver_avg_rating' => $order->driver?->average_rating??null,
                 'message' => 'شكراً لك على تقييمك!',
             ], 'تم إضافة التقييم بنجاح');
         } catch (\Exception $e) {
