@@ -87,32 +87,39 @@ class TwilioService
      | WhatsApp Messages
      ======================= */
 
-public function sendWhatsappOtp(string $to, string $code): array
-{
-    try {
-        $msg = $this->client->messages->create(
-            "whatsapp:$to",
-            [
-                'from' => 'whatsapp:+17656663382',
-                'contentSid' => 'HX229f5a04fd0510ce1b071852155d3e75',
-                'contentVariables' => json_encode([
-                    '1' => $code
-                ]),
-            ]
-        );
+    public function sendWhatsappOtp(string $to, string $code): array
+    {
+        try {
 
-        return [
-            'success' => true,
-            'sid' => $msg->sid,
-            'status' => $msg->status,
-        ];
-    } catch (\Throwable $e) {
-        return [
-            'success' => false,
-            'error' => $e->getMessage(),
-        ];
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Authorization' => 'Bearer ' . config('services.wasender.token'),
+                'Content-Type'  => 'application/json',
+            ])->post('https://wasenderapi.com/api/send-message', [
+                'to'   => $to,
+                'text' => "كود التحقق الخاص بك هو: {$code}",
+            ]);
+
+            $data = $response->json();
+
+            if ($response->successful() && ($data['success'] ?? false)) {
+                return [
+                    'success' => true,
+                    'sid'     => $data['data']['msgId'] ?? null,
+                    'status'  => $data['data']['status'] ?? 'sent',
+                ];
+            }
+
+            return [
+                'success' => false,
+                'error'   => $data['message'] ?? 'Failed to send message',
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'success' => false,
+                'error'   => $e->getMessage(),
+            ];
+        }
     }
-}
 
 
 

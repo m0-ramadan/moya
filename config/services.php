@@ -106,4 +106,7 @@ return [
         'default' => env('APP_TIMEZONE', 'asia/riyadh'),
     ],
 
+    'wasender' => [
+        'token' => env('wasender', 'f9853c9a2b245a417474882022f5ffb4ec5349a27d72e47a05944d617ca3b03a'),
+    ],
 ];
