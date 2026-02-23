@@ -196,4 +196,11 @@ class Order extends Model
     return $this->hasOne(OrderCancellation::class);
 }
 
+    /**
+     * سجل اكتمال الطلب - أضف هذه العلاقة
+     */
+    public function completionLog()
+    {
+        return $this->hasOne(OrderCompletionLog::class);
+    }
 }

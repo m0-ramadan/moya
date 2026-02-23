@@ -101,6 +101,12 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        .icon-driver {
+            background: rgba(111, 66, 193, 0.2);
+            color: #6f42c1;
+            border: 1px solid rgba(111, 66, 193, 0.3);
+        }
+
         .stats-number {
             font-size: 28px;
             font-weight: 700;
@@ -200,7 +206,7 @@
             margin-bottom: 20px;
         }
 
-        .product-item {
+        .driver-item {
             display: flex;
             align-items: center;
             gap: 15px;
@@ -209,13 +215,13 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .product-item:last-child {
+        .driver-item:last-child {
             border-bottom: none;
             margin-bottom: 0;
             padding-bottom: 0;
         }
 
-        .product-rank {
+        .driver-rank {
             width: 30px;
             height: 30px;
             border-radius: 50%;
@@ -243,24 +249,27 @@
             background: var(--primary-gradient);
         }
 
-        .product-info {
+        .driver-info {
             flex-grow: 1;
         }
 
-        .product-name {
+        .driver-name {
             font-weight: 600;
             color: rgba(255, 255, 255, 0.9);
             margin-bottom: 5px;
         }
 
-        .product-sales {
+        .driver-stats {
             color: rgba(255, 255, 255, 0.7);
             font-size: 13px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
         }
 
-        .sales-count {
-            font-weight: 700;
-            color: #20c997;
+        .driver-stats span i {
+            margin-left: 5px;
+            color: var(--primary-color);
         }
 
         .empty-chart {
@@ -290,13 +299,13 @@
             margin-bottom: 15px;
         }
 
-        .form-control {
+        .form-control, .form-select {
             background: rgba(255, 255, 255, 0.05);
             border-color: rgba(255, 255, 255, 0.1);
             color: #fff;
         }
 
-        .form-control:focus {
+        .form-control:focus, .form-select:focus {
             background: rgba(255, 255, 255, 0.1);
             border-color: var(--primary-color);
             color: #fff;
@@ -305,6 +314,11 @@
 
         .form-control::placeholder {
             color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-select option {
+            background: var(--dark-card);
+            color: #fff;
         }
 
         .btn-primary {
@@ -329,6 +343,25 @@
             border-color: rgba(255, 255, 255, 0.3);
         }
 
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .badge-gateway {
+            background: rgba(105, 108, 255, 0.2);
+            color: var(--primary-color);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            border: 1px solid rgba(105, 108, 255, 0.3);
+        }
+
         @media (max-width: 768px) {
             .chart-header {
                 flex-direction: column;
@@ -349,7 +382,7 @@
 @endsection
 
 @section('content')
-    <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
+    <div class="container-xxl flex-grow-1 container-p-y">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
@@ -363,125 +396,113 @@
         </nav>
 
         <!-- فلترة التاريخ -->
-        <div class="date-filter" bis_skin_checked="1">
+        <div class="date-filter">
             <h6 class="mb-3"><i class="fas fa-calendar-alt me-2"></i>فلترة حسب التاريخ</h6>
 
-            <div class="filter-row" bis_skin_checked="1">
-                <div class="input-group" bis_skin_checked="1">
-                    <span class="input-group-text">من</span>
+            <div class="filter-row">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent text-white border">من</span>
                     <input type="date" class="form-control" id="dateFrom"
-                        value="{{ now()->subDays(30)->format('Y-m-d') }}">
-                    <span class="input-group-text">إلى</span>
-                    <input type="date" class="form-control" id="dateTo" value="{{ now()->format('Y-m-d') }}">
+                        value="{{ request('date_from', now()->subDays(30)->format('Y-m-d')) }}">
+                    <span class="input-group-text bg-transparent text-white border">إلى</span>
+                    <input type="date" class="form-control" id="dateTo" 
+                        value="{{ request('date_to', now()->format('Y-m-d')) }}">
                 </div>
 
                 <select class="form-select" id="chartType">
                     <option value="daily">يومي</option>
-                    <option value="weekly">أسبوعي</option>
-                    <option value="monthly">شهري</option>
+                    <option value="weekly" {{ request('chart_type') == 'weekly' ? 'selected' : '' }}>أسبوعي</option>
+                    <option value="monthly" {{ request('chart_type') == 'monthly' ? 'selected' : '' }}>شهري</option>
                 </select>
 
                 <button class="btn btn-primary" onclick="loadStatistics()">
                     <i class="fas fa-filter me-2"></i>تطبيق الفلتر
                 </button>
+                <a href="{{ route('admin.orders.statistics') }}" class="btn btn-secondary">
+                    <i class="fas fa-redo me-2"></i>إعادة تعيين
+                </a>
             </div>
         </div>
 
         <!-- الإحصائيات الرئيسية -->
-        <div class="row mb-4" bis_skin_checked="1">
-            <div class="col-lg-3 col-md-6 mb-4" bis_skin_checked="1">
-                <div class="stats-card" bis_skin_checked="1">
-                    <div class="stats-icon icon-total" bis_skin_checked="1">
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-icon icon-total">
                         <i class="fas fa-shopping-cart"></i>
                     </div>
                     <div class="stats-number" id="totalOrders">
-                        {{ number_format($stats['total_orders']) }}
+                        {{ number_format($stats['total_orders'] ?? 0) }}
                     </div>
                     <div class="stats-label">إجمالي الطلبات</div>
-                    <div class="stats-change change-up">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>12% عن الشهر الماضي</span>
-                    </div>
                 </div>
             </div>
 
-            <div class="col-lg-3 col-md-6 mb-4" bis_skin_checked="1">
-                <div class="stats-card" bis_skin_checked="1">
-                    <div class="stats-icon icon-revenue" bis_skin_checked="1">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-icon icon-revenue">
                         <i class="fas fa-money-bill-wave"></i>
                     </div>
                     <div class="stats-number" id="totalRevenue">
-                        {{ number_format($stats['total_revenue'], 2) }} ج.م
+                        {{ number_format($stats['total_revenue'] ?? 0, 2) }} ر.س
                     </div>
                     <div class="stats-label">إجمالي الإيرادات</div>
-                    <div class="stats-change change-up">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>18% عن الشهر الماضي</span>
-                    </div>
                 </div>
             </div>
 
-            <div class="col-lg-3 col-md-6 mb-4" bis_skin_checked="1">
-                <div class="stats-card" bis_skin_checked="1">
-                    <div class="stats-icon icon-average" bis_skin_checked="1">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-icon icon-average">
                         <i class="fas fa-chart-line"></i>
                     </div>
                     <div class="stats-number" id="averageOrder">
-                        {{ number_format($stats['average_order_value'], 2) }} ج.م
+                        {{ number_format($stats['average_order_value'] ?? 0, 2) }} ر.س
                     </div>
                     <div class="stats-label">متوسط قيمة الطلب</div>
-                    <div class="stats-change change-up">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>5% عن الشهر الماضي</span>
-                    </div>
                 </div>
             </div>
 
-            <div class="col-lg-3 col-md-6 mb-4" bis_skin_checked="1">
-                <div class="stats-card" bis_skin_checked="1">
-                    <div class="stats-icon icon-today" bis_skin_checked="1">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-icon icon-today">
                         <i class="fas fa-calendar-day"></i>
                     </div>
                     <div class="stats-number" id="todayOrders">
-                        {{ number_format($stats['today_orders']) }}
+                        {{ number_format($stats['today_orders'] ?? 0) }}
                     </div>
                     <div class="stats-label">طلبات اليوم</div>
-                    <div class="stats-change change-up">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>3 عن الأمس</span>
-                    </div>
                 </div>
             </div>
         </div>
 
         <!-- المخططات -->
-        <div class="row" bis_skin_checked="1">
-            <!-- مخطط الطلبات حسب الحالة -->
-            <div class="col-lg-6 mb-4" bis_skin_checked="1">
-                <div class="chart-card" bis_skin_checked="1">
-                    <div class="chart-header" bis_skin_checked="1">
-                        <h6><i class="fas fa-chart-pie me-2"></i>توزيع الطلبات حسب الحالة</h6>
-                        <div class="chart-controls" bis_skin_checked="1">
-                            <button class="chart-control active" onclick="changeChartType('pie')">
+        <div class="row">
+            <!-- مخطط الطلبات حسب حالة الدفع -->
+            <div class="col-lg-6 mb-4">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h6><i class="fas fa-chart-pie me-2"></i>توزيع الطلبات حسب حالة الدفع</h6>
+                        <div class="chart-controls">
+                            <button class="chart-control active" onclick="changePaymentChartType('pie')">
                                 دائري
                             </button>
-                            <button class="chart-control" onclick="changeChartType('doughnut')">
+                            <button class="chart-control" onclick="changePaymentChartType('doughnut')">
                                 حلقي
                             </button>
                         </div>
                     </div>
-                    <div class="chart-container" bis_skin_checked="1">
-                        <canvas id="statusChart"></canvas>
+                    <div class="chart-container">
+                        <canvas id="paymentStatusChart"></canvas>
                     </div>
                 </div>
             </div>
 
             <!-- مخطط الإيرادات -->
-            <div class="col-lg-6 mb-4" bis_skin_checked="1">
-                <div class="chart-card" bis_skin_checked="1">
-                    <div class="chart-header" bis_skin_checked="1">
+            <div class="col-lg-6 mb-4">
+                <div class="chart-card">
+                    <div class="chart-header">
                         <h6><i class="fas fa-chart-bar me-2"></i>الإيرادات خلال الشهر</h6>
-                        <div class="chart-controls" bis_skin_checked="1">
+                        <div class="chart-controls">
                             <button class="chart-control active" onclick="changeRevenueChart('bar')">
                                 أعمدة
                             </button>
@@ -490,117 +511,120 @@
                             </button>
                         </div>
                     </div>
-                    <div class="chart-container" bis_skin_checked="1">
+                    <div class="chart-container">
                         <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- المنتجات الأكثر مبيعاً -->
-            <div class="col-lg-6 mb-4" bis_skin_checked="1">
-                <div class="table-card" bis_skin_checked="1">
-                    <div class="table-header" bis_skin_checked="1">
-                        <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>المنتجات الأكثر مبيعاً</h6>
+        <div class="row">
+            <!-- إحصائيات الحالة -->
+            <div class="col-lg-6 mb-4">
+                <div class="table-card">
+                    <div class="table-header">
+                        <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>إحصائيات حالات الطلبات</h6>
                     </div>
 
-                    @if ($stats['top_products']->isEmpty())
-                        <div class="empty-chart" bis_skin_checked="1">
-                            <i class="fas fa-box"></i>
-                            <p>لا توجد بيانات عن المبيعات</p>
-                        </div>
-                    @else
-                        @foreach ($stats['top_products'] as $index => $product)
-                            <div class="product-item" bis_skin_checked="1">
-                                <div class="product-rank rank-{{ $index + 1 }}">
-                                    {{ $index + 1 }}
-                                </div>
-                                <div class="product-info" bis_skin_checked="1">
-                                    <div class="product-name" bis_skin_checked="1">
-                                        {{ $product->name }}
+                    <div class="row">
+                        @php
+                            $statusColors = [
+                                'pending' => '#ffc107',
+                                'in-road' => '#0dcaf0',
+                                'scheduled' => '#ab8ce4',
+                                'delivered' => '#198754',
+                                'cancelled' => '#dc3545',
+                            ];
+
+                            $statusIcons = [
+                                'pending' => 'clock',
+                                'in-road' => 'truck',
+                                'scheduled' => 'calendar-check',
+                                'delivered' => 'check-circle',
+                                'cancelled' => 'times-circle',
+                            ];
+                        @endphp
+
+                        @foreach($orderStatuses ?? [] as $status)
+                            @php
+                                $count = $stats['status_counts'][$status->name] ?? 0;
+                                $percentage = ($stats['total_orders'] ?? 0) > 0 ? ($count / $stats['total_orders'] * 100) : 0;
+                                $color = $statusColors[$status->name] ?? '#6c757d';
+                                $icon = $statusIcons[$status->name] ?? 'question-circle';
+                            @endphp
+                            <div class="col-md-6 mb-3">
+                                <div class="stats-card" style="border-top-color: {{ $color }};">
+                                    <div class="stats-icon" style="background: {{ $color }}; color: white;">
+                                        <i class="fas fa-{{ $icon }}"></i>
                                     </div>
-                                    <div class="product-sales" bis_skin_checked="1">
-                                        تم بيع <span class="sales-count">{{ $product->total_quantity }}</span> وحدة
+                                    <div class="stats-number">{{ number_format($count) }}</div>
+                                    <div class="stats-label">{{ $status->label }}</div>
+                                    <div class="stats-change">
+                                        <span>{{ number_format($percentage, 1) }}%</span>
                                     </div>
                                 </div>
                             </div>
                         @endforeach
-                    @endif
+                    </div>
                 </div>
             </div>
 
-            <!-- إحصائيات الحالة -->
-            <div class="col-lg-6 mb-4" bis_skin_checked="1">
-                <div class="table-card" bis_skin_checked="1">
-                    <div class="table-header" bis_skin_checked="1">
-                        <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>إحصائيات الحالات</h6>
+            <!-- إحصائيات بوابات الدفع -->
+            <div class="col-lg-6 mb-4">
+                <div class="table-card">
+                    <div class="table-header">
+                        <h6 class="mb-0"><i class="fas fa-credit-card me-2"></i>إحصائيات طرق الدفع</h6>
                     </div>
 
-                    <div class="row" bis_skin_checked="1">
+                    <div class="row">
                         @php
-                            $statusColors = [
-                                'pending' => '#ffc107',
-                                'processing' => '#0d6efd',
-                                'shipped' => '#0dcaf0',
-                                'delivered' => '#198754',
-                                'cancelled' => '#dc3545',
-                                'refunded' => '#6c757d',
+                            $gatewayColors = [
+                                'wallet' => '#696cff',
+                                'paymob' => '#20c997',
+                                'tamara' => '#fd7e14',
+                                'tabby' => '#0dcaf0',
+                                'credit_card' => '#0d6efd',
+                                'mada' => '#dc3545',
+                                'apple_pay' => '#6f42c1',
                             ];
 
-                            $statusLabels = [
-                                'pending' => 'قيد الانتظار',
-                                'processing' => 'تحت المعالجة',
-                                'shipped' => 'تم الشحن',
-                                'delivered' => 'تم التسليم',
-                                'cancelled' => 'ملغي',
-                                'refunded' => 'مسترجع',
+                            $gatewayIcons = [
+                                'wallet' => 'wallet',
+                                'paymob' => 'money-bill',
+                                'tamara' => 'calendar',
+                                'tabby' => 'cat',
+                                'credit_card' => 'credit-card',
+                                'mada' => 'credit-card',
+                                'apple_pay' => 'apple-pay',
                             ];
                         @endphp
 
-                        @foreach ($stats['status_counts'] as $status => $count)
-                            @if (isset($statusColors[$status]))
-                                <div class="col-md-6 mb-3" bis_skin_checked="1">
-                                    <div class="stats-card" style="border-top-color: {{ $statusColors[$status] }};"
-                                        bis_skin_checked="1">
-                                        <div class="stats-icon"
-                                            style="background: {{ $statusColors[$status] }}; color: white;">
-                                            @switch($status)
-                                                @case('pending')
-                                                    <i class="fas fa-clock"></i>
-                                                @break
-
-                                                @case('processing')
-                                                    <i class="fas fa-cog"></i>
-                                                @break
-
-                                                @case('shipped')
-                                                    <i class="fas fa-truck"></i>
-                                                @break
-
-                                                @case('delivered')
-                                                    <i class="fas fa-check-circle"></i>
-                                                @break
-
-                                                @case('cancelled')
-                                                    <i class="fas fa-times-circle"></i>
-                                                @break
-
-                                                @case('refunded')
-                                                    <i class="fas fa-redo"></i>
-                                                @break
-
-                                                @default
-                                                    <i class="fas fa-question-circle"></i>
-                                            @endswitch
+                        @foreach($paymentGateways ?? [] as $gateway => $count)
+                            @if($count > 0)
+                                @php
+                                    $percentage = ($stats['total_orders'] ?? 0) > 0 ? ($count / $stats['total_orders'] * 100) : 0;
+                                    $color = $gatewayColors[$gateway] ?? '#6c757d';
+                                    $icon = $gatewayIcons[$gateway] ?? 'money-bill';
+                                @endphp
+                                <div class="col-md-6 mb-3">
+                                    <div class="stats-card" style="border-top-color: {{ $color }};">
+                                        <div class="stats-icon" style="background: {{ $color }}; color: white;">
+                                            <i class="fas fa-{{ $icon }}"></i>
                                         </div>
                                         <div class="stats-number">{{ number_format($count) }}</div>
-                                        <div class="stats-label">{{ $statusLabels[$status] ?? $status }}</div>
+                                        <div class="stats-label">
+                                            @switch($gateway)
+                                                @case('wallet')محفظة@break
+                                                @case('paymob')Paymob@break
+                                                @case('tamara')Tamara@break
+                                                @case('tabby')Tabby@break
+                                                @case('credit_card')بطاقة ائتمان@break
+                                                @case('mada')مدى@break
+                                                @case('apple_pay')Apple Pay@break
+                                                @default{{ $gateway }}
+                                            @endswitch
+                                        </div>
                                         <div class="stats-change">
-                                            @php
-                                                $percentage =
-                                                    $stats['total_orders'] > 0
-                                                        ? ($count / $stats['total_orders']) * 100
-                                                        : 0;
-                                            @endphp
                                             <span>{{ number_format($percentage, 1) }}%</span>
                                         </div>
                                     </div>
@@ -611,25 +635,156 @@
                 </div>
             </div>
         </div>
+
+        <div class="row">
+            <!-- السائقين الأكثر نشاطاً -->
+            <div class="col-lg-6 mb-4">
+                <div class="table-card">
+                    <div class="table-header">
+                        <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>السائقين الأكثر نشاطاً</h6>
+                    </div>
+
+                    @if(($topDrivers ?? collect())->isEmpty())
+                        <div class="empty-chart">
+                            <i class="fas fa-users"></i>
+                            <p>لا توجد بيانات عن السائقين</p>
+                        </div>
+                    @else
+                        @foreach($topDrivers ?? [] as $index => $driver)
+                            <div class="driver-item">
+                                <div class="driver-rank rank-{{ $index < 3 ? $index + 1 : 'default' }}">
+                                    {{ $index + 1 }}
+                                </div>
+                                <div class="driver-info">
+                                    <div class="driver-name">
+                                        {{ $driver->user->name ?? 'سائق #' . $driver->id }}
+                                        @if($driver->is_verified)
+                                            <i class="fas fa-check-circle text-success ms-1" title="موثق"></i>
+                                        @endif
+                                    </div>
+                                    <div class="driver-stats">
+                                        <span>
+                                            <i class="fas fa-shopping-cart"></i>
+                                            {{ $driver->orders_count ?? 0 }} طلب
+                                        </span>
+                                        @if($driver->vehicle_plate_number)
+                                            <span>
+                                                <i class="fas fa-car"></i>
+                                                {{ $driver->vehicle_plate_number }}
+                                            </span>
+                                        @endif
+                                        @if(isset($driver->total_revenue))
+                                            <span>
+                                                <i class="fas fa-money-bill-wave"></i>
+                                                {{ number_format($driver->total_revenue, 2) }} ر.س
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    @endif
+                </div>
+            </div>
+
+            <!-- العملاء الأكثر طلباً -->
+            <div class="col-lg-6 mb-4">
+                <div class="table-card">
+                    <div class="table-header">
+                        <h6 class="mb-0"><i class="fas fa-users me-2"></i>العملاء الأكثر طلباً</h6>
+                    </div>
+
+                    @if(($topUsers ?? collect())->isEmpty())
+                        <div class="empty-chart">
+                            <i class="fas fa-user"></i>
+                            <p>لا توجد بيانات عن العملاء</p>
+                        </div>
+                    @else
+                        @foreach($topUsers ?? [] as $index => $user)
+                            <div class="driver-item">
+                                <div class="driver-rank rank-{{ $index < 3 ? $index + 1 : 'default' }}">
+                                    {{ $index + 1 }}
+                                </div>
+                                <div class="driver-info">
+                                    <div class="driver-name">
+                                        {{ $user->name }}
+                                        @if($user->phone_verified_at)
+                                            <i class="fas fa-check-circle text-success ms-1" title="موثق"></i>
+                                        @endif
+                                    </div>
+                                    <div class="driver-stats">
+                                        <span>
+                                            <i class="fas fa-shopping-cart"></i>
+                                            {{ $user->orders_count ?? 0 }} طلب
+                                        </span>
+                                        <span>
+                                            <i class="fas fa-phone"></i>
+                                            {{ $user->full_phone ?? $user->phone }}
+                                        </span>
+                                        @if(isset($user->total_spent))
+                                            <span>
+                                                <i class="fas fa-money-bill-wave"></i>
+                                                {{ number_format($user->total_spent, 2) }} ر.س
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- إحصائيات إضافية -->
+            <div class="col-lg-12 mb-4">
+                <div class="table-card">
+                    <div class="table-header">
+                        <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>إحصائيات إضافية</h6>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="stats-card">
+                                <div class="stats-number">{{ number_format($stats['weekly_orders'] ?? 0) }}</div>
+                                <div class="stats-label">طلبات هذا الأسبوع</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stats-card">
+                                <div class="stats-number">{{ number_format($stats['weekly_revenue'] ?? 0, 2) }} ر.س</div>
+                                <div class="stats-label">إيرادات هذا الأسبوع</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stats-card">
+                                <div class="stats-number">{{ number_format($stats['monthly_orders'] ?? 0) }}</div>
+                                <div class="stats-label">طلبات هذا الشهر</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stats-card">
+                                <div class="stats-number">{{ number_format($stats['monthly_revenue'] ?? 0, 2) }} ر.س</div>
+                                <div class="stats-label">إيرادات هذا الشهر</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
 
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script>
-        let statusChart, revenueChart;
-        let currentChartType = 'pie';
+        let paymentStatusChart, revenueChart;
+        let currentPaymentChartType = 'pie';
         let currentRevenueChartType = 'bar';
 
         $(document).ready(function() {
-            // تحميل الإحصائيات الأولية
             loadCharts();
-
-            // تحميل الإحصائيات عند تغيير التاريخ
-            $('#dateFrom, #dateTo, #chartType').on('change', function() {
-                loadStatistics();
-            });
         });
 
         function loadStatistics() {
@@ -637,46 +792,50 @@
             const dateTo = $('#dateTo').val();
             const chartType = $('#chartType').val();
 
-            // هنا يمكنك إضافة AJAX لجلب الإحصائيات المحدثة
-            console.log('جلب الإحصائيات:', {
-                dateFrom,
-                dateTo,
-                chartType
-            });
-
-            // في التطبيق الحقيقي، ستقوم بإرسال طلب AJAX وجلب البيانات
-            // ثم تحديث المخططات والإحصائيات
+            const url = new URL(window.location.href);
+            url.searchParams.set('date_from', dateFrom);
+            url.searchParams.set('date_to', dateTo);
+            url.searchParams.set('chart_type', chartType);
+            window.location.href = url.toString();
         }
 
         function loadCharts() {
-            // بيانات مخطط الحالة
-            const statusData = {
-                labels: ['قيد الانتظار', 'تحت المعالجة', 'تم الشحن', 'تم التسليم', 'ملغي'],
+            // بيانات مخطط حالة الدفع
+            const paymentStatusData = {
+                labels: [
+                    'قيد الانتظار',
+                    'قيد المعالجة',
+                    'مدفوع',
+                    'فشل الدفع',
+                    'مسترد'
+                ],
                 datasets: [{
                     data: [
-                        {{ $stats['status_counts']['pending'] ?? 0 }},
-                        {{ $stats['status_counts']['processing'] ?? 0 }},
-                        {{ $stats['status_counts']['shipped'] ?? 0 }},
-                        {{ $stats['status_counts']['delivered'] ?? 0 }},
-                        {{ $stats['status_counts']['cancelled'] ?? 0 }}
+                        {{ $stats['payment_status_counts']['pending'] ?? 0 }},
+                        {{ $stats['payment_status_counts']['processing'] ?? 0 }},
+                        {{ $stats['payment_status_counts']['paid'] ?? 0 }},
+                        {{ $stats['payment_status_counts']['failed'] ?? 0 }},
+                        {{ $stats['payment_status_counts']['refunded'] ?? 0 }}
                     ],
                     backgroundColor: [
                         '#ffc107',
-                        '#0d6efd',
                         '#0dcaf0',
                         '#198754',
-                        '#dc3545'
+                        '#dc3545',
+                        '#6c757d'
                     ],
                     borderWidth: 1
                 }]
             };
 
-            // بيانات مخطط الإيرادات (بيانات وهمية للعرض)
+            // بيانات مخطط الإيرادات من الـ controller
             const revenueData = {
-                labels: ['1', '5', '10', '15', '20', '25', '30'],
+                labels: {!! json_encode($ordersByDay->pluck('date')->map(function($date) { 
+                    return \Carbon\Carbon::parse($date)->format('d M'); 
+                })) !!},
                 datasets: [{
-                    label: 'الإيرادات (ج.م)',
-                    data: [1200, 1900, 3000, 2500, 2200, 3000, 4000],
+                    label: 'الإيرادات (ر.س)',
+                    data: {!! json_encode($revenueByDay->pluck('revenue')) !!},
                     backgroundColor: 'rgba(105, 108, 255, 0.2)',
                     borderColor: 'rgba(105, 108, 255, 1)',
                     borderWidth: 2,
@@ -685,11 +844,12 @@
                 }]
             };
 
-            // إنشاء مخطط الحالة
-            const statusCtx = document.getElementById('statusChart').getContext('2d');
-            statusChart = new Chart(statusCtx, {
-                type: currentChartType,
-                data: statusData,
+            // إنشاء مخطط حالة الدفع
+            const paymentCtx = document.getElementById('paymentStatusChart').getContext('2d');
+            if (paymentStatusChart) paymentStatusChart.destroy();
+            paymentStatusChart = new Chart(paymentCtx, {
+                type: currentPaymentChartType,
+                data: paymentStatusData,
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -702,7 +862,8 @@
                                     family: 'Cairo',
                                     size: 12
                                 },
-                                padding: 20
+                                padding: 20,
+                                color: '#fff'
                             }
                         },
                         tooltip: {
@@ -727,6 +888,7 @@
 
             // إنشاء مخطط الإيرادات
             const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            if (revenueChart) revenueChart.destroy();
             revenueChart = new Chart(revenueCtx, {
                 type: currentRevenueChartType,
                 data: revenueData,
@@ -735,7 +897,9 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            display: false
+                            labels: {
+                                color: '#fff'
+                            }
                         },
                         tooltip: {
                             rtl: true,
@@ -744,7 +908,7 @@
                             },
                             callbacks: {
                                 label: function(context) {
-                                    return context.formattedValue + ' ج.م';
+                                    return context.raw ? context.raw.toLocaleString() + ' ر.س' : '0 ر.س';
                                 }
                             }
                         }
@@ -752,10 +916,22 @@
                     scales: {
                         y: {
                             beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
                             ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)',
                                 callback: function(value) {
-                                    return value + ' ج.م';
+                                    return value.toLocaleString() + ' ر.س';
                                 }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)'
                             }
                         }
                     }
@@ -763,19 +939,17 @@
             });
         }
 
-        function changeChartType(type) {
-            currentChartType = type;
-            statusChart.destroy();
+        function changePaymentChartType(type) {
+            currentPaymentChartType = type;
             loadCharts();
 
             // تحديث أزرار التحكم
             $('.chart-control').removeClass('active');
-            $(`.chart-control[onclick="changeChartType('${type}')"]`).addClass('active');
+            $(`.chart-control[onclick="changePaymentChartType('${type}')"]`).addClass('active');
         }
 
         function changeRevenueChart(type) {
             currentRevenueChartType = type;
-            revenueChart.destroy();
             loadCharts();
 
             // تحديث أزرار التحكم

@@ -232,8 +232,13 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         Route::get('/{order}/edit', [OrderController::class, 'edit'])->name('edit');
         Route::put('/{order}', [OrderController::class, 'update'])->name('update');
         Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
+Route::get('/{order}/tracking', [OrderController::class, 'tracking'])->name('tracking');
+Route::get('update-payment-status/{order}', [OrderController::class, 'updatePaymentStatus'])->name('update-payment-status');
+Route::get('assign-driver/{order}', [OrderController::class, 'assignDriver'])->name('assign-driver');
+Route::get('accept-offer/{order}', [OrderController::class, 'acceptOffer'])->name('accept-offer');
+Route::get('cancel/{order}', [OrderController::class, 'cancelOrder'])->name('cancel'); 
+Route::post('/{order}/update-status', [OrderController::class, 'updateStatus'])->name('update-status');
 
-        Route::post('/{order}/update-status', [OrderController::class, 'updateStatus'])->name('update-status');
         Route::get('/{order}/print', [OrderController::class, 'print'])->name('print');
         Route::get('/export', [OrderController::class, 'export'])->name('export');
     });
