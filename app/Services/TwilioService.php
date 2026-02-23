@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
-use Twilio\Rest\Client;
 use Exception;
+use Illuminate\Support\Facades\Log;
+use Twilio\Exceptions\TwilioException;
+use Twilio\Rest\Client;
 
 class TwilioService
 {
@@ -127,26 +129,55 @@ class TwilioService
      | SMS Fallback
      ======================= */
 
-    public function sendSms(string $to, string $message): array
-    {
-        try {
-            $msg = $this->client->messages->create(
-                $to,
-                [
-                    'from' => config('services.twilio.from'),
-                    'body' => $message,
-                ]
-            );
+   public function sendSms(string $to, string $message): array
+{
+    try {
 
-            return [
-                'success' => true,
-                'sid' => $msg->sid,
-            ];
-        } catch (Exception $e) {
+        // تأكد إن الرقم بصيغة دولية
+        if (!str_starts_with($to, '+')) {
             return [
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error'   => 'Phone number must be in E.164 format (e.g. +2011...)',
             ];
         }
+
+        $from = config('services.twilio.from');
+
+        if (!$from) {
+            return [
+                'success' => false,
+                'error'   => 'Twilio FROM number is not configured',
+            ];
+        }
+
+        $messageInstance = $this->client->messages->create(
+            $to,
+            [
+                'from' => $from,
+                'body' => $message,
+            ]
+        );
+
+        return [
+            'success' => true,
+            'sid'     => $messageInstance->sid,
+            'status'  => $messageInstance->status,
+        ];
+
+    } catch (TwilioException $e) {
+
+        Log::error('Twilio SMS Error', [
+            'to'    => $to,
+            'error' => $e->getMessage(),
+            'code'  => $e->getCode(),
+        ]);
+
+        return [
+            'success' => false,
+            'error'   => $e->getMessage(),
+            'code'    => $e->getCode(),
+        ];
     }
 }
+}
+
