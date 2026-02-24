@@ -20,7 +20,7 @@ class ChatController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $userId = $user->id;
+        $userId = (int) $user->id;
 
         $chats = Chat::with(['messages' => function ($query) {
             $query->latest()->limit(1);
@@ -29,50 +29,91 @@ class ChatController extends Controller
             ->orderBy('last_message_at', 'desc')
             ->paginate(20);
 
+        // جمع IDs للطرف الآخر (في user_user فقط)
+        $otherUserIds = collect($chats->items())
+            ->filter(fn($chat) => $chat->type === 'user_user')
+            ->map(function ($chat) use ($userId) {
+                $participants = collect($chat->participants ?? [])
+                    ->map(fn($id) => (int) $id); // مهم جدًا
+
+                return $participants->first(fn($id) => $id !== $userId);
+            })
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $otherUsers = \App\Models\User::query()
+            ->whereIn('id', $otherUserIds)
+            ->get(['id', 'name', 'avatar'])
+            ->keyBy('id');
+
+        // إضافة بيانات الطرف الآخر لكل Chat
+        $chats->getCollection()->transform(function ($chat) use ($userId, $otherUsers) {
+            $participants = collect($chat->participants ?? [])
+                ->map(fn($id) => (int) $id);
+
+            $otherId = $participants->first(fn($id) => $id !== $userId);
+
+            $chat->other_participant = null;
+
+            if ($chat->type === 'user_user' && $otherId) {
+                $u = $otherUsers->get($otherId);
+
+                $chat->other_participant = $u ? [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'avatar' => $u->avatar ? asset('storage/' . ltrim($u->avatar, '/')) : null,
+                ] : null;
+            }
+
+            return $chat;
+        });
+
         return response()->json([
             'status' => 'success',
             'chats' => $chats
         ]);
     }
 
-public function getOrCreateChat(Request $request)
-{
-    $messages = [
-        'participant_id.required' => 'المرسل اليه مطلوب',
-        'participant_id.integer' => 'المرسل اليه لازم يكون رقم صحيح',
-        'participant_id.exists' => 'المرسل اليه غير موجود',
-        'type.required' => 'نوع الدردشة مطلوب',
-        'type.in' => 'نوع الدردشة غير مسموح'
-    ];
+    public function getOrCreateChat(Request $request)
+    {
+        $messages = [
+            'participant_id.required' => 'المرسل اليه مطلوب',
+            'participant_id.integer' => 'المرسل اليه لازم يكون رقم صحيح',
+            'participant_id.exists' => 'المرسل اليه غير موجود',
+            'type.required' => 'نوع الدردشة مطلوب',
+            'type.in' => 'نوع الدردشة غير مسموح'
+        ];
 
-    $validated = $request->validate([
-        'participant_id' => 'required|integer|exists:users,id',
-        'type' => 'required|in:user_user,user_driver,driver_driver'
-    ], $messages);
+        $validated = $request->validate([
+            'participant_id' => 'required|integer|exists:users,id',
+            'type' => 'required|in:user_user,user_driver,driver_driver'
+        ], $messages);
 
-    $user = Auth::user();
-    $participants = [$user->id, $request->participant_id];
-    sort($participants);
+        $user = Auth::user();
+        $participants = [$user->id, $request->participant_id];
+        sort($participants);
 
-    $chat = Chat::where('type', $request->type)
-        ->whereJsonContains('participants', $participants[0])
-        ->whereJsonContains('participants', $participants[1])
-        ->first();
+        $chat = Chat::where('type', $request->type)
+            ->whereJsonContains('participants', $participants[0])
+            ->whereJsonContains('participants', $participants[1])
+            ->first();
 
-    if (!$chat) {
-        $chat = Chat::create([
-            'chat_uuid' => Str::uuid(),
-            'type' => $request->type,
-            'participants' => $participants,
-            'last_message_at' => now()
+        if (!$chat) {
+            $chat = Chat::create([
+                'chat_uuid' => Str::uuid(),
+                'type' => $request->type,
+                'participants' => $participants,
+                'last_message_at' => now()
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'chat' => $chat->load('messages.sender')
         ]);
     }
-
-    return response()->json([
-        'status' => 'success',
-        'chat' => $chat->load('messages.sender')
-    ]);
-}
 
 
     public function getMessages(Chat $chat)
