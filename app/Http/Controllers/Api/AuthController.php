@@ -31,10 +31,17 @@ class AuthController extends Controller
     {
         try {
             $dto = PhoneLoginData::fromRequest($request);
+            if ($request->filled('phone_number')) {
+
+                $checkUser = User::where('phone_number', $request->input('phone_number'))->first();
+
+                if ($checkUser && $checkUser->driver()->exists()) {
+                    return $this->errorResponse('هذا الرقم مسجل كسائق ', 422);
+                }
+            }
 
             $res = $this->authService->sendOtp($dto, $request);
-     
-      
+
             return $this->successResponse([
                 'phone' => $res['phone'],
                 'method' => $res['method'],
@@ -76,7 +83,6 @@ class AuthController extends Controller
     // Complete profile
     public function completeProfile(Request $request)
     {
-
 
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -176,7 +182,6 @@ class AuthController extends Controller
         ], 'تم تحديث إعدادات الإشعارات بنجاح');
     }
 
-    
     public function deleteAccount($phone_number)
     {
         $user = User::where('full_phone', $phone_number)->orWhere('phone_number', $phone_number)->first();
