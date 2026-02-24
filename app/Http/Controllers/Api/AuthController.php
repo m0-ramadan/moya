@@ -27,56 +27,23 @@ class AuthController extends Controller
     }
 
     // Send OTP
-    // public function sendOtp(PhoneLoginRequest $request)
-    // {
-    //     try {
-    //         $dto = PhoneLoginData::fromRequest($request);
+    public function sendOtp(PhoneLoginRequest $request)
+    {
+        try {
+            $dto = PhoneLoginData::fromRequest($request);
 
-    //         $res = $this->authService->sendOtp($dto, $request);
-
-    //         return $this->successResponse([
-    //             'phone' => $res['phone'],
-    //             'method' => $res['method'],
-    //             'otp' => $res['otp'],
-    //         ], 'تم إرسال رمز التحقق بنجاح');
-    //     } catch (\Exception $e) {
-    //         return $this->errorResponse($e->getMessage(), 500);
-    //     }
-    // }
-public function sendOtp(PhoneLoginData $dto, $request): array
-{
-    // 1️⃣ ابحث عن المستخدم
-    $user = User::where('full_phone', $dto->full_phone)->first();
-
-    if ($user) {
-
-        // ✅ تحقق هل مرتبط بسائق
-        if ($user->driver()->exists()) {
-            throw new \Exception('هذا الرقم مسجل كسائق بالفعل');
+            $res = $this->authService->sendOtp($dto, $request);
+     
+      
+            return $this->successResponse([
+                'phone' => $res['phone'],
+                'method' => $res['method'],
+                'otp' => $res['otp'],
+            ], 'تم إرسال رمز التحقق بنجاح');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 500);
         }
-
-    } else {
-        // 2️⃣ لو مش موجود اعمل إنشاء
-        $user = User::create([
-            'full_phone'   => $dto->full_phone,
-            'country_code' => $dto->country_code,
-            'phone_number' => $dto->phone_number,
-            'status'       => 'active',
-        ]);
     }
-
-    // 3️⃣ توليد OTP
-    $otp = $user->generateOtp();
-
-    // 4️⃣ إرسال (WhatsApp / SMS حسب نظامك)
-    $method = 'whatsapp';
-
-    return [
-        'phone'  => $user->full_phone,
-        'method' => $method,
-        'otp'    => $otp, // احذفها في production
-    ];
-}
 
     // Verify
     public function verifyOtp(VerifyOtpRequest $request)
