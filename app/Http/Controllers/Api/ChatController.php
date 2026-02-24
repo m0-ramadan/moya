@@ -110,6 +110,7 @@ public function getOrCreateChat(Request $request)
             'message' => 'nullable|string',
             'message_type' => 'required|in:text,image,voice,location,file',
             'file_url' => 'nullable|url',
+            'file' => 'nullable|max:102400', // Max 100MB
             'duration' => 'nullable|integer|min:1|max:600',
             'file_size' => 'nullable|string',
             'file_name' => 'nullable|string',
