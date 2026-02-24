@@ -24,7 +24,6 @@ class DriverRatingResource extends JsonResource
             'created_at' => optional($this->created_at)->toISOString(),
             'updated_at' => optional($this->updated_at)->toISOString(),
 
-            // علاقات (بتتعبّى فقط لو معمولها eager loading)
             'user'  => [
                 'id'    => $this->user->id,
                 'name'  => $this->user->name,
