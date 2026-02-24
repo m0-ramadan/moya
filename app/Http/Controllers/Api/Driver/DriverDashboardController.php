@@ -318,7 +318,6 @@ class DriverDashboardController extends Controller
     */
     public function getReviews()
     {
-        dd(auth()->user());
         $driver = auth()->user()->driver;
 
         if (!$driver) {
