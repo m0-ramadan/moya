@@ -318,8 +318,9 @@ class DriverDashboardController extends Controller
     */
     public function getReviews()
     {
+        dd(auth()->user());
         $driver = auth()->user()->driver;
-        dd(auth()->user()?->id, auth()->user()?->driver);
+
         if (!$driver) {
             return $this->errorResponse('هذا المستخدم ليس سائقًا', 403);
         }
