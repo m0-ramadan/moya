@@ -46,7 +46,7 @@ class DriverAcceptOrder implements ShouldBroadcastNow
             ]);
 
             $this->offerData = [];
-            $this->orderId = 0;
+            $this->orderId = $offer->order?->id ?? 0;
             $this->remainingDriversCount = 0;
 
             return;
@@ -78,7 +78,7 @@ class DriverAcceptOrder implements ShouldBroadcastNow
             return [];
         }
 
-        return new Channel('user.' . $this->userId);
+        return new Channel('order.' . $this->orderId);
     }
 
     public function broadcastAs()
