@@ -315,8 +315,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/stats', [DriverDashboardController::class, 'stats']);
             Route::get('/recent-orders', [DriverDashboardController::class, 'recentOrders']);
             Route::get('/earnings', [DriverDashboardController::class, 'earnings']);
-            Route::get('/reviews', [DriverDashboardController::class, 'getReviews']);
         });
+        Route::get('/reviews', [DriverDashboardController::class, 'getReviews']);
     });
     // في routes/api.php
     //  Route::post('/paymob/webhook', [PaymentController::class, 'handleWebhook'])->name('paymob.webhook');
