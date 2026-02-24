@@ -29,6 +29,8 @@ class DriverRatingResource extends JsonResource
                 'id'    => $this->user->id,
                 'name'  => $this->user->name,
                 'phone' => $this->user->full_phone ?? $this->user->phone ?? null,
+                'avatar' => get_user_image($this->user->avatar),
+
             ]),
             'order' => $this->whenLoaded('order', fn() => [
                 'id' => $this->order->id,
