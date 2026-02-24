@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources\Driver;
 
+use App\Http\Resources\WebsiteUser\UserResource;
+
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,12 +22,7 @@ class DriverRatingResource extends JsonResource
             //     'name' => $this->driver->name,
             //     // أي بيانات إضافية للـ driver
             // ],
-            'user' => [
-                'id' => $this->user->id,
-                'name' => $this->user->name,
-                'phone' => $this->user->full_phone,
-                // أي بيانات إضافية للـ user
-            ],
+            'user' => new UserResource($this->user),
             'order_id' => $this->order_id,
             'rating' => $this->rating,
             'comment' => $this->comment,
