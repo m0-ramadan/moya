@@ -344,7 +344,7 @@ class DriverDashboardController extends Controller
                 'total_reviews' => $reviews->count(),
                 'stars_distribution' => $starStats
             ],
-            'reviews' => $reviews
+            'reviews' => DriverRatingResource::collection($reviews)
         ], 'تم جلب التقييمات والإحصائيات بنجاح');
     }
 
