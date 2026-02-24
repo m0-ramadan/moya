@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\WebsiteUser\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -24,12 +25,7 @@ class DriverRatingResource extends JsonResource
             'created_at' => optional($this->created_at)->toISOString(),
             'updated_at' => optional($this->updated_at)->toISOString(),
 
-            'user'  => [
-                'id'    => $this->user->id,
-                'name'  => $this->user->name,
-                'phone' => $this->user->full_phone ?? $this->user->phone ?? null,
-                'avatar' => get_user_image($this->user->avatar),
-            ],
+            'user'  => new UserResource($this->user),
             'order' => $this->whenLoaded('order', fn() => [
                 'id' => $this->order->id,
             ]),
