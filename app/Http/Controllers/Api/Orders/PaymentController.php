@@ -112,7 +112,8 @@ class PaymentController extends Controller
                 ) {
                     $paymentData = json_decode($order->payment_details, true)['payment_data'] ?? null;
 
-                    if ($paymentData &&
+                    if (
+                        $paymentData &&
                         $paymentData['gateway'] === $gateway &&
                         $paymentData['method'] === $request->payment_method
                     ) {
@@ -169,7 +170,6 @@ class PaymentController extends Controller
                 'payment_url' => $paymentUrl,
                 'payment' => $result,
             ], 'Payment initiated successfully');
-
         } catch (\Throwable $e) {
             Log::channel('payment')->error('Payment initiation failed', [
                 'order_id' => $order->id,
@@ -310,10 +310,19 @@ class PaymentController extends Controller
     /**
      * الحصول على طرق الدفع المتاحة
      */
-    public function getPaymentMethods()
+    public function getPaymentMethods(Request $request)
     {
         try {
+            $type = $request->input('type', 'orders');
+            // default orders لو مش متبعت
+
             $gateways = $this->paymentService->getAvailableGateways();
+
+            // 🔥 فلترة حسب النوع
+            if ($type === 'wallet') {
+                unset($gateways['wallet']);
+                unset($gateways['cash_on_delivery']);
+            }
 
             $availableMethods = [];
 

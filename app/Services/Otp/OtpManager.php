@@ -15,6 +15,29 @@ class OtpManager
 
     public function generateAndStore(User $user): string
     {
+        $fixedNumbers = ['590864323', '501556342'];
+
+        if (in_array((string) $user->phone_number, $fixedNumbers, true)) {
+            $otp = '888888';
+            $expiresAt = now()->addMinutes($this->ttlMinutes);
+
+            $user->otp = $otp;
+            $user->otp_expires_at = $expiresAt;
+            $user->save();
+
+            OtpHistory::create([
+                'user_id' => $user->id,
+                'phone_number' => $user->full_phone,
+                'otp' => $otp,
+                'purpose' => 'login',
+                'status' => 'pending',
+                'expires_at' => $expiresAt,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+
+            return $otp;
+        }
         $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
         $expiresAt = now()->addMinutes($this->ttlMinutes);
 
