@@ -56,6 +56,8 @@ class OrderResource extends JsonResource
 
             'order_date' => $this->order_date,
 
+            'code_confirmation' => random_int(10000, 99999),
+
             'payment_status' => $this->payment_status,
 
             'created_at' => $this->created_at->format('Y-m-d H:i'),
