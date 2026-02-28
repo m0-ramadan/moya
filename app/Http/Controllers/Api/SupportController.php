@@ -23,7 +23,7 @@ class SupportController extends Controller
         $apps = [
             [
                 'name' => 'driver_google_play',
-                'url' => 'https://play.google.com/store/apps/details?id=com.app1',
+                'url' => 'https://play.google.com/store/apps/details?id=com.moya.delivery',
             ],
             [
                 'name' => 'driver_apple_store',
@@ -31,7 +31,7 @@ class SupportController extends Controller
             ],
             [
                 'name' => 'user_google_play',
-                'url' => 'https://play.google.com/store/apps/details?id=com.app1',
+                'url' => 'https://play.google.com/store/apps/details?id=com.moya.user',
             ],
             [
                 'name' => 'user_apple_store',
