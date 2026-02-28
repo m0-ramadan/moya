@@ -18,4 +18,27 @@ class SupportController extends Controller
 
         return $this->success($supports);
     }
+    public function getApps()
+    {
+        $apps = [
+            [
+                'name' => 'driver_google_play',
+                'url' => 'https://play.google.com/store/apps/details?id=com.app1',
+            ],
+            [
+                'name' => 'driver_apple_store',
+                'url' => 'https://play.google.com/store/apps/details?id=com.app2',
+            ],
+            [
+                'name' => 'user_google_play',
+                'url' => 'https://play.google.com/store/apps/details?id=com.app1',
+            ],
+            [
+                'name' => 'user_apple_store',
+                'url' => 'https://play.google.com/store/apps/details?id=com.app2',
+            ],
+        ];
+
+        return $this->success($apps);
+    }
 }

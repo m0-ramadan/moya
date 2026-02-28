@@ -21,10 +21,10 @@ class PageController extends Controller
             ->with([
                 'sections' => function ($q) {
                     $q->where('is_active', true)->orderBy('order')->with([
-                          'contents' => function ($q) {
-                              $q->where('is_active', true)->orderBy('order');
-                          }
-                      ]);
+                        'contents' => function ($q) {
+                            $q->where('is_active', true)->orderBy('order');
+                        }
+                    ]);
                 }
             ])
             ->first();
