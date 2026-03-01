@@ -54,7 +54,7 @@ class DriverAuthController extends Controller
             return $this->successResponse([
                 'phone' => $res['phone'],
                 'method' => $res['method'],
-                'otp' => $res['otp'],
+             //   'otp' => $res['otp'],
             ], 'تم إرسال رمز التحقق بنجاح');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);
