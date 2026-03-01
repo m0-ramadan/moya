@@ -112,7 +112,7 @@ class UserAddressController extends Controller
      */
     public function destroy($id)
     {
-        $address = UserAddress::find($id);
+        $address = SavedLocation::find($id);
 
         if (!$address) {
             return $this->error('العنوان غير موجود', 404);
