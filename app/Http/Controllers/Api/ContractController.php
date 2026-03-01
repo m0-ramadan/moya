@@ -253,7 +253,7 @@ $request->validate([
         return response()->json([
             'success' => true,
             'data' => $newContract->load(['deliveryLocations.savedLocation']),
-            'payment_proof_url' => $paymentProofPath ? url($paymentProofPath) : null,
+            'payment_proof' => $paymentProofPath ? url('storage/'.$paymentProofPath) : null,
             'message' => 'تم إنشاء عقد تجديد جديد'
         ], 201);
 
