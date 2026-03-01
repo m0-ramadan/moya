@@ -28,7 +28,7 @@ class Contract extends Model
         'remaining_amount',
         'status', // 'active', 'expired', 'pending', 'cancelled'
         'notes',
-        'phone',
+        'phone','payment_proof'
     ];
 
     protected $casts = [

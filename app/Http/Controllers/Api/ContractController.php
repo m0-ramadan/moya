@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\ContractDeliveryLocation;
 use App\Http\Requests\Admin\CreateContractRequest;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ContractController extends Controller
 {
@@ -149,82 +151,120 @@ class ContractController extends Controller
     /**
      * تجديد العقد
      */
-    public function renew(Request $request, $id)
-    {
-        $user = $request->user();
+public function renew(Request $request, $id)
+{
+    $user = $request->user();
+$request->validate([
+    'payment_proof' => [
+        'required',
+        'mimes:jpg,jpeg,png,webp,pdf',
+        'max:5120',
+    ],
+], [
+    'payment_proof.required' => 'صورة إثبات الدفع مطلوبة',
+    'payment_proof.file' => 'يجب رفع ملف صالح',
+    'payment_proof.mimes' => 'الملف يجب أن يكون صورة أو PDF (jpg, png, webp, pdf)',
+    'payment_proof.max' => 'حجم الملف يجب ألا يتجاوز 5 ميجابايت',
+]);
 
-        $contract = Contract::where('user_id', $user->id)
-            ->where('id', $id)
-            ->first();
+    $contract = Contract::where('user_id', $user->id)
+        ->where('id', $id)
+        ->first();
 
-        if (!$contract) {
-            return response()->json([
-                'success' => false,
-                'message' => 'العقد غير موجود'
-            ], 404);
-        }
-
-        if ($contract->status != 'active') {
-            return response()->json([
-                'success' => false,
-                'message' => 'لا يمكن تجديد عقد غير نشط'
-            ], 400);
-        }
-
-        if (Carbon::now()->lt($contract->renewal_date)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'لا يمكن التجديد إلا قبل 7 أيام من انتهاء العقد'
-            ], 400);
-        }
-
-        try {
-            DB::beginTransaction();
-
-            // إنشاء عقد جديد كتجديد
-            $newContract = Contract::create([
-                'user_id' => $user->id,
-                'contract_number' => $this->generateContractNumber(),
-                'contract_type' => $contract->contract_type,
-                'company_name' => $contract->company_name,
-                'duration_type' => $contract->duration_type,
-                'start_date' => $contract->end_date->addDay(),
-                'end_date' => $this->calculateEndDate($contract->end_date->addDay(), $contract->duration_type),
-                'renewal_date' => $this->calculateEndDate($contract->end_date->addDay(), $contract->duration_type)->subDays(7),
-                'total_orders_limit' => $contract->total_orders_limit,
-                'remaining_orders' => $contract->total_orders_limit,
-                'total_amount' => $contract->total_amount,
-                'paid_amount' => 0,
-                'remaining_amount' => $contract->total_amount,
-                'status' => 'pending',
-                'notes' => "تجديد للعقد السابق رقم: {$contract->contract_number}",
-            ]);
-
-            // نسخ مواقع التوصيل
-            foreach ($contract->deliveryLocations as $location) {
-                ContractDeliveryLocation::create([
-                    'contract_id' => $newContract->id,
-                    'saved_location_id' => $location->saved_location_id,
-                    'priority' => $location->priority,
-                    'notes' => $location->notes,
-                ]);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'data' => $newContract->load(['deliveryLocations.savedLocation']),
-                'message' => 'تم إنشاء عقد تجديد جديد'
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'حدث خطأ أثناء تجديد العقد: ' . $e->getMessage()
-            ], 500);
-        }
+    if (!$contract) {
+        return response()->json([
+            'success' => false,
+            'message' => 'العقد غير موجود'
+        ], 404);
     }
+
+    if ($contract->status != 'active') {
+        return response()->json([
+            'success' => false,
+            'message' => 'لا يمكن تجديد عقد غير نشط'
+        ], 400);
+    }
+
+    // ✅ لو عايز "قبل 7 أيام من الانتهاء" صح:
+    // يعني مسموح التجديد من (end_date - 7) إلى end_date
+    if (Carbon::now()->lt(Carbon::parse($contract->end_date)->subDays(7))) {
+        return response()->json([
+            'success' => false,
+            'message' => 'لا يمكن التجديد إلا قبل 7 أيام من انتهاء العقد'
+        ], 400);
+    }
+
+    // ✅ تحقق من صورة إثبات الدفع (اختياري أو required حسب نظامك)
+    $validated = $request->validate([
+        'payment_proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'], // 5MB
+    ]);
+
+    try {
+        DB::beginTransaction();
+
+        // ✅ ارفع الصورة إن وجدت
+        $paymentProofPath = null;
+        if ($request->hasFile('payment_proof')) {
+            $file = $request->file('payment_proof');
+
+            // اسم ملف منظم
+            $filename = 'contract_renewal_' . $contract->id . '_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+
+            // تخزين داخل storage/app/public/payment_proofs
+            $paymentProofPath = $file->storeAs('payment_proofs', $filename, 'public');
+        }
+
+        $startDate = Carbon::parse($contract->end_date)->copy()->addDay();
+        $endDate   = $this->calculateEndDate($startDate, $contract->duration_type);
+        $renewalDate = Carbon::parse($endDate)->copy()->subDays(7);
+
+        // إنشاء عقد جديد كتجديد
+        $newContract = Contract::create([
+            'user_id' => $user->id,
+            'contract_number' => $this->generateContractNumber(),
+            'contract_type' => $contract->contract_type,
+            'company_name' => $contract->company_name,
+            'duration_type' => $contract->duration_type,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'renewal_date' => $renewalDate,
+            'total_orders_limit' => $contract->total_orders_limit,
+            'remaining_orders' => $contract->total_orders_limit,
+            'total_amount' => $contract->total_amount,
+            'paid_amount' => 0,
+            'remaining_amount' => $contract->total_amount,
+            'status' => 'pending',
+            'notes' => "تجديد للعقد السابق رقم: {$contract->contract_number}",
+            'payment_proof' => $paymentProofPath, // ✅ هنا حفظ المسار
+        ]);
+
+        // نسخ مواقع التوصيل
+        foreach ($contract->deliveryLocations as $location) {
+            ContractDeliveryLocation::create([
+                'contract_id' => $newContract->id,
+                'saved_location_id' => $location->saved_location_id,
+                'priority' => $location->priority,
+                'notes' => $location->notes,
+            ]);
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'data' => $newContract->load(['deliveryLocations.savedLocation']),
+            'payment_proof_url' => $paymentProofPath ? url($paymentProofPath) : null,
+            'message' => 'تم إنشاء عقد تجديد جديد'
+        ], 201);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'message' => 'حدث خطأ أثناء تجديد العقد: ' . $e->getMessage()
+        ], 500);
+    }
+}
 
     /**
      * الحصول على العقد النشط للمستخدم
