@@ -136,12 +136,14 @@ class ContractController extends Controller
                 ($contract->paid_amount / $contract->total_amount) * 100 : 0,
             'days_remaining' => Carbon::parse($contract->end_date)->diffInDays(Carbon::now()),
             'can_renew' => Carbon::now()->gte($contract->renewal_date),
+            
         ];
 
         return response()->json([
             'success' => true,
             'data' => [
                 'contract' => $contract,
+                'payment_proof_url' => $contract->payment_proof ? url('storage/'.$contract->payment_proof) : null,
                 'stats' => $stats
             ],
             'message' => 'تم جلب تفاصيل العقد بنجاح'
@@ -253,7 +255,7 @@ $request->validate([
         return response()->json([
             'success' => true,
             'data' => $newContract->load(['deliveryLocations.savedLocation']),
-            'payment_proof' => $paymentProofPath ? url('storage/'.$paymentProofPath) : null,
+            'payment_proof_url' => $paymentProofPath ? url('storage/'.$paymentProofPath) : null,
             'message' => 'تم إنشاء عقد تجديد جديد'
         ], 201);
 

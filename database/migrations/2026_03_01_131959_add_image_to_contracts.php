@@ -12,9 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('contracts', function (Blueprint $table) {
-Schema::table('contracts', function (Blueprint $table) {
-    $table->string('payment_proof')->nullable(); // path
-});
+            Schema::table('contracts', function (Blueprint $table) {
+                $table->string('payment_proof')->nullable(); // path
+                $table->softDeletes();
+            });
         });
     }
 
