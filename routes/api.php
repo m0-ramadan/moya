@@ -132,6 +132,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/{id}', [ContractController::class, 'show']);
             Route::post('/{id}/renew', [ContractController::class, 'renew']);
             Route::post('/{id}/cancel', [ContractController::class, 'cancel']);
+            Route::delete('/{id}/delete', [ContractController::class, 'destroy']);
+
 
             // مدفوعات العقد
             Route::post('/{contractId}/payments', [ContractController::class, 'addPayment']);
