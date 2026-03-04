@@ -44,6 +44,7 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
+        'phone_verified_at' => 'datetime',
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'otp_expires_at' => 'datetime',
@@ -227,11 +228,14 @@ class User extends Authenticatable
     /**
      * Get wallet
      */
-    public function wallet()
-    {
-        return $this->userWallet;
-    }
-
+    // public function wallet()
+    // {
+    //     return $this->userWallet;
+    // }
+public function wallet()
+{
+    return $this->hasOne(\App\Models\Wallet\UserWallet::class);
+}
     /**
      * Check if user can transact
      */

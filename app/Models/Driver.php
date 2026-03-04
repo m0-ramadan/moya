@@ -57,7 +57,10 @@ class Driver extends Model
         'status',
         'is_active',
     ];
-
+protected $casts = [
+    'license_expiry_date' => 'date',   
+    'date_of_birth' => 'date',
+];
     public function user()
     {
         return $this->belongsTo(User::class,'user_id');

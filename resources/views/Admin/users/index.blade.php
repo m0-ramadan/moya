@@ -9,708 +9,1207 @@
             font-family: "Cairo", sans-serif !important;
         }
 
-        .user-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid #f8f9fa;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        /* Users Dashboard */
+        .users-dashboard {
+            padding: 20px 0;
         }
 
-        .user-avatar-placeholder {
+        /* Welcome Card */
+        .welcome-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            color: white;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .welcome-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .welcome-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-left: 20px;
+        }
+
+        .welcome-content h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .welcome-content p {
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bs-card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid;
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-card.total {
+            border-left-color: #696cff;
+        }
+
+        .stat-card.active {
+            border-left-color: #198754;
+        }
+
+        .stat-card.inactive {
+            border-left-color: #dc3545;
+        }
+
+        .stat-card.verified {
+            border-left-color: #0dcaf0;
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-icon {
             width: 50px;
             height: 50px;
-            border-radius: 50%;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-left: 15px;
+            color: white;
+        }
+
+        .stat-card.total .stat-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .stat-card.active .stat-icon {
+            background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+        }
+
+        .stat-card.inactive .stat-icon {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+        }
+
+        .stat-card.verified .stat-icon {
+            background: linear-gradient(135deg, #0dcaf0 0%, #0d6efd 100%);
+        }
+
+        .stat-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--bs-heading-color);
+            margin-bottom: 5px;
+        }
+
+        .stat-description {
+            font-size: 13px;
+            color: var(--bs-secondary-color);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        /* Filter Card */
+        .filter-card {
+            background: var(--bs-card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--bs-border-color);
+        }
+
+        .filter-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 20px;
-            font-weight: 600;
-            border: 3px solid #f8f9fa;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-left: 15px;
         }
 
-        .badge-custom {
-            padding: 5px 12px;
+        .filter-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--bs-heading-color);
+            margin-bottom: 5px;
+        }
+
+        .filter-subtitle {
+            color: var(--bs-secondary-color);
+            font-size: 14px;
+        }
+
+        .filter-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .filter-group {
+            flex: 1 1 200px;
+        }
+
+        .filter-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--bs-heading-color);
+            margin-bottom: 5px;
+        }
+
+        .filter-select, .filter-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 8px;
+            background: var(--bs-card-bg);
+            color: var(--bs-heading-color);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex: 1 1 200px;
+        }
+
+        .btn-filter {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: opacity 0.3s;
+        }
+
+        .btn-filter:hover {
+            opacity: 0.9;
+            color: white;
+        }
+
+        .btn-reset {
+            background: var(--bs-secondary-bg);
+            color: var(--bs-heading-color);
+            border: 1px solid var(--bs-border-color);
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-reset:hover {
+            background: var(--bs-border-color);
+        }
+
+        /* Table Card */
+        .table-card {
+            background: var(--bs-card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .table-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .table-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .table-title h5 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--bs-heading-color);
+            margin-bottom: 5px;
+        }
+
+        .table-title p {
+            color: var(--bs-secondary-color);
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+            width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 25px;
+            background: var(--bs-card-bg);
+            color: var(--bs-heading-color);
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--bs-secondary-color);
+        }
+
+        /* Users Table */
+        .users-table {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: right;
+            padding: 15px 10px;
+            background: var(--bs-light-bg-subtle);
+            color: var(--bs-heading-color);
+            font-weight: 600;
+            font-size: 14px;
+            border-bottom: 2px solid var(--bs-border-color);
+        }
+
+        td {
+            padding: 15px 10px;
+            border-bottom: 1px solid var(--bs-border-color);
+            vertical-align: middle;
+        }
+
+        /* User Info */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-details h6 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--bs-heading-color);
+            margin-bottom: 3px;
+        }
+
+        .user-details span {
+            font-size: 12px;
+            color: var(--bs-secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .user-details i {
+            font-size: 11px;
+        }
+
+        /* Badges */
+        .badge-phone-verified {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-phone-verified.verified {
+            background: var(--bs-success-bg-subtle);
+            color: var(--bs-success-text);
+        }
+
+        .badge-phone-verified.unverified {
+            background: var(--bs-warning-bg-subtle);
+            color: var(--bs-warning-text);
+        }
+
+        .badge-status {
+            padding: 5px 10px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
         }
 
-        .badge-social {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        .badge-status.active {
+            background: var(--bs-success-bg-subtle);
+            color: var(--bs-success-text);
         }
 
-        .badge-email {
-            background: #e7f5ff;
-            color: #0c63e4;
+        .badge-status.inactive {
+            background: var(--bs-secondary-bg-subtle);
+            color: var(--bs-secondary-text);
         }
 
-        .badge-google {
-            background: #ea4335;
-            color: white;
+        .badge-driver {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
         }
 
-        .badge-facebook {
-            background: #1877f2;
-            color: white;
+        .badge-driver.yes {
+            background: var(--bs-info-bg-subtle);
+            color: var(--bs-info-text);
         }
 
-        .badge-apple {
-            background: #000000;
-            color: white;
+        .badge-driver.no {
+            background: var(--bs-secondary-bg-subtle);
+            color: var(--bs-secondary-text);
         }
 
-        .badge-active {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .badge-inactive {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .table-card {
-            /* background: white; */
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .table-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px 25px;
-        }
-
-        .search-box {
-            position: relative;
-        }
-
-        .search-box input {
-            padding-right: 40px;
-            border-radius: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-
-        .search-box input::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .search-box .search-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: white;
-        }
-
-        .filter-tabs {
+        /* Auth Methods */
+        .auth-methods {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 5px;
             flex-wrap: wrap;
         }
 
-        .filter-tab {
-            padding: 8px 20px;
-            border-radius: 25px;
-            background: #f8f9fa;
-            color: #6c757d;
-            border: 1px solid #dee2e6;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .filter-tab:hover {
-            background: #e9ecef;
-        }
-
-        .filter-tab.active {
-            background: #696cff;
-            color: white;
-            border-color: #696cff;
-        }
-
-        .stats-card {
-            background: #242f3b;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            border-top: 4px solid #696cff;
-            transition: transform 0.3s ease;
-            margin-bottom: 20px;
-        }
-
-        .stats-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stats-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            margin-bottom: 15px;
-        }
-
-        .icon-users {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .icon-orders {
-            background: #e7f5ff;
-            color: #0c63e4;
-        }
-
-        .icon-reviews {
-            background: #f8f9fa;
-            color: #495057;
-        }
-
-        .icon-social {
-            background: #ff6b6b;
-            color: white;
-        }
-
-        .stats-number {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .stats-label {
-            color: #6c757d;
-            font-size: 14px;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-action {
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .auth-badge {
+            width: 28px;
+            height: 28px;
             border-radius: 8px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-details h6 {
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-
-        .user-details p {
-            margin: 0;
-            font-size: 13px;
-            color: #6c757d;
-        }
-
-        .social-icons {
-            display: flex;
-            gap: 5px;
-            margin-top: 5px;
-        }
-
-        .social-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 14px;
             color: white;
         }
 
-        .icon-google {
-            background: #ea4335;
+        .auth-badge.email {
+            background: #dc3545;
         }
 
-        .icon-facebook {
-            background: #1877f2;
+        .auth-badge.google {
+            background: #db4437;
         }
 
-        .icon-apple {
+        .auth-badge.facebook {
+            background: #4267B2;
+        }
+
+        .auth-badge.apple {
             background: #000000;
         }
 
-        .toggle-switch {
-            position: relative;
-            width: 50px;
-            height: 26px;
+        .auth-badge.phone {
+            background: #198754;
         }
 
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
-        .toggle-slider {
-            position: absolute;
+        .btn-action {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
             cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
+            transition: all 0.3s;
+            color: white;
         }
 
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
+        .btn-action.view {
+            background: linear-gradient(135deg, #0dcaf0 0%, #0d6efd 100%);
         }
 
-        input:checked+.toggle-slider {
-            background-color: #696cff;
+        .btn-action.edit {
+            background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
         }
 
-        input:checked+.toggle-slider:before {
-            transform: translateX(24px);
+        .btn-action.toggle {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
         }
 
+        .btn-action.wallet {
+            background: linear-gradient(135deg, #6610f2 0%, #6f42c1 100%);
+        }
+
+        .btn-action.contracts {
+            background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+        }
+
+        .btn-action.orders {
+            background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+        }
+
+        .btn-action.notifications {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Pagination */
+        .pagination-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--bs-border-color);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .pagination-details {
+            color: var(--bs-secondary-color);
+            font-size: 14px;
+        }
+
+        .pagination-links {
+            display: flex;
+            gap: 5px;
+        }
+
+        .page-link {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bs-card-bg);
+            border: 1px solid var(--bs-border-color);
+            color: var(--bs-heading-color);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .page-link:hover,
+        .page-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 50px 20px;
         }
 
-        .empty-state-icon {
-            font-size: 60px;
-            color: #dee2e6;
-            margin-bottom: 20px;
-        }
-
-        .empty-state-text {
-            color: #6c757d;
-            margin-bottom: 20px;
-        }
-
-        .sort-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .sort-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 25px;
-            cursor: pointer;
+        .empty-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--bs-light-bg-subtle);
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            font-size: 40px;
+            color: var(--bs-secondary-color);
+            margin: 0 auto 20px;
         }
 
-        .sort-dropdown-content {
-            display: none;
-            position: absolute;
-            background: white;
-            min-width: 200px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--bs-heading-color);
+            margin-bottom: 10px;
+        }
+
+        .empty-description {
+            color: var(--bs-secondary-color);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* User Details Modal */
+        .user-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .info-section {
+            background: var(--bs-card-bg);
             border-radius: 10px;
-            z-index: 1;
-            padding: 10px 0;
-            margin-top: 5px;
+            padding: 15px;
+            border: 1px solid var(--bs-border-color);
         }
 
-        .sort-dropdown:hover .sort-dropdown-content {
-            display: block;
+        .info-section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--bs-border-color);
         }
 
-        .sort-item {
-            padding: 10px 20px;
-            cursor: pointer;
-            transition: background 0.3s;
-            color: #495057;
-        }
-
-        .sort-item:hover {
-            background: #f8f9fa;
-        }
-
-        .sort-item.active {
-            background: #696cff;
+        .info-section-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
         }
 
+        .info-section-title h6 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--bs-heading-color);
+            margin-bottom: 0;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .info-label {
+            width: 120px;
+            color: var(--bs-secondary-color);
+        }
+
+        .info-value {
+            flex: 1;
+            color: var(--bs-heading-color);
+            font-weight: 500;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            .filter-tabs {
+            .welcome-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .welcome-icon {
+                margin-left: 0;
+                margin-bottom: 15px;
+            }
+
+            .stat-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .stat-icon {
+                margin-left: 0;
+                margin-bottom: 10px;
+            }
+
+            .table-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .table-actions {
+                width: 100%;
+            }
+
+            .action-buttons {
                 justify-content: center;
             }
 
             .user-info {
                 flex-direction: column;
                 text-align: center;
-                gap: 10px;
             }
 
-            .user-details {
-                text-align: center;
+            .user-details span {
+                justify-content: center;
+            }
+
+            td {
+                min-width: 200px;
+            }
+
+            td:first-child {
+                min-width: 250px;
             }
         }
     </style>
 @endsection
 
 @section('content')
-    <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
+    <div class="container-xxl flex-grow-1 container-p-y">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
                     <a href="{{ route('admin.index') }}">الرئيسية</a>
                 </li>
-                <li class="breadcrumb-item active">المستخدمين</li>
+                <li class="breadcrumb-item active">إدارة المستخدمين</li>
             </ol>
         </nav>
 
-        <!-- الإحصائيات -->
-        <div class="row mb-4" bis_skin_checked="1">
-            <div class="col-lg-3 col-md-6 mb-4" bis_skin_checked="1">
-                <div class="stats-card" bis_skin_checked="1">
-                    <div class="stats-icon icon-users" bis_skin_checked="1">
+        <div class="users-dashboard">
+            <!-- Welcome Card -->
+            <div class="welcome-card">
+                <div class="welcome-header">
+                    <div class="welcome-icon">
                         <i class="fas fa-users"></i>
                     </div>
-                    <div class="stats-number" bis_skin_checked="1">
-                        {{ $users->total() }}
+                    <div class="welcome-content">
+                        <h3>إدارة المستخدمين</h3>
+                        <p>من هنا يمكنك إدارة جميع المستخدمين المسجلين في النظام، وعرض بياناتهم وتفاصيلهم</p>
                     </div>
-                    <div class="stats-label" bis_skin_checked="1">إجمالي المستخدمين</div>
+                </div>
+                <div class="row">
+                    <div class="col-md-8">
+                        <p class="mb-0">يمكنك متابعة المستخدمين، تفعيل أو تعطيل حساباتهم، وإدارة محافظهم وعقودهم بكل سهولة.</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="mt-3">
+                            <span class="badge bg-light text-dark me-2">
+                                <i class="fas fa-clock me-1"></i> {{ now()->format('H:i') }}
+                            </span>
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-calendar me-1"></i> {{ now()->translatedFormat('l، d F Y') }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="col-lg-3 col-md-6 mb-4" bis_skin_checked="1">
-                @php
-                    $socialUsers = $users
-                        ->filter(function ($user) {
-                            return $user->google_id || $user->facebook_id || $user->apple_id;
-                        })
-                        ->count();
-                @endphp
-                <div class="stats-card" bis_skin_checked="1">
-                    <div class="stats-icon icon-social" bis_skin_checked="1">
-                        <i class="fas fa-share-alt"></i>
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card total">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div>
+                            <div class="stat-title">إجمالي المستخدمين</div>
+                            <div class="stat-description">جميع المستخدمين المسجلين</div>
+                        </div>
                     </div>
-                    <div class="stats-number" bis_skin_checked="1">
-                        {{ $socialUsers }}
+                    <div class="stat-value">{{ $totalUsers ?? 0 }}</div>
+                    <div class="stat-actions">
+                        <span class="badge bg-primary">إجمالي</span>
+                        <span class="text-muted">{{ $newThisMonth ?? 0 }} هذا الشهر</span>
                     </div>
-                    <div class="stats-label" bis_skin_checked="1">مستخدمي التواصل الاجتماعي</div>
+                </div>
+
+                <div class="stat-card active">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <div class="stat-title">نشطون</div>
+                            <div class="stat-description">حسابات نشطة حالياً</div>
+                        </div>
+                    </div>
+                    <div class="stat-value">{{ $activeUsers ?? 0 }}</div>
+                    <div class="stat-actions">
+                        <span class="badge bg-success">نشط</span>
+                        <span class="text-muted">{{ $activeToday ?? 0 }} نشط اليوم</span>
+                    </div>
+                </div>
+
+                <div class="stat-card inactive">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-ban"></i>
+                        </div>
+                        <div>
+                            <div class="stat-title">غير نشطين</div>
+                            <div class="stat-description">حسابات موقوفة أو محظورة</div>
+                        </div>
+                    </div>
+                    <div class="stat-value">{{ $inactiveUsers ?? 0 }}</div>
+                    <div class="stat-actions">
+                        <span class="badge bg-danger">موقوف</span>
+                        <span class="text-muted">{{ $suspendedToday ?? 0 }} اليوم</span>
+                    </div>
+                </div>
+
+                <div class="stat-card verified">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+                        <div>
+                            <div class="stat-title">محققين</div>
+                            <div class="stat-description">رقم جوال موثق</div>
+                        </div>
+                    </div>
+                    <div class="stat-value">{{ $verifiedUsers ?? 0 }}</div>
+                    <div class="stat-actions">
+                        <span class="badge bg-info">موثق</span>
+                        <span class="text-muted">{{ $verifiedThisMonth ?? 0 }} هذا الشهر</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="col-lg-3 col-md-6 mb-4" bis_skin_checked="1">
-                <div class="stats-card" bis_skin_checked="1">
-                    <div class="stats-icon icon-orders" bis_skin_checked="1">
-                        <i class="fas fa-shopping-cart"></i>
+            <!-- Filter Card -->
+            <div class="filter-card">
+                <div class="filter-header">
+                    <div class="filter-icon">
+                        <i class="fas fa-filter"></i>
                     </div>
-                    <div class="stats-number" bis_skin_checked="1">
-                        {{ \App\Models\Order::count() }}
+                    <div>
+                        <h5 class="filter-title">فلترة المستخدمين</h5>
+                        <p class="filter-subtitle">تصفية النتائج حسب المعايير التالية</p>
                     </div>
-                    <div class="stats-label" bis_skin_checked="1">إجمالي الطلبات</div>
                 </div>
+
+                <form method="GET" action="{{ route('admin.users.index') }}" class="filter-form">
+                    <div class="filter-group">
+                        <label class="filter-label">الحالة</label>
+                        <select name="status" class="filter-select">
+                            <option value="">الكل</option>
+                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>نشط</option>
+                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>غير نشط</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">توثيق الجوال</label>
+                        <select name="phone_verified" class="filter-select">
+                            <option value="">الكل</option>
+                            <option value="1" {{ request('phone_verified') == '1' ? 'selected' : '' }}>موثق</option>
+                            <option value="0" {{ request('phone_verified') == '0' ? 'selected' : '' }}>غير موثق</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">نوع المستخدم</label>
+                        <select name="has_driver" class="filter-select">
+                            <option value="">الكل</option>
+                            <option value="1" {{ request('has_driver') == '1' ? 'selected' : '' }}>سائق</option>
+                            <option value="0" {{ request('has_driver') == '0' ? 'selected' : '' }}>عميل</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">طريقة التسجيل</label>
+                        <select name="auth_method" class="filter-select">
+                            <option value="">الكل</option>
+                            <option value="email" {{ request('auth_method') == 'email' ? 'selected' : '' }}>بريد إلكتروني</option>
+                            <option value="google" {{ request('auth_method') == 'google' ? 'selected' : '' }}>جوجل</option>
+                            <option value="facebook" {{ request('auth_method') == 'facebook' ? 'selected' : '' }}>فيسبوك</option>
+                            <option value="apple" {{ request('auth_method') == 'apple' ? 'selected' : '' }}>أبل</option>
+                            <option value="phone" {{ request('auth_method') == 'phone' ? 'selected' : '' }}>جوال</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">الإشعارات</label>
+                        <select name="notifications" class="filter-select">
+                            <option value="">الكل</option>
+                            <option value="1" {{ request('notifications') == '1' ? 'selected' : '' }}>مفعلة</option>
+                            <option value="0" {{ request('notifications') == '0' ? 'selected' : '' }}>معطلة</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-filter">
+                            <i class="fas fa-search me-2"></i> تطبيق الفلتر
+                        </button>
+                        <a href="{{ route('admin.users.index') }}" class="btn-reset">
+                            <i class="fas fa-redo me-2"></i> إعادة تعيين
+                        </a>
+                    </div>
+                </form>
             </div>
 
-            <div class="col-lg-3 col-md-6 mb-4" bis_skin_checked="1">
-                <div class="stats-card" bis_skin_checked="1">
-                    <div class="stats-icon icon-reviews" bis_skin_checked="1">
-                        <i class="fas fa-star"></i>
+            <!-- Users Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">
+                        <div class="table-icon">
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <div>
+                            <h5>قائمة المستخدمين</h5>
+                            <p>عرض جميع المستخدمين المسجلين في النظام</p>
+                        </div>
                     </div>
-                    <div class="stats-number" bis_skin_checked="1">
-                        {{ \App\Models\Review::count() }}
+
+                    <div class="table-actions">
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="بحث عن مستخدم..." value="{{ request('search') }}">
+                            <i class="fas fa-search"></i>
+                        </div>
                     </div>
-                    <div class="stats-label" bis_skin_checked="1">إجمالي التقييمات</div>
+                </div>
+
+                <div class="users-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>المستخدم</th>
+                                <th>معلومات الاتصال</th>
+                                <th>طرق التسجيل</th>
+                                <th>الحالة</th>
+                                <th>السائق</th>
+                                <th>الإشعارات</th>
+                                <th>تاريخ التسجيل</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($users as $user)
+                                <tr>
+                                    <td>
+                                        <div class="user-info">
+                                            <div class="user-avatar">
+                                                @if($user->avatar)
+                                                    <img src="{{ asset('storage/' . $user->avatar) }}" alt="{{ $user->name }}">
+                                                @else
+                                                    {{ substr($user->name, 0, 1) }}
+                                                @endif
+                                            </div>
+                                            <div class="user-details">
+                                                <h6>{{ $user->name }}</h6>
+                                                <span>
+                                                    <i class="fas fa-envelope"></i>
+                                                    {{ $user->email ?? 'لا يوجد بريد' }}
+                                                </span>
+                                                @if($user->isPhoneVerified())
+                                                    <span class="text-success">
+                                                        <i class="fas fa-check-circle"></i> جوال موثق
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="contact-info">
+                                            <div>
+                                                <i class="fas fa-phone"></i>
+                                                {{ $user->full_phone ?? $user->phone ?? 'غير محدد' }}
+                                            </div>
+                                            <div class="mt-1">
+                                                <span class="badge-phone-verified {{ $user->isPhoneVerified() ? 'verified' : 'unverified' }}">
+                                                    <i class="fas {{ $user->isPhoneVerified() ? 'fa-check' : 'fa-times' }}"></i>
+                                                    {{ $user->isPhoneVerified() ? 'موثق' : 'غير موثق' }}
+                                                </span>
+                                            </div>
+                                            @if($user->phone_verified_at)
+                                                <small class="text-muted">
+                                                    <i class="fas fa-calendar"></i>
+                                                    {{ $user->phone_verified_at->format('Y-m-d') }}
+                                                </small>
+                                            @endif
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="auth-methods">
+                                            @if($user->email)
+                                                <div class="auth-badge email" title="بريد إلكتروني">
+                                                    <i class="fas fa-envelope"></i>
+                                                </div>
+                                            @endif
+                                            @if($user->google_id)
+                                                <div class="auth-badge google" title="جوجل">
+                                                    <i class="fab fa-google"></i>
+                                                </div>
+                                            @endif
+                                            @if($user->facebook_id)
+                                                <div class="auth-badge facebook" title="فيسبوك">
+                                                    <i class="fab fa-facebook-f"></i>
+                                                </div>
+                                            @endif
+                                            @if($user->apple_id)
+                                                <div class="auth-badge apple" title="أبل">
+                                                    <i class="fab fa-apple"></i>
+                                                </div>
+                                            @endif
+                                            @if($user->phone)
+                                                <div class="auth-badge phone" title="جوال">
+                                                    <i class="fas fa-mobile-alt"></i>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-key"></i>
+                                                آخر OTP: {{ $user->otp ?? 'لا يوجد' }}
+                                            </small>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge-status {{ $user->status }}">
+                                            <i class="fas {{ $user->status == 'active' ? 'fa-circle' : 'fa-circle' }}"></i>
+                                            {{ $user->status == 'active' ? 'نشط' : 'غير نشط' }}
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge-driver {{ $user->driver ? 'yes' : 'no' }}">
+                                            <i class="fas {{ $user->driver ? 'fa-check' : 'fa-times' }}"></i>
+                                            {{ $user->driver ? 'سائق' : 'عميل' }}
+                                        </span>
+                                        @if($user->driver)
+                                            <div class="mt-1">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-truck"></i>
+                                                    {{ $user->driver->vehicle_size ?? 'غير محدد' }}
+                                                </small>
+                                            </div>
+                                        @endif
+                                    </td>
+
+                                    <td>
+                                        <div class="text-center">
+                                            <i class="fas {{ $user->allow_notifications ? 'fa-bell text-success' : 'fa-bell-slash text-danger' }}"></i>
+                                            <span class="badge bg-{{ $user->allow_notifications ? 'success' : 'secondary' }}">
+                                                {{ $user->allow_notifications ? 'مفعلة' : 'معطلة' }}
+                                            </span>
+                                        </div>
+                                        <div class="mt-1">
+                                            <small class="text-muted">
+                                                <i class="fas fa-mobile"></i>
+                                                {{ $user->deviceTokens->count() ?? 0 }} جهاز
+                                            </small>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div>
+                                            {{ $user->created_at->format('Y-m-d') }}
+                                        </div>
+                                        <small class="text-muted">
+                                            {{ $user->created_at->diffForHumans() }}
+                                        </small>
+                                        @if($user->email_verified_at)
+                                            <div>
+                                                <small class="text-success">
+                                                    <i class="fas fa-check-circle"></i> بريد موثق
+                                                </small>
+                                            </div>
+                                        @endif
+                                    </td>
+
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn-action view" onclick="viewUser({{ $user->id }})" title="عرض التفاصيل">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            
+                                            <a href="{{ route('admin.users.edit', $user->id) }}" class="btn-action edit" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            
+                                            <button class="btn-action toggle" onclick="toggleUserStatus({{ $user->id }}, '{{ $user->status }}')" title="تغيير الحالة">
+                                                <i class="fas {{ $user->status == 'active' ? 'fa-pause' : 'fa-play' }}"></i>
+                                            </button>
+                                            
+                                            <button class="btn-action wallet" onclick="viewUserWallet({{ $user->id }})" title="المحفظة">
+                                                <i class="fas fa-wallet"></i>
+                                            </button>
+                                            
+                                            @if($user->driver)
+                                                <a href="{{ route('admin.drivers.show', $user->driver->id) }}" class="btn-action contracts" title="بيانات السائق">
+                                                    <i class="fas fa-truck"></i>
+                                                </a>
+                                            @endif
+                                            
+                                            <button class="btn-action orders" onclick="viewUserOrders({{ $user->id }})" title="الطلبات">
+                                                <i class="fas fa-shopping-cart"></i>
+                                            </button>
+                                            
+                                            <button class="btn-action notifications" onclick="sendNotification({{ $user->id }})" title="إرسال إشعار">
+                                                <i class="fas fa-bell"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8">
+                                        <div class="empty-state">
+                                            <div class="empty-icon">
+                                                <i class="fas fa-users-slash"></i>
+                                            </div>
+                                            <h5 class="empty-title">لا يوجد مستخدمين</h5>
+                                            <p class="empty-description">لم يتم تسجيل أي مستخدمين حتى الآن.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                @if(isset($users) && $users->hasPages())
+                    <div class="pagination-info">
+                        <div class="pagination-details">
+                            عرض {{ $users->firstItem() }} - {{ $users->lastItem() }} من {{ $users->total() }} مستخدم
+                        </div>
+                        <div class="pagination-links">
+                            {{ $users->appends(request()->query())->links('pagination::bootstrap-4') }}
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div class="modal fade" id="userDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">تفاصيل المستخدم</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="userDetailsContent">
+                    <!-- سيتم تعبئتها عبر JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="row" bis_skin_checked="1">
-            <div class="col-12" bis_skin_checked="1">
-                <div class="table-card" bis_skin_checked="1">
-                    <div class="table-header" bis_skin_checked="1">
-                        <div class="row align-items-center" bis_skin_checked="1">
-                            <div class="col-md-6" bis_skin_checked="1">
-                                <h5 class="mb-0">إدارة المستخدمين</h5>
-                                <small class="opacity-75">عرض وإدارة جميع مستخدمي النظام</small>
-                            </div>
-                            <div class="col-md-6" bis_skin_checked="1">
-                                <div class="d-flex justify-content-end align-items-center gap-3" bis_skin_checked="1">
-                                    <div class="search-box" bis_skin_checked="1">
-                                        <i class="fas fa-search search-icon"></i>
-                                        <input type="text" class="form-control"
-                                            placeholder="بحث بالاسم، البريد، الهاتف..." id="searchInput"
-                                            value="{{ request('search') }}" style="width: 250px;">
-                                    </div>
-                                    <div class="sort-dropdown" bis_skin_checked="1">
-                                        <button class="sort-btn">
-                                            <i class="fas fa-sort-amount-down"></i>
-                                            الترتيب
-                                        </button>
-                                        <div class="sort-dropdown-content" bis_skin_checked="1">
-                                            <div class="sort-item {{ request('sort_by') == 'created_at' && request('sort_direction') == 'desc' ? 'active' : '' }}"
-                                                onclick="sortBy('created_at', 'desc')">
-                                                الأحدث أولاً
-                                            </div>
-                                            <div class="sort-item {{ request('sort_by') == 'created_at' && request('sort_direction') == 'asc' ? 'active' : '' }}"
-                                                onclick="sortBy('created_at', 'asc')">
-                                                الأقدم أولاً
-                                            </div>
-                                            <div class="sort-item {{ request('sort_by') == 'name' && request('sort_direction') == 'asc' ? 'active' : '' }}"
-                                                onclick="sortBy('name', 'asc')">
-                                                الاسم من أ إلى ي
-                                            </div>
-                                            <div class="sort-item {{ request('sort_by') == 'name' && request('sort_direction') == 'desc' ? 'active' : '' }}"
-                                                onclick="sortBy('name', 'desc')">
-                                                الاسم من ي إلى أ
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <a href="{{ route('admin.users.create') }}" class="btn btn-light">
-                                        <i class="fas fa-user-plus me-2"></i>إضافة مستخدم
-                                    </a>
-                                </div>
-                            </div>
+    <!-- Send Notification Modal -->
+    <div class="modal fade" id="sendNotificationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">إرسال إشعار</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="notificationForm">
+                        @csrf
+                        <input type="hidden" id="notificationUserId" name="user_id">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">عنوان الإشعار</label>
+                            <input type="text" class="form-control" id="notificationTitle" name="title" required>
                         </div>
-                    </div>
-
-                    <!-- فلاتر التبويب -->
-                    <div class="px-4 pt-3" bis_skin_checked="1">
-                        <div class="filter-tabs" bis_skin_checked="1">
-                            <div class="filter-tab {{ !request('type') ? 'active' : '' }}" onclick="filterBy('all')">
-                                جميع المستخدمين
-                            </div>
-                            <div class="filter-tab {{ request('type') == 'social' ? 'active' : '' }}"
-                                onclick="filterBy('social')">
-                                <i class="fas fa-share-alt me-2"></i>مستخدمي السوشيال ميديا
-                            </div>
-                            <div class="filter-tab {{ request('type') == 'email' ? 'active' : '' }}"
-                                onclick="filterBy('email')">
-                                <i class="fas fa-envelope me-2"></i>مستخدمي البريد الإلكتروني
-                            </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">نص الإشعار</label>
+                            <textarea class="form-control" id="notificationBody" name="body" rows="3" required></textarea>
                         </div>
-                    </div>
-
-                    <div class="table-responsive" bis_skin_checked="1">
-                        <table class="table table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th width="60">#</th>
-                                    <th>المستخدم</th>
-                                    <th>معلومات الاتصال</th>
-                                    <th>طريقة التسجيل</th>
-                                    <th>الحالة</th>
-                                    <th>تاريخ التسجيل</th>
-                                    <th width="120">الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTable">
-                                @forelse($users as $user)
-                                    <tr data-id="{{ $user->id }}">
-                                        <td>{{ $loop->iteration + $users->perPage() * ($users->currentPage() - 1) }}</td>
-                                        <td>
-                                            <div class="user-info" bis_skin_checked="1">
-                                                @if ($user->image)
-                                                    <img src="{{ asset('storage/' . $user->image) }}"
-                                                        alt="{{ $user->name }}" class="user-avatar">
-                                                @else
-                                                    <div class="user-avatar-placeholder" bis_skin_checked="1">
-                                                        {{ strtoupper(substr($user->name, 0, 1)) }}
-                                                    </div>
-                                                @endif
-                                                <div class="user-details" bis_skin_checked="1">
-                                                    <h6 class="mb-1">{{ $user->name }}</h6>
-                                                    <p class="mb-0">ID: #{{ $user->id }}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="mb-1" bis_skin_checked="1">
-                                                <i class="fas fa-envelope me-2 text-muted"></i>
-                                                <small>{{ $user->email }}</small>
-                                            </div>
-                                            @if ($user->phone)
-                                                <div class="mb-1" bis_skin_checked="1">
-                                                    <i class="fas fa-phone me-2 text-muted"></i>
-                                                    <small>{{ $user->phone }}</small>
-                                                </div>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if ($user->google_id || $user->facebook_id || $user->apple_id)
-                                                <span class="badge-custom badge-social">
-                                                    <i class="fas fa-share-alt me-1"></i>
-                                                    التواصل الاجتماعي
-                                                </span>
-                                                <div class="social-icons" bis_skin_checked="1">
-                                                    @if ($user->google_id)
-                                                        <span class="social-icon icon-google" title="تسجيل الدخول بجوجل">
-                                                            <i class="fab fa-google"></i>
-                                                        </span>
-                                                    @endif
-                                                    @if ($user->facebook_id)
-                                                        <span class="social-icon icon-facebook"
-                                                            title="تسجيل الدخول بفيسبوك">
-                                                            <i class="fab fa-facebook-f"></i>
-                                                        </span>
-                                                    @endif
-                                                    @if ($user->apple_id)
-                                                        <span class="social-icon icon-apple" title="تسجيل الدخول بأبل">
-                                                            <i class="fab fa-apple"></i>
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            @else
-                                                <span class="badge-custom badge-email">
-                                                    <i class="fas fa-envelope me-1"></i>
-                                                    البريد الإلكتروني
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if (isset($user->is_active))
-                                                <div class="d-flex align-items-center gap-2" bis_skin_checked="1">
-                                                    <label class="toggle-switch">
-                                                        <input type="checkbox" class="status-toggle"
-                                                            data-id="{{ $user->id }}"
-                                                            {{ $user->is_active ? 'checked' : '' }}>
-                                                        <span class="toggle-slider"></span>
-                                                    </label>
-                                                    <span
-                                                        class="badge-custom {{ $user->is_active ? 'badge-active' : 'badge-inactive' }}">
-                                                        {{ $user->is_active ? 'نشط' : 'غير نشط' }}
-                                                    </span>
-                                                </div>
-                                            @else
-                                                <span class="badge-custom badge-active">
-                                                    نشط
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <div class="mb-1" bis_skin_checked="1">
-                                                <small class="text-muted">
-                                                    {{ $user->created_at->translatedFormat('d M Y') }}
-                                                </small>
-                                            </div>
-                                            <div class="mb-1" bis_skin_checked="1">
-                                                <small class="text-muted">
-                                                    {{ $user->created_at->translatedFormat('h:i A') }}
-                                                </small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons" bis_skin_checked="1">
-                                                <a href="{{ route('admin.users.show', $user) }}"
-                                                    class="btn btn-action btn-info" title="عرض التفاصيل">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="{{ route('admin.users.edit', $user) }}"
-                                                    class="btn btn-action btn-warning" title="تعديل">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <button type="button" class="btn btn-action btn-danger delete-btn"
-                                                    title="حذف" data-id="{{ $user->id }}"
-                                                    data-name="{{ $user->name }}">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7">
-                                            <div class="empty-state" bis_skin_checked="1">
-                                                <div class="empty-state-icon" bis_skin_checked="1">
-                                                    <i class="fas fa-users"></i>
-                                                </div>
-                                                <h5 class="empty-state-text">لا توجد مستخدمين</h5>
-                                                <a href="{{ route('admin.users.create') }}" class="btn btn-primary">
-                                                    <i class="fas fa-user-plus me-2"></i>إضافة مستخدم جديد
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Pagination -->
-                    @if ($users->hasPages())
-                        <div class="m-3">
-                            <nav>
-                                <ul class="pagination">
-                                    {{-- Previous Page Link --}}
-                                    @if ($users->onFirstPage())
-                                        <li class="page-item disabled" aria-disabled="true">
-                                            <span class="page-link waves-effect" aria-hidden="true">‹</span>
-                                        </li>
-                                    @else
-                                        <li class="page-item">
-                                            <a class="page-link waves-effect" href="{{ $users->previousPageUrl() }}"
-                                                rel="prev">‹</a>
-                                        </li>
-                                    @endif
-
-                                    {{-- Pagination Elements --}}
-                                    @foreach ($users->links()->elements[0] as $page => $url)
-                                        @if ($page == $users->currentPage())
-                                            <li class="page-item active" aria-current="page">
-                                                <span class="page-link waves-effect">{{ $page }}</span>
-                                            </li>
-                                        @else
-                                            <li class="page-item">
-                                                <a class="page-link waves-effect"
-                                                    href="{{ $url }}">{{ $page }}</a>
-                                            </li>
-                                        @endif
-                                    @endforeach
-
-                                    {{-- Next Page Link --}}
-                                    @if ($users->hasMorePages())
-                                        <li class="page-item">
-                                            <a class="page-link waves-effect" href="{{ $users->nextPageUrl() }}"
-                                                rel="next">›</a>
-                                        </li>
-                                    @else
-                                        <li class="page-item disabled" aria-disabled="true">
-                                            <span class="page-link waves-effect" aria-hidden="true">›</span>
-                                        </li>
-                                    @endif
-                                </ul>
-                            </nav>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">بيانات إضافية (JSON)</label>
+                            <textarea class="form-control" id="notificationData" name="data" rows="2" placeholder='{"key": "value"}'></textarea>
                         </div>
-                    @endif
-
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-primary" onclick="submitNotification()">إرسال</button>
                 </div>
             </div>
         </div>
@@ -718,172 +1217,449 @@
 @endsection
 
 @section('js')
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function() {
-            // البحث مع تأخير
-            let searchTimeout;
+            // Initialize tooltips
+            $('[data-bs-toggle="tooltip"]').tooltip();
+
+            // Search functionality
+            let searchTimer;
             $('#searchInput').on('keyup', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    updateUrl({
-                        search: $(this).val()
-                    });
+                clearTimeout(searchTimer);
+                const searchValue = $(this).val();
+                
+                searchTimer = setTimeout(() => {
+                    performSearch(searchValue);
                 }, 500);
             });
 
-            // تبديل الحالة
-            $('.status-toggle').on('change', function() {
-                const userId = $(this).data('id');
-                const isChecked = $(this).is(':checked');
-
-                $.ajax({
-                    url: "{{ route('admin.users.toggle-status', '') }}/" + userId,
-                    type: 'POST',
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        _method: 'PATCH'
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            const statusBadge = $(`tr[data-id="${userId}"] .badge-custom`);
-                            if (response.is_active) {
-                                statusBadge.removeClass('badge-inactive').addClass(
-                                    'badge-active').text('نشط');
-                            } else {
-                                statusBadge.removeClass('badge-active').addClass(
-                                    'badge-inactive').text('غير نشط');
-                            }
-
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'نجاح',
-                                text: response.message,
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'خطأ',
-                            text: 'حدث خطأ أثناء تغيير الحالة',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-                    }
-                });
-            });
-
-            // حذف المستخدم
-            $('.delete-btn').on('click', function() {
-                const userId = $(this).data('id');
-                const userName = $(this).data('name');
-
-                Swal.fire({
-                    title: 'هل أنت متأكد؟',
-                    text: `سيتم حذف المستخدم "${userName}" نهائياً`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'نعم، احذف',
-                    cancelButtonText: 'إلغاء',
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: "{{ route('admin.users.destroy', '') }}/" + userId,
-                            type: 'POST',
-                            data: {
-                                _token: "{{ csrf_token() }}",
-                                _method: 'DELETE'
-                            },
-                            success: function(response) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'تم الحذف',
-                                    text: response.success,
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    location.reload();
-                                });
-                            },
-                            error: function() {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'خطأ',
-                                    text: 'حدث خطأ أثناء الحذف',
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                });
-                            }
-                        });
-                    }
-                });
-            });
-
-            // رسائل التنبيه من الجلسة
-            @if (session('success'))
-                Swal.fire({
-                    icon: 'success',
-                    title: 'نجاح',
-                    text: "{{ session('success') }}",
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            @endif
-
-            @if (session('error'))
-                Swal.fire({
-                    icon: 'error',
-                    title: 'خطأ',
-                    text: "{{ session('error') }}",
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            @endif
+            function performSearch(search) {
+                const url = new URL(window.location.href);
+                if (search) {
+                    url.searchParams.set('search', search);
+                } else {
+                    url.searchParams.delete('search');
+                }
+                window.location.href = url.toString();
+            }
         });
 
-        function filterBy(type) {
-            if (type === 'all') {
-                updateUrl({
-                    type: null
-                });
-            } else {
-                updateUrl({
-                    type: type
-                });
-            }
-        }
+        // View user details
+        function viewUser(userId) {
+            $.ajax({
+                url: `/admin/users/${userId}`,
+                type: 'GET',
+                beforeSend: function() {
+                    Swal.fire({
+                        title: 'جاري التحميل...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                },
+                success: function(response) {
+                    Swal.close();
+                    
+                    let content = `
+                        <div class="user-info-grid">
+                            <div class="info-section">
+                                <div class="info-section-title">
+                                    <div class="info-section-icon">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <h6>معلومات شخصية</h6>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">الاسم:</span>
+                                    <span class="info-value">${response.name}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">البريد:</span>
+                                    <span class="info-value">${response.email || 'لا يوجد'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">الجوال:</span>
+                                    <span class="info-value">${response.full_phone || response.phone || 'غير محدد'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">حالة الجوال:</span>
+                                    <span class="info-value">
+                                        <span class="badge ${response.phone_verified_at ? 'bg-success' : 'bg-warning'}">
+                                            ${response.phone_verified_at ? 'موثق' : 'غير موثق'}
+                                        </span>
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">حالة الحساب:</span>
+                                    <span class="info-value">
+                                        <span class="badge ${response.status == 'active' ? 'bg-success' : 'bg-danger'}">
+                                            ${response.status == 'active' ? 'نشط' : 'غير نشط'}
+                                        </span>
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">الإشعارات:</span>
+                                    <span class="info-value">
+                                        <i class="fas ${response.allow_notifications ? 'fa-bell text-success' : 'fa-bell-slash text-danger'}"></i>
+                                        ${response.allow_notifications ? 'مفعلة' : 'معطلة'}
+                                    </span>
+                                </div>
+                            </div>
 
-        function sortBy(sortBy, sortDirection) {
-            updateUrl({
-                sort_by: sortBy,
-                sort_direction: sortDirection
-            });
-        }
+                            <div class="info-section">
+                                <div class="info-section-title">
+                                    <div class="info-section-icon">
+                                        <i class="fas fa-calendar"></i>
+                                    </div>
+                                    <h6>التواريخ</h6>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">تاريخ التسجيل:</span>
+                                    <span class="info-value">${response.created_at}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">آخر تحديث:</span>
+                                    <span class="info-value">${response.updated_at}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">توثيق الجوال:</span>
+                                    <span class="info-value">${response.phone_verified_at || 'لم يتم'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">توثيق البريد:</span>
+                                    <span class="info-value">${response.email_verified_at || 'لم يتم'}</span>
+                                </div>
+                            </div>
 
-        function updateUrl(params) {
-            const url = new URL(window.location.href);
-            const searchParams = new URLSearchParams(url.search);
+                            <div class="info-section">
+                                <div class="info-section-title">
+                                    <div class="info-section-icon">
+                                        <i class="fas fa-key"></i>
+                                    </div>
+                                    <h6>طرق التسجيل</h6>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">البريد:</span>
+                                    <span class="info-value">
+                                        <i class="fas ${response.email ? 'fa-check text-success' : 'fa-times text-danger'}"></i>
+                                        ${response.email ? 'مسجل' : 'غير مسجل'}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">جوجل:</span>
+                                    <span class="info-value">
+                                        <i class="fas ${response.google_id ? 'fa-check text-success' : 'fa-times text-danger'}"></i>
+                                        ${response.google_id ? 'مرتبط' : 'غير مرتبط'}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">فيسبوك:</span>
+                                    <span class="info-value">
+                                        <i class="fas ${response.facebook_id ? 'fa-check text-success' : 'fa-times text-danger'}"></i>
+                                        ${response.facebook_id ? 'مرتبط' : 'غير مرتبط'}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">أبل:</span>
+                                    <span class="info-value">
+                                        <i class="fas ${response.apple_id ? 'fa-check text-success' : 'fa-times text-danger'}"></i>
+                                        ${response.apple_id ? 'مرتبط' : 'غير مرتبط'}
+                                    </span>
+                                </div>
+                            </div>
 
-            // تحديث جميع الباراميترات
-            Object.keys(params).forEach(key => {
-                if (params[key] === null || params[key] === '') {
-                    searchParams.delete(key);
-                } else {
-                    searchParams.set(key, params[key]);
+                            <div class="info-section">
+                                <div class="info-section-title">
+                                    <div class="info-section-icon">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <h6>إحصائيات</h6>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">عدد الطلبات:</span>
+                                    <span class="info-value">${response.orders_count || 0}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">عدد العقود:</span>
+                                    <span class="info-value">${response.contracts_count || 0}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">عدد المدفوعات:</span>
+                                    <span class="info-value">${response.payments_count || 0}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">الأجهزة:</span>
+                                    <span class="info-value">${response.device_tokens_count || 0}</span>
+                                </div>
+                                ${response.driver ? `
+                                <div class="info-row">
+                                    <span class="info-label">سائق:</span>
+                                    <span class="info-value">
+                                        <span class="badge bg-info">نعم</span>
+                                        ${response.driver.vehicle_size || ''}
+                                    </span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    $('#userDetailsContent').html(content);
+                    $('#userDetailsModal').modal('show');
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'خطأ!',
+                        text: xhr.responseJSON?.message || 'حدث خطأ أثناء تحميل البيانات'
+                    });
                 }
             });
+        }
 
-            // إعادة التوجيه إلى الصفحة الأولى مع الباراميترات الجديدة
-            searchParams.set('page', '1');
-            url.search = searchParams.toString();
-            window.location.href = url.toString();
+        // Toggle user status
+        function toggleUserStatus(userId, currentStatus) {
+            const newStatus = currentStatus == 'active' ? 'inactive' : 'active';
+            const action = newStatus == 'active' ? 'تفعيل' : 'تعطيل';
+            
+            Swal.fire({
+                title: `${action} المستخدم`,
+                text: `هل أنت متأكد من ${action} هذا المستخدم؟`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: newStatus == 'active' ? '#198754' : '#dc3545',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: `نعم، ${action}`,
+                cancelButtonText: 'إلغاء'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `/admin/users/${userId}/toggle-status`,
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            status: newStatus
+                        },
+                        beforeSend: function() {
+                            Swal.fire({
+                                title: 'جاري التغيير...',
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+                        },
+                        success: function(response) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'تم التغيير!',
+                                text: response.message,
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        },
+                        error: function(xhr) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'خطأ!',
+                                text: xhr.responseJSON?.message || 'حدث خطأ أثناء تغيير الحالة'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        // View user wallet
+        function viewUserWallet(userId) {
+            $.ajax({
+                url: `/admin/users/${userId}/wallet`,
+                type: 'GET',
+                beforeSend: function() {
+                    Swal.fire({
+                        title: 'جاري تحميل المحفظة...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                },
+                success: function(response) {
+                    Swal.close();
+                    
+                    let content = `
+                        <div class="wallet-info">
+                            <h4 class="text-center mb-4">محفظة المستخدم</h4>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="info-section bg-primary text-white p-3 rounded">
+                                        <h6>الرصيد الحالي</h6>
+                                        <h3>${response.balance || 0} ${response.currency || 'SAR'}</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-section bg-warning p-3 rounded">
+                                        <h6>الرصيد المعلق</h6>
+                                        <h3>${response.held_balance || 0} ${response.currency || 'SAR'}</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-section bg-success text-white p-3 rounded">
+                                        <h6>حالة المحفظة</h6>
+                                        <h3>
+                                            <span class="badge ${response.status == 'active' ? 'bg-light text-dark' : 'bg-secondary'}">
+                                                ${response.status == 'active' ? 'نشطة' : 'معطلة'}
+                                            </span>
+                                        </h3>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h5 class="mt-4">آخر المعاملات</h5>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>التاريخ</th>
+                                            <th>النوع</th>
+                                            <th>المبلغ</th>
+                                            <th>الوصف</th>
+                                            <th>الحالة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                    `;
+                    
+                    if (response.ledger_entries && response.ledger_entries.length > 0) {
+                        response.ledger_entries.forEach(entry => {
+                            content += `
+                                <tr>
+                                    <td>${entry.created_at}</td>
+                                    <td>
+                                        <span class="badge bg-${entry.type == 'credit' ? 'success' : 'danger'}">
+                                            ${entry.type == 'credit' ? 'إيداع' : 'سحب'}
+                                        </span>
+                                    </td>
+                                    <td>${entry.amount} ${entry.currency}</td>
+                                    <td>${entry.description || '---'}</td>
+                                    <td>
+                                        <span class="badge bg-${entry.status == 'completed' ? 'success' : (entry.status == 'pending' ? 'warning' : 'danger')}">
+                                            ${entry.status == 'completed' ? 'مكتملة' : (entry.status == 'pending' ? 'معلقة' : 'فاشلة')}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        content += `
+                            <tr>
+                                <td colspan="5" class="text-center">لا توجد معاملات</td>
+                            </tr>
+                        `;
+                    }
+                    
+                    content += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                    
+                    $('#userDetailsContent').html(content);
+                    $('#userDetailsModal').modal('show');
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'خطأ!',
+                        text: xhr.responseJSON?.message || 'حدث خطأ أثناء تحميل المحفظة'
+                    });
+                }
+            });
+        }
+
+        // View user orders
+        function viewUserOrders(userId) {
+            window.location.href = `/admin/orders?user_id=${userId}`;
+        }
+
+        // Send notification
+        function sendNotification(userId) {
+            $('#notificationUserId').val(userId);
+            $('#sendNotificationModal').modal('show');
+        }
+
+        function submitNotification() {
+            const userId = $('#notificationUserId').val();
+            const title = $('#notificationTitle').val();
+            const body = $('#notificationBody').val();
+            const data = $('#notificationData').val();
+
+            if (!title || !body) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'تنبيه!',
+                    text: 'الرجاء إدخال عنوان ونص الإشعار'
+                });
+                return;
+            }
+
+            let parsedData = {};
+            if (data) {
+                try {
+                    parsedData = JSON.parse(data);
+                } catch (e) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'خطأ!',
+                        text: 'البيانات الإضافية يجب أن تكون بصيغة JSON صحيحة'
+                    });
+                    return;
+                }
+            }
+
+            $.ajax({
+                url: `/admin/users/${userId}/send-notification`,
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    title: title,
+                    body: body,
+                    data: parsedData
+                },
+                beforeSend: function() {
+                    Swal.fire({
+                        title: 'جاري الإرسال...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'تم الإرسال!',
+                        text: response.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    
+                    $('#sendNotificationModal').modal('hide');
+                    $('#notificationForm')[0].reset();
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'خطأ!',
+                        text: xhr.responseJSON?.message || 'حدث خطأ أثناء إرسال الإشعار'
+                    });
+                }
+            });
         }
     </script>
 @endsection

@@ -1,37 +1,37 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\FaqController;
-use App\Http\Controllers\Admin\RoleController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\ChatsController;
-use App\Http\Controllers\Admin\ErrorController;
-use App\Http\Controllers\Admin\OrderController;
-use App\Http\Controllers\Admin\RolesController;
-use App\Http\Controllers\Admin\BannerController;
-use App\Http\Controllers\Admin\CouponController;
-use App\Http\Controllers\Admin\RegionController;
-use App\Http\Controllers\Admin\SliderController;
-use App\Http\Controllers\Admin\ArticleController;
-use App\Http\Controllers\Admin\ContactController;
-use App\Http\Controllers\Admin\CountryController;
-use App\Http\Controllers\Admin\ManagerController;
-use App\Http\Controllers\Admin\ProductController;
-use App\Http\Controllers\Admin\SettingController;
-use App\Http\Controllers\Admin\VisitorController;
-use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\AdminAuthController;
-use App\Http\Controllers\Admin\ContactUsController;
-use App\Http\Controllers\Admin\SubscribeController;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\ArticleController;
+use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BannerItemController;
-use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Admin\StaticPageController;
-use App\Http\Controllers\Admin\PermissionsController;
-use App\Http\Controllers\Admin\SocialMediaController;
-use App\Http\Controllers\Admin\PaymentMethodController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ChatsController;
+use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Admin\ContactUsController;
+use App\Http\Controllers\Admin\CountryController;
+use App\Http\Controllers\Admin\CouponController;
+use App\Http\Controllers\Admin\DriverController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\ErrorController;
+use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\LogisticServiceController;
+use App\Http\Controllers\Admin\ManagerController;
+use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\PaymentMethodController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\PermissionsController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\RegionController;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\RolesController;
+use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\SocialMediaController;
+use App\Http\Controllers\Admin\StaticPageController;
+use App\Http\Controllers\Admin\SubscribeController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\VisitorController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -122,21 +122,6 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         Route::post('/bulk-update', [SocialMediaController::class, 'bulkUpdate'])->name('bulk-update');
     });
 
-    // Users
-    Route::prefix('users')->as('user.')->group(function () {
-        Route::get('/', [UserController::class, 'index'])->name('index')->withoutMiddleware('admin:1')->middleware('admin:1,0');
-        Route::get('show/{id}', [UserController::class, 'show'])->name('show')->withoutMiddleware('admin:1')->middleware('admin:1,0');
-        Route::get('verify/email/{id}', [UserController::class, 'verifyEmail'])->name('verify-email');
-        Route::get('verify/{id}', [UserController::class, 'verify'])->name('verify');
-        Route::post('reject/{id}', [UserController::class, 'reject'])->name('reject');
-        Route::post('notify', [UserController::class, 'sendNotify'])->name('sendnotify');
-        Route::get('archive', [UserController::class, 'archive'])->name('archive');
-        Route::get('restore/{id}', [UserController::class, 'restore'])->name('restore');
-        Route::delete('force-delete/{id}', [UserController::class, 'forceDelete'])->name('forcedelete');
-        Route::post('wallet-control', [UserController::class, 'walletControl'])->name('walletcontrol')->withoutMiddleware('admin:1')->middleware('admin:1,0');
-        Route::post('package-control', [UserController::class, 'packageControl'])->name('package-control');
-    });
-
     // categories (without tree route)
     Route::prefix('categories')->as('categories.')->group(function () {
         Route::get('/', [CategoryController::class, 'index'])->name('index');
@@ -167,7 +152,6 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
     });
     Route::post('products/update/{id}', [ProductController::class, 'update'])->name('products.update');
 
-
     // Contacts
     Route::prefix('contacts')->as('contact.')->group(function () {
         Route::get('/', [ContactController::class, 'index'])->name('index');
@@ -192,16 +176,43 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
     Route::patch('payment-methods/{paymentMethod}/toggle-status', [PaymentMethodController::class, 'toggleStatus'])->name('payment-methods.toggle-status');
 
     // Users
-    Route::prefix('users')->as('users.')->group(function () {
-        Route::resource('/', UserController::class);
+   
+    // Users Management
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::get('/create', [UserController::class, 'create'])->name('create');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::get('/{user}', [UserController::class, 'show'])->name('show');
+        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [UserController::class, 'update'])->name('update');
+        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+        
+        // User Status
         Route::post('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
+        
+        // User Wallet
+        Route::get('/{user}/wallet', [UserController::class, 'wallet'])->name('wallet');
+        
+        // User Notifications
+        Route::post('/{user}/send-notification', [UserController::class, 'sendNotification'])->name('send-notification');
+        
+        // User Orders
         Route::get('/{user}/orders', [UserController::class, 'orders'])->name('orders');
-        Route::get('/{user}/reviews', [UserController::class, 'reviews'])->name('reviews');
-        Route::get('/{user}/favourites', [UserController::class, 'favourites'])->name('favourites');
-        Route::get('/{user}/activities', [UserController::class, 'activities'])->name('activities');
+        
+        // User Contracts
+        Route::get('/{user}/contracts', [UserController::class, 'contracts'])->name('contracts');
+        
+        // User Device Tokens
+        Route::get('/{user}/devices', [UserController::class, 'devices'])->name('devices');
+        
+        // Export Users
+        Route::get('/export/excel', [UserController::class, 'exportExcel'])->name('export.excel');
+        Route::get('/export/pdf', [UserController::class, 'exportPdf'])->name('export.pdf');
+        
+        // Bulk Actions
+        Route::post('/bulk/toggle-status', [UserController::class, 'bulkToggleStatus'])->name('bulk.toggle-status');
+        Route::post('/bulk/delete', [UserController::class, 'bulkDelete'])->name('bulk.delete');
     });
-
-
     // Banner Routes
     Route::prefix('banners')->name('banners.')->group(function () {
         Route::get('/', [BannerController::class, 'index'])->name('index');
@@ -232,12 +243,12 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         Route::get('/{order}/edit', [OrderController::class, 'edit'])->name('edit');
         Route::put('/{order}', [OrderController::class, 'update'])->name('update');
         Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
-Route::get('/{order}/tracking', [OrderController::class, 'tracking'])->name('tracking');
-Route::get('update-payment-status/{order}', [OrderController::class, 'updatePaymentStatus'])->name('update-payment-status');
-Route::get('assign-driver/{order}', [OrderController::class, 'assignDriver'])->name('assign-driver');
-Route::get('accept-offer/{order}', [OrderController::class, 'acceptOffer'])->name('accept-offer');
-Route::get('cancel/{order}', [OrderController::class, 'cancelOrder'])->name('cancel'); 
-Route::post('/{order}/update-status', [OrderController::class, 'updateStatus'])->name('update-status');
+        Route::get('/{order}/tracking', [OrderController::class, 'tracking'])->name('tracking');
+        Route::get('update-payment-status/{order}', [OrderController::class, 'updatePaymentStatus'])->name('update-payment-status');
+        Route::get('assign-driver/{order}', [OrderController::class, 'assignDriver'])->name('assign-driver');
+        Route::get('accept-offer/{order}', [OrderController::class, 'acceptOffer'])->name('accept-offer');
+        Route::get('cancel/{order}', [OrderController::class, 'cancelOrder'])->name('cancel');
+        Route::post('/{order}/update-status', [OrderController::class, 'updateStatus'])->name('update-status');
 
         Route::get('/{order}/print', [OrderController::class, 'print'])->name('print');
         Route::get('/export', [OrderController::class, 'export'])->name('export');
@@ -316,7 +327,37 @@ Route::post('/{order}/update-status', [OrderController::class, 'updateStatus'])-
         Route::delete('/{chat}', [ChatsController::class, 'destroy'])->name('destroy');
     });
 
+    // Drivers Management
+    Route::prefix('drivers')->name('drivers.')->group(function () {
+        Route::post('/{id}/delete-image', [DriverController::class, 'deleteImage'])->name('delete-image');
+        Route::post('/{id}/reset-verification', [DriverController::class, 'resetVerification'])->name('reset-verification');
+        // Resource routes
+        Route::get('/', [DriverController::class, 'index'])->name('index');
+        Route::get('/create', [DriverController::class, 'create'])->name('create');
+        Route::post('/', [DriverController::class, 'store'])->name('store');
+        Route::get('/{id}', [DriverController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [DriverController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [DriverController::class, 'update'])->name('update');
+        Route::delete('/{id}', [DriverController::class, 'destroy'])->name('destroy');
 
+        // Custom routes (must come before resource routes with parameters)
+        Route::get('/stats/quick', [DriverController::class, 'quickStats'])->name('quick-stats');
+        Route::get('/stats/storage-usage', [DriverController::class, 'storageUsage'])->name('storage-usage');
+        Route::get('/stats/recent-activities', [DriverController::class, 'recentActivities'])->name('recent-activities');
+        Route::get('/stats/system-status', [DriverController::class, 'systemStatus'])->name('system-status');
+
+        Route::post('/clear-cache', [DriverController::class, 'clearCache'])->name('clear-cache');
+        Route::post('/toggle-maintenance', [DriverController::class, 'toggleMaintenance'])->name('toggle-maintenance');
+        Route::get('/export', [DriverController::class, 'export'])->name('export');
+
+        // Driver specific actions
+        Route::prefix('{id}')->group(function () {
+            Route::post('/approve', [DriverController::class, 'approve'])->name('approve');
+            Route::post('/reject', [DriverController::class, 'reject'])->name('reject');
+            Route::post('/toggle-status', [DriverController::class, 'toggleStatus'])->name('toggle-status');
+            Route::get('/wallet', [DriverController::class, 'wallet'])->name('wallet');
+        });
+    });
     Route::get('order/statistics', [OrderController::class, 'statistics'])->name('orders.statistics');
 });
 

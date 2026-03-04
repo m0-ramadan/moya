@@ -237,9 +237,10 @@ class DriverOrderController extends Controller
         if($status->name=='delivered' && $order->code_confirmation){
             if($validated['code_confirmation'] != $order->code_confirmation){
                 return $this->errorResponse('كود التأكيد غير صحيح', 400);
-            }else{
-                return $this->errorResponse('كود التأكيد مطلوب لهذه الحالة', 400);
             }
+            // else{
+            //     return $this->errorResponse('كود التأكيد مطلوب لهذه الحالة', 400);
+            // }
         }
 
         // التحقق من تسلسل الحالات

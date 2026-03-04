@@ -69,6 +69,12 @@
                            <div>العملاء</div>
                        </a>
                    </li>
+
+                                      <li class="menu-item ">
+                       <a href="{{ route('admin.drivers.index') }}" class="menu-link">
+                           <div> السواقين </div>
+                       </a>
+                   </li>
                </ul>
            </li>
            <li class="menu-item ">
