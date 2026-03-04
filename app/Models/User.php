@@ -236,6 +236,10 @@ public function wallet()
 {
     return $this->hasOne(\App\Models\Wallet\UserWallet::class);
 }
+public function reviews()
+{
+    return $this->hasMany(OrderRating::class);
+}
     /**
      * Check if user can transact
      */

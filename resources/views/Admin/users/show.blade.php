@@ -471,11 +471,8 @@
                                                 <div class="mb-1" bis_skin_checked="1">
                                                     <span class="badge bg-info">{{ $order->status_label }}</span>
                                                     <span class="ms-2">{{ number_format($order->total_amount, 2) }}
-                                                        ج.م</span>
+                                                       RAS</span>
                                                 </div>
-                                                <small class="text-muted">
-                                                    {{ $order->items->count() }} منتج
-                                                </small>
                                             </div>
                                         </div>
                                     @empty
@@ -487,7 +484,7 @@
                                 </div>
 
                                 <!-- التقييمات الحديثة -->
-                                <div class="info-section" bis_skin_checked="1">
+                                {{-- <div class="info-section" bis_skin_checked="1">
                                     <div class="d-flex justify-content-between align-items-center mb-3"
                                         bis_skin_checked="1">
                                         <h6 class="mb-0"><i class="fas fa-star me-2"></i>التقييمات الحديثة</h6>
@@ -524,7 +521,7 @@
                                             <i class="fas fa-star"></i>
                                             <p>لا توجد تقييمات حديثة</p>
                                         </div>
-                                    @endforelse
+                                    @endforelse --}}
                                 </div>
                             </div>
 
@@ -552,25 +549,13 @@
                                         {{ $user->reviews()->count() }}
                                     </div>
                                     <div class="stats-label" bis_skin_checked="1">إجمالي التقييمات</div>
-                                    <a href="{{ route('admin.users.reviews', $user) }}"
+                                    <a href="#"
                                         class="btn btn-sm btn-outline-info mt-2">
                                         عرض التفاصيل
                                     </a>
                                 </div>
 
-                                <div class="stats-card" bis_skin_checked="1">
-                                    <div class="stats-icon" bis_skin_checked="1">
-                                        <i class="fas fa-heart"></i>
-                                    </div>
-                                    <div class="stats-number" bis_skin_checked="1">
-                                        {{ $user->favouriteProducts()->count() }}
-                                    </div>
-                                    <div class="stats-label" bis_skin_checked="1">المنتجات المفضلة</div>
-                                    <a href="{{ route('admin.users.favourites', $user) }}"
-                                        class="btn btn-sm btn-outline-warning mt-2">
-                                        عرض التفاصيل
-                                    </a>
-                                </div>
+
 
                                 <div class="stats-card" bis_skin_checked="1">
                                     <div class="stats-icon" bis_skin_checked="1">

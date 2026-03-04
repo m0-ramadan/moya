@@ -240,6 +240,25 @@ class DriverController extends Controller
         return response()->json($driver);
     }
 
+    public function details($id)
+    {
+        $driver = Driver::with([
+            'user', 
+            'driverWallet', 
+            'ratings.user', 
+            'reports.reportedBy', 
+            'orders.service', 
+            'orders.waterType', 
+            'orders.location', 
+            'orders.status'
+        ])
+        ->withCount('orders')
+        ->withAvg('ratings', 'rating')
+        ->findOrFail($id);
+
+        return view('Admin.drivers.show', compact('driver'));
+    }
+
     /**
      * Show the form for editing the specified driver.
      */

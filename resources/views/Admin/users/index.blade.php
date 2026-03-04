@@ -1113,7 +1113,7 @@
                                             </button>
                                             
                                             @if($user->driver)
-                                                <a href="{{ route('admin.drivers.show', $user->driver->id) }}" class="btn-action contracts" title="بيانات السائق">
+                                                <a href="{{ route('admin.drivers.details', $user->driver->id) }}" class="btn-action contracts" title="بيانات السائق">
                                                     <i class="fas fa-truck"></i>
                                                 </a>
                                             @endif

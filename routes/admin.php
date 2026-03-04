@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\ContactUsController;
 use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DriverController;
+use App\Http\Controllers\Admin\DriverMapController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\ErrorController;
 use App\Http\Controllers\Admin\FaqController;
@@ -336,6 +337,7 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         Route::get('/create', [DriverController::class, 'create'])->name('create');
         Route::post('/', [DriverController::class, 'store'])->name('store');
         Route::get('/{id}', [DriverController::class, 'show'])->name('show');
+        Route::get('/{id}/details', [DriverController::class, 'details'])->name('details');
         Route::get('/{id}/edit', [DriverController::class, 'edit'])->name('edit');
         Route::put('/{id}', [DriverController::class, 'update'])->name('update');
         Route::delete('/{id}', [DriverController::class, 'destroy'])->name('destroy');
@@ -357,6 +359,14 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
             Route::post('/toggle-status', [DriverController::class, 'toggleStatus'])->name('toggle-status');
             Route::get('/wallet', [DriverController::class, 'wallet'])->name('wallet');
         });
+    });
+      // Driver Map
+    Route::prefix('driver-map')->name('drivers.map.')->group(function () {
+        Route::get('/', [DriverMapController::class, 'index'])->name('index');
+        Route::get('/locations', [DriverMapController::class, 'getLocations'])->name('locations');
+        Route::get('/driver/{id}', [DriverMapController::class, 'getDriverDetails'])->name('details');
+        Route::get('/search', [DriverMapController::class, 'search'])->name('search');
+        Route::get('/filter', [DriverMapController::class, 'filter'])->name('filter');
     });
     Route::get('order/statistics', [OrderController::class, 'statistics'])->name('orders.statistics');
 });

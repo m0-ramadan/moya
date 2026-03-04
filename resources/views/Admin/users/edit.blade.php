@@ -488,20 +488,13 @@
                                     </div>
 
                                     <div class="mb-3" bis_skin_checked="1">
-                                        <a href="{{ route('admin.users.reviews', $user) }}"
+                                        <a href="#"
                                             class="btn btn-outline-info w-100 mb-2">
                                             <i class="fas fa-star me-2"></i>
                                             التقييمات ({{ $user->reviews()->count() }})
                                         </a>
                                     </div>
 
-                                    <div class="mb-3" bis_skin_checked="1">
-                                        <a href="{{ route('admin.users.favourites', $user) }}"
-                                            class="btn btn-outline-warning w-100 mb-2">
-                                            <i class="fas fa-heart me-2"></i>
-                                            المفضلة ({{ $user->favouriteProducts()->count() }})
-                                        </a>
-                                    </div>
                                 </div>
 
                                 <!-- الأزرار -->

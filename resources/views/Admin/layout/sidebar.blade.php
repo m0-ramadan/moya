@@ -70,7 +70,7 @@
                        </a>
                    </li>
 
-                                      <li class="menu-item ">
+                    <li class="menu-item ">
                        <a href="{{ route('admin.drivers.index') }}" class="menu-link">
                            <div> السواقين </div>
                        </a>
@@ -109,6 +109,12 @@
                    <div>الشات</div>
                </a>
            </li>
+           <li class="menu-item">
+    <a href="{{ route('admin.drivers.map.index') }}" class="menu-link">
+        <i class="menu-icon ti ti-map-pin"></i>
+        <div>خريطة السائقين</div>
+    </a>
+</li>
            <li class="menu-item">
                <a href="{{ route('admin.adminChats.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-message-circle"></i>

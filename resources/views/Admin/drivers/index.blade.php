@@ -1272,6 +1272,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                    <a type="button" class="btn btn-primary" href="{{ route('admin.drivers.details', $driver->id) }}"> عرض صفحة التفاصيل </a>
+
                 </div>
             </div>
         </div>
