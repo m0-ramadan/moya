@@ -66,6 +66,7 @@ class OrderController extends Controller
                 'order_status_id' => $statusOrder->id ?? null,
                 'order_date' => $validated['order_date'] ?? null,
                 'notes' => $validated['notes'] ?? null,
+                'code_confirmation' => random_int(100000, 999999),
                 'created_at' => Carbon::now(),
                 'expires_at' => Carbon::now()->addMinutes(env('ORDER_EXPIRATION_MINUTES', 5)),
                 // Add price if needed

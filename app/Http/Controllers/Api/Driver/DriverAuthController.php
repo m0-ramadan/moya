@@ -2,25 +2,26 @@
 
 namespace App\Http\Controllers\Api\Driver;
 
-use App\Models\User;
-use App\Models\Driver;
+use App\DataTransferObjects\PhoneLoginData;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\VerifyOtpRequest;
+use App\Http\Requests\Driver\CompleteProfileRequest;
+use App\Http\Resources\Driver\CountryResource;
+use App\Http\Resources\Driver\DriverResource;
+use App\Http\Resources\Driver\DriverWithRatingResource;
 use App\Models\Country;
+use App\Models\DeviceToken;
+use App\Models\Driver;
+use App\Models\User;
 use App\Models\Vehicle;
-use Illuminate\Http\Request;
 use App\Services\AuthService;
-use App\Traits\UploadFileTrait;
+use App\Services\FirebaseNotificationService;
 use App\Traits\ApiResponseTrait;
+use App\Traits\UploadFileTrait;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
-use App\DataTransferObjects\PhoneLoginData;
-use App\Http\Requests\Auth\VerifyOtpRequest;
-use App\Http\Resources\Driver\DriverResource;
-use App\Services\FirebaseNotificationService;
-use App\Http\Resources\Driver\CountryResource;
-use App\Http\Requests\Driver\CompleteProfileRequest;
-use App\Http\Resources\Driver\DriverWithRatingResource;
 
 class DriverAuthController extends Controller
 {
@@ -71,6 +72,11 @@ class DriverAuthController extends Controller
             $otp = $request->input('otp');
             $drivers = User::where('type', 'driver')->count();
             $res = $this->authService->verifyOtp($fullPhone, $otp);
+                        $deviceToken = DeviceToken::where('session_id', $request->input('session_id'))->first();
+            if ($deviceToken) {
+                $deviceToken->update(['user_id' => $res['user']->id]);
+            }
+
             $user = $res['user'];
             if ($user->type == 'user') {
                 $user->type = 'driver';

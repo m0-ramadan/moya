@@ -216,6 +216,7 @@ class DriverOrderController extends Controller
             'status_id' => 'required', // الحالات المسموحة
             'location_lat' => 'nullable|numeric',
             'location_lng' => 'nullable|numeric',
+            'code_confirmation' => 'nullable|string|max:10',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -231,6 +232,14 @@ class DriverOrderController extends Controller
             ->first();
         if (! $order) {
             return $this->errorResponse('الطلب غير موجود أو لا يخصك', 404);
+        }
+        $status=OrderStatus::find($validated['status_id']);
+        if($status->name=='delivered' && $order->code_confirmation){
+            if($validated['code_confirmation'] != $order->code_confirmation){
+                return $this->errorResponse('كود التأكيد غير صحيح', 400);
+            }else{
+                return $this->errorResponse('كود التأكيد مطلوب لهذه الحالة', 400);
+            }
         }
 
         // التحقق من تسلسل الحالات

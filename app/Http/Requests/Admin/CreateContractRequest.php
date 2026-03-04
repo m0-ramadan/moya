@@ -25,7 +25,7 @@ class CreateContractRequest extends FormRequest
             'delivery_locations.*.saved_location_id' => 'nullable|exists:saved_locations,id',
             'delivery_locations.*.priority' => 'integer|min:1',
             'notes' => 'nullable|string',
-            'phone' => 'required|string|max:20',
+            'phone' => 'nullable|string|max:20',
         ];
     }
 

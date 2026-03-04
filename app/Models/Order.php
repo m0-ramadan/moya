@@ -46,7 +46,7 @@ class Order extends Model
         'order_date',
         'contract_id',
         'payment_gateway',
-        'expires_at',
+        'expires_at','code_confirmation',
     ];
 
     protected $casts = [
