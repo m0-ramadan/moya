@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Models\Order;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DriverMapController extends Controller
 {
@@ -15,68 +16,82 @@ class DriverMapController extends Controller
      */
     public function index(Request $request)
     {
-        // Get all active drivers with their current locations and current orders
-        $drivers = Driver::with(['user', 'currectLocation', 'orders' => function($q) {
-            $q->whereIn('order_status_id', [1, 2, 3]) // pending, accepted, in_progress
-                  ->with('user')
-                  ->latest();
-            }])
-            ->where('status', 'active')
-            ->where('is_active', true)
-            ->whereHas('currectLocation') // فقط السائقين الذين لديهم موقع حالي
-            ->get()
-            ->map(function($driver) {
-                // Get current active order
-                $currentOrder = $driver->orders->first();
-                
-                return [
-                    'id' => $driver->id,
-                    'name' => $driver->user->name,
-                    'phone' => $driver->user->full_phone ?? $driver->user->phone,
-                    'avatar' => $driver->personal_photo ? asset('storage/' . $driver->personal_photo) : null,
-                    'location' => $driver->currectLocation ? [
-                        'lat' => (float) $driver->currectLocation->lat,
-                        'lng' => (float) $driver->currectLocation->lng,
-                        'speed' => $driver->currectLocation->speed,
-                        'heading' => $driver->currectLocation->heading,
-                        'last_updated' => $driver->currectLocation->last_updated_at?->diffForHumans(),
-                    ] : null,
-                    'vehicle' => [
-                        'size' => $driver->vehicle_size,
-                        'plate' => $driver->vehicle_plate_number,
-                        'is_owner' => $driver->is_vehicle_owner,
-                    ],
-                    'stats' => [
-                        'orders_count' => $driver->orders()->count(),
-                        'rating' => $driver->ratings()->avg('rating') ?? 0,
-                        'is_verified' => $driver->is_verified,
-                    ],
-                    'current_order' => $currentOrder ? [
-                        'id' => $currentOrder->id,
-                        'status' => $currentOrder->order_status_id,
-                        'status_text' => $this->getOrderStatusText($currentOrder->order_status_id),
-                        'customer' => $currentOrder->user?->name,
-                        'customer_phone' => $currentOrder->user?->full_phone ?? $currentOrder->user?->phone,
-                        'created_at' => $currentOrder->created_at->diffForHumans(),
-                    ] : null,
-                ];
-            });
+        try {
+            // Get all active drivers with their current locations and current orders
+            $drivers = Driver::with(['user', 'currectLocation', 'orders' => function($q) {
+                    $q->whereIn('order_status_id', [1, 2, 3]) // pending, accepted, in_progress
+                      ->with('user')
+                      ->latest();
+                }])
+                ->where('status', 'active')
+                ->where('is_active', true)
+                ->whereHas('currectLocation') // فقط السائقين الذين لديهم موقع حالي
+                ->get()
+                ->map(function($driver) {
+                    // Get current active order
+                    $currentOrder = $driver->orders->first();
+                    
+                    return [
+                        'id' => $driver->id,
+                        'name' => $driver->user->name ?? 'غير معروف',
+                        'phone' => $driver->user->full_phone ?? $driver->user->phone ?? '',
+                        'avatar' => $driver->personal_photo ? asset('storage/' . $driver->personal_photo) : null,
+                        'location' => $driver->currectLocation ? [
+                            'lat' => (float) $driver->currectLocation->lat,
+                            'lng' => (float) $driver->currectLocation->lng,
+                            'speed' => $driver->currectLocation->speed ?? 0,
+                            'heading' => $driver->currectLocation->heading ?? 0,
+                            'last_updated' => $driver->currectLocation->last_updated_at?->diffForHumans(),
+                        ] : null,
+                        'vehicle' => [
+                            'size' => $driver->vehicle_size,
+                            'plate' => $driver->vehicle_plate_number ?? 'غير محدد',
+                            'is_owner' => $driver->is_vehicle_owner,
+                        ],
+                        'stats' => [
+                            'orders_count' => $driver->orders()->count(),
+                            'rating' => $driver->ratings()->avg('rating') ?? 0,
+                            'is_verified' => $driver->is_verified,
+                        ],
+                        'current_order' => $currentOrder ? [
+                            'id' => $currentOrder->id,
+                            'status' => $currentOrder->order_status_id,
+                            'status_text' => $this->getOrderStatusText($currentOrder->order_status_id),
+                            'customer' => $currentOrder->user?->name ?? 'غير معروف',
+                            'customer_phone' => $currentOrder->user?->full_phone ?? $currentOrder->user?->phone ?? '',
+                            'created_at' => $currentOrder->created_at->diffForHumans(),
+                        ] : null,
+                    ];
+                });
 
-        // Statistics
-        $stats = [
-            'total_active' => Driver::where('status', 'active')->where('is_active', true)->count(),
-            'online_now' => Driver::whereHas('currectLocation', function($q) {
-                $q->where('last_updated_at', '>=', now()->subMinutes(5));
-            })->count(),
-            'on_delivery' => Driver::whereHas('orders', function($q) {
-                $q->whereIn('order_status_id', [2, 3]); // accepted, in_progress
-            })->count(),
-            'available' => Driver::whereDoesntHave('orders', function($q) {
-                $q->whereIn('order_status_id', [1, 2, 3]); // ليس لديه طلب نشط
-            })->whereHas('currectLocation')->count(),
-        ];
+            // Statistics
+            $stats = [
+                'total_active' => Driver::where('status', 'active')->where('is_active', true)->count(),
+                'online_now' => Driver::whereHas('currectLocation', function($q) {
+                    $q->where('last_updated_at', '>=', now()->subMinutes(5));
+                })->count(),
+                'on_delivery' => Driver::whereHas('orders', function($q) {
+                    $q->whereIn('order_status_id', [2, 3]); // accepted, in_progress
+                })->count(),
+                'available' => Driver::whereDoesntHave('orders', function($q) {
+                    $q->whereIn('order_status_id', [1, 2, 3]); // ليس لديه طلب نشط
+                })->whereHas('currectLocation')->count(),
+            ];
 
-        return view('Admin.drivers.map', compact('drivers', 'stats'));
+            return view('Admin.drivers.map', compact('drivers', 'stats'));
+
+        } catch (\Exception $e) {
+            Log::error('Error in driver map index: ' . $e->getMessage());
+            return view('Admin.drivers.map', [
+                'drivers' => [],
+                'stats' => [
+                    'total_active' => 0,
+                    'online_now' => 0,
+                    'on_delivery' => 0,
+                    'available' => 0
+                ]
+            ])->with('error', 'حدث خطأ في تحميل بيانات السائقين');
+        }
     }
 
     /**
@@ -84,49 +99,78 @@ class DriverMapController extends Controller
      */
     public function getLocations(Request $request)
     {
-        $drivers = Driver::with(['user', 'currectLocation', 'orders' => function($q) {
-                $q->whereIn('order_status_id', [1, 2, 3])
-                  ->with('user')
-                  ->latest();
-            }])
-            ->where('status', 'active')
-            ->where('is_active', true)
-            ->whereHas('currectLocation')
-            ->get()
-            ->map(function($driver) {
-                $currentOrder = $driver->orders->first();
-                
-                return [
-                    'id' => $driver->id,
-                    'name' => $driver->user->name,
-                    'avatar' => $driver->personal_photo ? asset('storage/' . $driver->personal_photo) : null,
-                    'location' => $driver->currectLocation ? [
-                        'lat' => (float) $driver->currectLocation->lat,
-                        'lng' => (float) $driver->currectLocation->lng,
-                        'speed' => $driver->currectLocation->speed,
-                        'heading' => $driver->currectLocation->heading,
-                    ] : null,
-                    'vehicle' => [
-                        'plate' => $driver->vehicle_plate_number,
-                    ],
-                    'has_order' => !is_null($currentOrder),
-                    'order_status' => $currentOrder ? $this->getOrderStatusText($currentOrder->order_status_id) : null,
-                    'last_update' => $driver->currectLocation->last_updated_at?->timestamp,
-                ];
-            });
+        try {
+            $drivers = Driver::with(['user', 'currectLocation', 'orders' => function($q) {
+                    $q->whereIn('order_status_id', [1, 2, 3])
+                      ->with('user')
+                      ->latest();
+                }])
+                ->where('status', 'active')
+                ->where('is_active', true)
+                ->whereHas('currectLocation')
+                ->get()
+                ->map(function($driver) {
+                    $currentOrder = $driver->orders->first();
+                    
+                    return [
+                        'id' => $driver->id,
+                        'name' => $driver->user->name ?? 'غير معروف',
+                        'avatar' => $driver->personal_photo ? asset('storage/' . $driver->personal_photo) : null,
+                        'location' => $driver->currectLocation ? [
+                            'lat' => (float) $driver->currectLocation->lat,
+                            'lng' => (float) $driver->currectLocation->lng,
+                            'speed' => $driver->currectLocation->speed ?? 0,
+                            'heading' => $driver->currectLocation->heading ?? 0,
+                        ] : null,
+                        'vehicle' => [
+                            'plate' => $driver->vehicle_plate_number ?? 'غير محدد',
+                        ],
+                        'has_order' => !is_null($currentOrder),
+                        'order_status' => $currentOrder ? $this->getOrderStatusText($currentOrder->order_status_id) : null,
+                        'last_update' => $driver->currectLocation->last_updated_at?->timestamp,
+                    ];
+                });
 
-        return response()->json([
-            'success' => true,
-            'drivers' => $drivers,
-            'stats' => [
-                'online_now' => Driver::whereHas('currectLocation', function($q) {
-                    $q->where('last_updated_at', '>=', now()->subMinutes(5));
-                })->count(),
-                'on_delivery' => Driver::whereHas('orders', function($q) {
-                    $q->whereIn('order_status_id', [2, 3]);
-                })->count(),
-            ]
-        ]);
+            return response()->json([
+                'success' => true,
+                'drivers' => $drivers,
+                'stats' => [
+                    'online_now' => Driver::whereHas('currectLocation', function($q) {
+                        $q->where('last_updated_at', '>=', now()->subMinutes(5));
+                    })->count(),
+                    'on_delivery' => Driver::whereHas('orders', function($q) {
+                        $q->whereIn('order_status_id', [2, 3]);
+                    })->count(),
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in getLocations: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ في تحميل المواقع',
+                'drivers' => [],
+                'stats' => ['online_now' => 0, 'on_delivery' => 0]
+            ], 500);
+        }
+    }
+
+
+
+    /**
+     * Get order status text.
+     */
+    private function getOrderStatusText($statusId)
+    {
+        $statuses = [
+            1 => 'قيد الانتظار',
+            2 => 'تم القبول',
+            3 => 'جاري التوصيل',
+            4 => 'مكتمل',
+            5 => 'ملغي',
+        ];
+
+        return $statuses[$statusId] ?? 'غير معروف';
     }
 
     /**
@@ -212,18 +256,7 @@ class DriverMapController extends Controller
     /**
      * Get order status text.
      */
-    private function getOrderStatusText($statusId)
-    {
-        $statuses = [
-            1 => 'قيد الانتظار',
-            2 => 'تم القبول',
-            3 => 'جاري التوصيل',
-            4 => 'مكتمل',
-            5 => 'ملغي',
-        ];
 
-        return $statuses[$statusId] ?? 'غير معروف';
-    }
 
     /**
      * Search drivers.
