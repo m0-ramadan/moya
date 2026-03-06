@@ -187,9 +187,11 @@ class DriverAuthController extends Controller
                     'errors' => $validator->errors(),
                 ]);
 
+                $firstError = $validator->errors()->first();
+
                 return response()->json([
                     'status' => false,
-                    'message' => 'Validation failed',
+                    'message' => $firstError,
                     'errors' => $validator->errors(),
                 ], 422);
             }
