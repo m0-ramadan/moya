@@ -46,16 +46,16 @@ class DriverController extends Controller
         // Search functionality
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('user', function($q) use ($search) {
+            $query->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('full_phone', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('full_phone', 'like', "%{$search}%");
             })
-            ->orWhere('national_id', 'like', "%{$search}%")
-            ->orWhere('iqama_number', 'like', "%{$search}%")
-            ->orWhere('license_number', 'like', "%{$search}%")
-            ->orWhere('vehicle_plate_number', 'like', "%{$search}%");
+                ->orWhere('national_id', 'like', "%{$search}%")
+                ->orWhere('iqama_number', 'like', "%{$search}%")
+                ->orWhere('license_number', 'like', "%{$search}%")
+                ->orWhere('vehicle_plate_number', 'like', "%{$search}%");
         }
 
         // Statistics for cards
@@ -63,26 +63,26 @@ class DriverController extends Controller
         $activeDrivers = Driver::where('status', 'active')->where('is_active', true)->count();
         $pendingDrivers = Driver::where('is_verified', false)->whereNull('rejection_reason')->count();
         $inactiveDrivers = Driver::where('status', '!=', 'active')->orWhere('is_active', false)->count();
-        
+
         // New this month
         $newThisMonth = Driver::whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->count();
-        
+
         // Available now (with active location in last 5 minutes)
         $availableNow = Driver::where('status', 'active')
             ->where('is_active', true)
-            ->whereHas('currectLocation', function($q) {
+            ->whereHas('currectLocation', function ($q) {
                 $q->where('updated_at', '>=', now()->subMinutes(5));
             })
             ->count();
-        
+
         // Pending this week
         $pendingThisWeek = Driver::where('is_verified', false)
             ->whereNull('rejection_reason')
             ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
             ->count();
-        
+
         // Suspended today
         $suspendedToday = Driver::where('status', 'suspended')
             ->whereDate('updated_at', today())
@@ -118,7 +118,7 @@ class DriverController extends Controller
     {
         // Get users who are not drivers yet
         $users = User::whereDoesntHave('driver')->get();
-        
+
         return view('Admin.drivers.create', compact('users'));
     }
 
@@ -135,18 +135,18 @@ class DriverController extends Controller
             'national_id' => 'required_if:citizenship,saudi|string|unique:drivers,national_id|nullable',
             'iqama_number' => 'required_if:citizenship,resident|string|unique:drivers,iqama_number|nullable',
             'iqama_expiry_date' => 'required_if:citizenship,resident|date|nullable',
-            
+
             // Images
             'personal_photo' => 'nullable|image|max:2048',
             'id_image_front' => 'required|image|max:2048',
             'id_image_back' => 'required|image|max:2048',
-            
+
             // License
             'license_number' => 'required|string|unique:drivers',
             'license_expiry_date' => 'required|date',
             'license_image_front' => 'required|image|max:2048',
             'license_image_back' => 'required|image|max:2048',
-            
+
             // Vehicle
             'vehicle_size' => 'required|in:small,medium,large',
             'is_vehicle_owner' => 'required|boolean',
@@ -166,11 +166,11 @@ class DriverController extends Controller
             DB::beginTransaction();
 
             $driverData = $request->except([
-                'personal_photo', 
-                'id_image_front', 
-                'id_image_back', 
-                'license_image_front', 
-                'license_image_back', 
+                'personal_photo',
+                'id_image_front',
+                'id_image_back',
+                'license_image_front',
+                'license_image_back',
                 'vehicle_registration_image'
             ]);
 
@@ -211,7 +211,6 @@ class DriverController extends Controller
 
             return redirect()->route('admin.drivers.index')
                 ->with('success', 'تم إضافة السائق بنجاح');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -226,16 +225,17 @@ class DriverController extends Controller
     public function show($id)
     {
         $driver = Driver::with([
-            'user', 
-            'driverWallet', 
-            'ratings', 
-            'orders' => function($q) {
+            'user',
+            'driverWallet',
+            'ratings',
+            'country',
+            'orders' => function ($q) {
                 $q->latest()->limit(10);
             }
         ])
-        ->withCount('orders')
-        ->withAvg('ratings', 'rating')
-        ->findOrFail($id);
+            ->withCount('orders')
+            ->withAvg('ratings', 'rating')
+            ->findOrFail($id);
 
         return response()->json($driver);
     }
@@ -243,18 +243,18 @@ class DriverController extends Controller
     public function details($id)
     {
         $driver = Driver::with([
-            'user', 
-            'driverWallet', 
-            'ratings.user', 
-            'reports.reportedBy', 
-            'orders.service', 
-            'orders.waterType', 
-            'orders.location', 
+            'user',
+            'driverWallet',
+            'ratings.user',
+            'reports.reportedBy',
+            'orders.service',
+            'orders.waterType',
+            'orders.location',
             'orders.status'
         ])
-        ->withCount('orders')
-        ->withAvg('ratings', 'rating')
-        ->findOrFail($id);
+            ->withCount('orders')
+            ->withAvg('ratings', 'rating')
+            ->findOrFail($id);
 
         return view('Admin.drivers.show', compact('driver'));
     }
@@ -266,7 +266,7 @@ class DriverController extends Controller
     {
         $driver = Driver::with('user')->findOrFail($id);
         $users = User::whereDoesntHave('driver')->orWhere('id', $driver->user_id)->get();
-        
+
         return view('Admin.drivers.edit', compact('driver', 'users'));
     }
 
@@ -285,18 +285,18 @@ class DriverController extends Controller
             'national_id' => 'required_if:citizenship,saudi|string|unique:drivers,national_id,' . $id . '|nullable',
             'iqama_number' => 'required_if:citizenship,resident|string|unique:drivers,iqama_number,' . $id . '|nullable',
             'iqama_expiry_date' => 'required_if:citizenship,resident|date|nullable',
-            
+
             // Images
             'personal_photo' => 'nullable|image|max:2048',
             'id_image_front' => 'nullable|image|max:2048',
             'id_image_back' => 'nullable|image|max:2048',
-            
+
             // License
             'license_number' => 'required|string|unique:drivers,license_number,' . $id,
             'license_expiry_date' => 'required|date',
             'license_image_front' => 'nullable|image|max:2048',
             'license_image_back' => 'nullable|image|max:2048',
-            
+
             // Vehicle
             'vehicle_size' => 'required|in:small,medium,large',
             'is_vehicle_owner' => 'required|boolean',
@@ -316,11 +316,11 @@ class DriverController extends Controller
             DB::beginTransaction();
 
             $driverData = $request->except([
-                'personal_photo', 
-                'id_image_front', 
-                'id_image_back', 
-                'license_image_front', 
-                'license_image_back', 
+                'personal_photo',
+                'id_image_front',
+                'id_image_back',
+                'license_image_front',
+                'license_image_back',
                 'vehicle_registration_image'
             ]);
 
@@ -375,7 +375,6 @@ class DriverController extends Controller
 
             return redirect()->route('admin.drivers.index')
                 ->with('success', 'تم تحديث بيانات السائق بنجاح');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -391,7 +390,7 @@ class DriverController extends Controller
     {
         try {
             $driver = Driver::findOrFail($id);
-            
+
             // Check if driver has orders
             if ($driver->orders()->count() > 0) {
                 return response()->json([
@@ -427,7 +426,6 @@ class DriverController extends Controller
                 'success' => true,
                 'message' => 'تم حذف السائق بنجاح'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -444,12 +442,12 @@ class DriverController extends Controller
     {
         try {
             $driver = Driver::findOrFail($id);
-            
+
             $driver->update([
                 'is_verified' => true,
                 'verified_at' => now(),
                 'rejection_reason' => null,
-                'status' => 'active'
+                'is_active' => true
             ]);
 
             // TODO: Send notification to driver
@@ -458,7 +456,6 @@ class DriverController extends Controller
                 'success' => true,
                 'message' => 'تم توثيق السائق بنجاح'
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -485,12 +482,12 @@ class DriverController extends Controller
 
         try {
             $driver = Driver::findOrFail($id);
-            
+
             $driver->update([
                 'is_verified' => false,
                 'verified_at' => null,
                 'rejection_reason' => $request->rejection_reason,
-                'status' => 'inactive'
+                'is_active' => false
             ]);
 
             // TODO: Send notification to driver with rejection reason
@@ -499,7 +496,6 @@ class DriverController extends Controller
                 'success' => true,
                 'message' => 'تم رفض طلب السائق'
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -526,10 +522,11 @@ class DriverController extends Controller
 
         try {
             $driver = Driver::findOrFail($id);
-            
+
             $driver->update([
-                'status' => $request->status,
-                'is_active' => $request->status === 'active'
+                // 'status' => $request->status,
+
+                'is_active' => $request->status == 'active' ? 1 : 0
             ]);
 
             $statusText = [
@@ -542,7 +539,6 @@ class DriverController extends Controller
                 'success' => true,
                 'message' => 'تم ' . $statusText[$request->status] . ' السائق بنجاح'
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -558,7 +554,7 @@ class DriverController extends Controller
     {
         try {
             $driver = Driver::with('driverWallet')->findOrFail($id);
-            
+
             // Get wallet transactions
             $transactions = $driver->ledgerEntries()
                 ->latest()
@@ -573,7 +569,7 @@ class DriverController extends Controller
                     ->where('type', 'credit')
                     ->where('status', 'completed')
                     ->sum('amount'),
-                'transactions' => $transactions->map(function($transaction) {
+                'transactions' => $transactions->map(function ($transaction) {
                     return [
                         'id' => $transaction->id,
                         'amount' => $transaction->amount,
@@ -586,7 +582,6 @@ class DriverController extends Controller
             ];
 
             return response()->json($walletData);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -612,7 +607,7 @@ class DriverController extends Controller
         // Calculate storage used by driver documents
         $totalSize = 0;
         $drivers = Driver::all();
-        
+
         foreach ($drivers as $driver) {
             $files = [
                 $driver->personal_photo,
@@ -622,7 +617,7 @@ class DriverController extends Controller
                 $driver->license_image_back,
                 $driver->vehicle_registration_image
             ];
-            
+
             foreach ($files as $file) {
                 if ($file && Storage::disk('public')->exists($file)) {
                     $totalSize += Storage::disk('public')->size($file);
@@ -668,7 +663,7 @@ class DriverController extends Controller
             ->latest()
             ->limit(10)
             ->get()
-            ->map(function($driver) {
+            ->map(function ($driver) {
                 return [
                     'id' => $driver->id,
                     'type' => $driver->is_verified ? 'success' : 'info',
@@ -723,7 +718,6 @@ class DriverController extends Controller
                 'success' => true,
                 'message' => 'تم مسح الكاش بنجاح'
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -763,7 +757,6 @@ class DriverController extends Controller
                 'success' => true,
                 'message' => $message
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -798,69 +791,67 @@ class DriverController extends Controller
         return !empty($config['username']) && !empty($config['password']);
     }
     /**
- * Delete driver image
- */
-public function deleteImage(Request $request, $id)
-{
-    $validator = Validator::make($request->all(), [
-        'field' => 'required|in:personal_photo,id_image_front,id_image_back,license_image_front,license_image_back,vehicle_registration_image'
-    ]);
+     * Delete driver image
+     */
+    public function deleteImage(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'field' => 'required|in:personal_photo,id_image_front,id_image_back,license_image_front,license_image_back,vehicle_registration_image'
+        ]);
 
-    if ($validator->fails()) {
-        return response()->json([
-            'success' => false,
-            'errors' => $validator->errors()
-        ], 422);
-    }
-
-    try {
-        $driver = Driver::findOrFail($id);
-        $field = $request->field;
-
-        if ($driver->$field) {
-            Storage::disk('public')->delete($driver->$field);
-            $driver->$field = null;
-            $driver->save();
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'تم حذف الصورة بنجاح'
-        ]);
+        try {
+            $driver = Driver::findOrFail($id);
+            $field = $request->field;
 
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'حدث خطأ أثناء حذف الصورة: ' . $e->getMessage()
-        ], 500);
+            if ($driver->$field) {
+                Storage::disk('public')->delete($driver->$field);
+                $driver->$field = null;
+                $driver->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم حذف الصورة بنجاح'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء حذف الصورة: ' . $e->getMessage()
+            ], 500);
+        }
     }
-}
 
-/**
- * Reset driver verification status
- */
-public function resetVerification($id)
-{
-    try {
-        $driver = Driver::findOrFail($id);
-        
-        $driver->update([
-            'is_verified' => false,
-            'verified_at' => null,
-            'rejection_reason' => null,
-            'status' => 'pending'
-        ]);
+    /**
+     * Reset driver verification status
+     */
+    public function resetVerification($id)
+    {
+        try {
+            $driver = Driver::findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'تم إعادة تعيين حالة التحقق بنجاح'
-        ]);
+            $driver->update([
+                'is_verified' => false,
+                'verified_at' => null,
+                'rejection_reason' => null,
+                'is_active' => false
+            ]);
 
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'حدث خطأ أثناء إعادة التعيين: ' . $e->getMessage()
-        ], 500);
+            return response()->json([
+                'success' => true,
+                'message' => 'تم إعادة تعيين حالة التحقق بنجاح'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء إعادة التعيين: ' . $e->getMessage()
+            ], 500);
+        }
     }
-}
 }

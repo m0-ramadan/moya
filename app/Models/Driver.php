@@ -57,13 +57,14 @@ class Driver extends Model
         'status',
         'is_active',
     ];
-protected $casts = [
-    'license_expiry_date' => 'date',   
-    'date_of_birth' => 'date',
-];
+    protected $casts = [
+        'license_expiry_date' => 'date',
+        'date_of_birth' => 'date',
+        'verified_at' => 'date',
+    ];
     public function user()
     {
-        return $this->belongsTo(User::class,'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     // public function vehicle()
@@ -76,6 +77,10 @@ protected $casts = [
         return $this->hasMany(DriverRating::class);
     }
 
+    public function country()
+    {
+        return $this->belongsTo(Country::class, 'country_id');
+    }
     public function reports()
     {
         return $this->hasMany(DriverReport::class);
@@ -201,10 +206,11 @@ protected $casts = [
     }
 
     public function latestLocation()
-{
-    return $this->hasOne(DriverLocation::class)->latestOfMany();
-}
-public function currectLocation(){
-    return $this->hasOne(DriverCurrentLocation::class);
-}
+    {
+        return $this->hasOne(DriverLocation::class)->latestOfMany();
+    }
+    public function currectLocation()
+    {
+        return $this->hasOne(DriverCurrentLocation::class);
+    }
 }

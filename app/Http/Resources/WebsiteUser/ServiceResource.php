@@ -17,8 +17,7 @@ class ServiceResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            //'image_url' => $this->image ? asset('storage/' . $this->image) : null,
-            'image_url' => 'https://i.ibb.co/HfQygsxR/Whats-App-Image-2025-12-25-at-12-09-56-AM.jpg',
+            'image_url' => $this->image ? asset('storage/' . $this->image) : 'https://i.ibb.co/HfQygsxR/Whats-App-Image-2025-12-25-at-12-09-56-AM.jpg',
             'is_active' => $this->is_active,
             'start_price' => $this->start_price,
             'title' => $this->title,

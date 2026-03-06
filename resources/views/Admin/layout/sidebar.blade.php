@@ -70,7 +70,7 @@
                        </a>
                    </li>
 
-                    <li class="menu-item ">
+                   <li class="menu-item ">
                        <a href="{{ route('admin.drivers.index') }}" class="menu-link">
                            <div> السواقين </div>
                        </a>
@@ -110,11 +110,11 @@
                </a>
            </li>
            <li class="menu-item">
-    <a href="{{ route('admin.drivers.map.index') }}" class="menu-link">
-        <i class="menu-icon ti ti-map-pin"></i>
-        <div>خريطة السائقين</div>
-    </a>
-</li>
+               <a href="{{ route('admin.drivers.map.index') }}" class="menu-link">
+                   <i class="menu-icon ti ti-map-pin"></i>
+                   <div>خريطة السائقين</div>
+               </a>
+           </li>
            <li class="menu-item">
                <a href="{{ route('admin.adminChats.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-message-circle"></i>
@@ -122,7 +122,7 @@
                </a>
            </li>
 
-           <li class="menu-item ">
+           {{-- <li class="menu-item ">
                <a href="{{ route('admin.payment-methods.index') }}" class="menu-link">
                    <i class="menua-icon ti ti-credit-card"></i>
                    <div>طرق الدفع</div>
@@ -134,12 +134,12 @@
                    <i class="menua-icon ti ti-shopping-bag"></i>
                    <div>المنتجات</div>
                </a>
-           </li>
+           </li> --}}
 
            <li class="menu-item">
-               <a href="{{ route('admin.categories.index') }}" class="menu-link">
+               <a href="{{ route('admin.services.index') }}" class="menu-link">
                    <i class="menua-icon ti ti-category"></i>
-                   <div>الأقسام</div>
+                   <div>الخدمات</div>
                </a>
            </li>
 

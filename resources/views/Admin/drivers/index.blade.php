@@ -874,13 +874,14 @@
                         <i class="fas fa-truck"></i>
                     </div>
                     <div class="welcome-content">
-                        <h3>   إدارة السائقين</h3>
+                        <h3> إدارة السائقين</h3>
                         <p>من هنا يمكنك إدارة جميع السائقين المسجلين في النظام، وعرض بياناتهم وتفاصيلهم</p>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-8">
-                        <p class="mb-0">يمكنك متابعة طلبات التسجيل، التحقق من الوثائق، وتفعيل أو تعطيل حسابات السائقين بكل سهولة.</p>
+                        <p class="mb-0">يمكنك متابعة طلبات التسجيل، التحقق من الوثائق، وتفعيل أو تعطيل حسابات السائقين بكل
+                            سهولة.</p>
                     </div>
                     <div class="col-md-4 text-end">
                         <div class="mt-3">
@@ -984,7 +985,8 @@
                         <select name="citizenship" class="filter-select">
                             <option value="">الكل</option>
                             <option value="saudi" {{ request('citizenship') == 'saudi' ? 'selected' : '' }}>سعودي</option>
-                            <option value="resident" {{ request('citizenship') == 'resident' ? 'selected' : '' }}>مقيم</option>
+                            <option value="resident" {{ request('citizenship') == 'resident' ? 'selected' : '' }}>مقيم
+                            </option>
                         </select>
                     </div>
 
@@ -1002,8 +1004,10 @@
                         <select name="status" class="filter-select">
                             <option value="">الكل</option>
                             <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>نشط</option>
-                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>غير نشط</option>
-                            <option value="suspended" {{ request('status') == 'suspended' ? 'selected' : '' }}>موقوف</option>
+                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>غير نشط
+                            </option>
+                            <option value="suspended" {{ request('status') == 'suspended' ? 'selected' : '' }}>موقوف
+                            </option>
                         </select>
                     </div>
 
@@ -1011,9 +1015,12 @@
                         <label class="filter-label">حجم المركبة</label>
                         <select name="vehicle_size" class="filter-select">
                             <option value="">الكل</option>
-                            <option value="small" {{ request('vehicle_size') == 'small' ? 'selected' : '' }}>صغيرة</option>
-                            <option value="medium" {{ request('vehicle_size') == 'medium' ? 'selected' : '' }}>متوسطة</option>
-                            <option value="large" {{ request('vehicle_size') == 'large' ? 'selected' : '' }}>كبيرة</option>
+                            <option value="small" {{ request('vehicle_size') == 'small' ? 'selected' : '' }}>صغيرة
+                            </option>
+                            <option value="medium" {{ request('vehicle_size') == 'medium' ? 'selected' : '' }}>متوسطة
+                            </option>
+                            <option value="large" {{ request('vehicle_size') == 'large' ? 'selected' : '' }}>كبيرة
+                            </option>
                         </select>
                     </div>
 
@@ -1021,8 +1028,10 @@
                         <label class="filter-label">ملكية المركبة</label>
                         <select name="is_vehicle_owner" class="filter-select">
                             <option value="">الكل</option>
-                            <option value="1" {{ request('is_vehicle_owner') == '1' ? 'selected' : '' }}>مالك</option>
-                            <option value="0" {{ request('is_vehicle_owner') == '0' ? 'selected' : '' }}>غير مالك</option>
+                            <option value="1" {{ request('is_vehicle_owner') == '1' ? 'selected' : '' }}>مالك
+                            </option>
+                            <option value="0" {{ request('is_vehicle_owner') == '0' ? 'selected' : '' }}>غير مالك
+                            </option>
                         </select>
                     </div>
 
@@ -1052,7 +1061,8 @@
 
                     <div class="table-actions">
                         <div class="search-box">
-                            <input type="text" id="searchInput" placeholder="بحث عن سائق..." value="{{ request('search') }}">
+                            <input type="text" id="searchInput" placeholder="بحث عن سائق..."
+                                value="{{ request('search') }}">
                             <i class="fas fa-search"></i>
                         </div>
                         <a href="{{ route('admin.drivers.create') }}" class="btn-add">
@@ -1081,8 +1091,9 @@
                                     <td>
                                         <div class="driver-info">
                                             <div class="driver-avatar">
-                                                @if($driver->personal_photo)
-                                                    <img src="{{ asset('storage/' . $driver->personal_photo) }}" alt="{{ $driver->user->name }}">
+                                                @if ($driver->personal_photo)
+                                                    <img src="{{ asset('storage/' . $driver->personal_photo) }}"
+                                                        alt="{{ $driver->user->name }}">
                                                 @else
                                                     {{ substr($driver->user->name, 0, 1) }}
                                                 @endif
@@ -1106,46 +1117,58 @@
                                     </td>
 
                                     <td>
-                                        <span class="badge-citizenship {{ $driver->citizenship == 'saudi' ? 'saudi' : 'resident' }}">
-                                            <i class="fas {{ $driver->citizenship == 'saudi' ? 'fa-flag' : 'fa-passport' }} me-1"></i>
+                                        <span
+                                            class="badge-citizenship {{ $driver->citizenship == 'saudi' ? 'saudi' : 'resident' }}">
+                                            <i
+                                                class="fas {{ $driver->citizenship == 'saudi' ? 'fa-flag' : 'fa-passport' }} me-1"></i>
                                             {{ $driver->citizenship == 'saudi' ? 'سعودي' : 'مقيم' }}
                                         </span>
-                                        @if($driver->citizenship == 'resident')
+                                        @if ($driver->citizenship == 'resident')
                                             <div class="mt-2 small">
                                                 <i class="fas fa-calendar-alt"></i>
-                                                انتهاء الإقامة: {{ $driver->iqama_expiry_date ? $driver->iqama_expiry_date->format('Y-m-d') : 'غير محدد' }}
+                                                انتهاء الإقامة:
+                                                {{ $driver->iqama_expiry_date ? $driver->iqama_expiry_date->format('Y-m-d') : 'غير محدد' }}
                                             </div>
                                         @endif
                                     </td>
 
                                     <td>
                                         <div class="doc-icons">
-                                            @if($driver->id_image_front || $driver->id_image_back)
-                                                <div class="doc-icon id" onclick="viewDocument('{{ $driver->id_image_front }}', 'id-front')" title="عرض الهوية">
+                                            @if ($driver->id_image_front || $driver->id_image_back)
+                                                <div class="doc-icon id"
+                                                    onclick="viewDocument('{{ $driver->id_image_front }}', 'id-front')"
+                                                    title="عرض الهوية">
                                                     <i class="fas fa-id-card"></i>
                                                 </div>
                                             @endif
-                                            
-                                            @if($driver->license_image_front || $driver->license_image_back)
-                                                <div class="doc-icon license" onclick="viewDocument('{{ $driver->license_image_front }}', 'license-front')" title="عرض الرخصة">
+
+                                            @if ($driver->license_image_front || $driver->license_image_back)
+                                                <div class="doc-icon license"
+                                                    onclick="viewDocument('{{ $driver->license_image_front }}', 'license-front')"
+                                                    title="عرض الرخصة">
                                                     <i class="fas fa-id-card"></i>
                                                 </div>
                                             @endif
-                                            
-                                            @if($driver->vehicle_registration_image)
-                                                <div class="doc-icon vehicle" onclick="viewDocument('{{ $driver->vehicle_registration_image }}', 'vehicle-reg')" title="عرض رخصة السير">
+
+                                            @if ($driver->vehicle_registration_image)
+                                                <div class="doc-icon vehicle"
+                                                    onclick="viewDocument('{{ $driver->vehicle_registration_image }}', 'vehicle-reg')"
+                                                    title="عرض رخصة السير">
                                                     <i class="fas fa-file-alt"></i>
                                                 </div>
                                             @endif
-                                            
-                                            @if($driver->personal_photo)
-                                                <div class="doc-icon photo" onclick="viewDocument('{{ $driver->personal_photo }}', 'personal')" title="عرض الصورة الشخصية">
+
+                                            @if ($driver->personal_photo)
+                                                <div class="doc-icon photo"
+                                                    onclick="viewDocument('{{ $driver->personal_photo }}', 'personal')"
+                                                    title="عرض الصورة الشخصية">
                                                     <i class="fas fa-user"></i>
                                                 </div>
                                             @endif
                                         </div>
                                         <div class="mt-2 small">
-                                            <span class="badge {{ $driver->license_expiry_date && $driver->license_expiry_date?->isPast() ? 'bg-danger' : 'bg-success' }}">
+                                            <span
+                                                class="badge {{ $driver->license_expiry_date && $driver->license_expiry_date?->isPast() ? 'bg-danger' : 'bg-success' }}">
                                                 <i class="fas fa-id-card"></i>
                                                 رخصة: {{ $driver->license_number ?? 'غير محدد' }}
                                             </span>
@@ -1170,15 +1193,18 @@
 
                                     <td>
                                         <div class="mb-2">
-                                            <span class="badge-verification 
+                                            <span
+                                                class="badge-verification 
                                                 {{ $driver->is_verified ? 'verified' : ($driver->rejection_reason ? 'rejected' : 'pending') }}">
-                                                <i class="fas {{ $driver->is_verified ? 'fa-check-circle' : ($driver->rejection_reason ? 'fa-times-circle' : 'fa-clock') }}"></i>
+                                                <i
+                                                    class="fas {{ $driver->is_verified ? 'fa-check-circle' : ($driver->rejection_reason ? 'fa-times-circle' : 'fa-clock') }}"></i>
                                                 {{ $driver->is_verified ? 'موثق' : ($driver->rejection_reason ? 'مرفوض' : 'قيد المراجعة') }}
                                             </span>
                                         </div>
                                         <div>
                                             <span class="badge-status {{ $driver->status }}">
-                                                <i class="fas {{ $driver->status == 'active' ? 'fa-circle' : ($driver->status == 'suspended' ? 'fa-ban' : 'fa-circle') }}"></i>
+                                                <i
+                                                    class="fas {{ $driver->status == 'active' ? 'fa-circle' : ($driver->status == 'suspended' ? 'fa-ban' : 'fa-circle') }}"></i>
                                                 {{ $driver->status == 'active' ? 'نشط' : ($driver->status == 'suspended' ? 'موقوف' : 'غير نشط') }}
                                             </span>
                                         </div>
@@ -1195,31 +1221,39 @@
 
                                     <td>
                                         <div class="action-buttons">
-                                            <button class="btn-action view" onclick="viewDriver({{ $driver->id }})" title="عرض التفاصيل">
+                                            <button class="btn-action view" onclick="viewDriver({{ $driver->id }})"
+                                                title="عرض التفاصيل">
                                                 <i class="fas fa-eye"></i>
                                             </button>
-                                            
-                                            <a href="{{ route('admin.drivers.edit', $driver->id) }}" class="btn-action edit" title="تعديل">
+
+                                            <a href="{{ route('admin.drivers.edit', $driver->id) }}"
+                                                class="btn-action edit" title="تعديل">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            
-                                            @if(!$driver->is_verified && !$driver->rejection_reason)
-                                                <button class="btn-action approve" onclick="approveDriver({{ $driver->id }})" title="توثيق السائق">
+
+                                            @if (!$driver->is_verified && !$driver->rejection_reason)
+                                                <button class="btn-action approve"
+                                                    onclick="approveDriver({{ $driver->id }})" title="توثيق السائق">
                                                     <i class="fas fa-check"></i>
                                                 </button>
-                                                
-                                                <button class="btn-action reject" onclick="rejectDriver({{ $driver->id }})" title="رفض الطلب">
+
+                                                <button class="btn-action reject"
+                                                    onclick="rejectDriver({{ $driver->id }})" title="رفض الطلب">
                                                     <i class="fas fa-times"></i>
                                                 </button>
                                             @endif
-                                            
-                                            <button class="btn-action wallet" onclick="viewWallet({{ $driver->id }})" title="المحفظة">
+
+                                            <button class="btn-action wallet" onclick="viewWallet({{ $driver->id }})"
+                                                title="المحفظة">
                                                 <i class="fas fa-wallet"></i>
                                             </button>
-                                            
-                                            <button class="btn-action toggle" onclick="toggleStatus({{ $driver->id }}, '{{ $driver->status }}')" title="تغيير الحالة">
-                                                <i class="fas {{ $driver->status == 'active' ? 'fa-pause' : 'fa-play' }}"></i>
-                                            </button>
+
+                                            {{-- <button class="btn-action toggle"
+                                                onclick="toggleStatus({{ $driver->id }}, '{{ $driver->status }}')"
+                                                title="تغيير الحالة">
+                                                <i
+                                                    class="fas {{ $driver->status == 'active' ? 'fa-pause' : 'fa-play' }}"></i>
+                                            </button> --}}
                                         </div>
                                     </td>
                                 </tr>
@@ -1231,8 +1265,10 @@
                                                 <i class="fas fa-users-slash"></i>
                                             </div>
                                             <h5 class="empty-title">لا يوجد سائقين</h5>
-                                            <p class="empty-description">لم يتم إضافة أي سائقين حتى الآن. يمكنك إضافة أول سائق الآن.</p>
-                                            <a href="{{ route('admin.drivers.create') }}" class="btn-add" style="display: inline-flex;">
+                                            <p class="empty-description">لم يتم إضافة أي سائقين حتى الآن. يمكنك إضافة أول
+                                                سائق الآن.</p>
+                                            <a href="{{ route('admin.drivers.create') }}" class="btn-add"
+                                                style="display: inline-flex;">
                                                 <i class="fas fa-plus"></i>
                                                 <span>إضافة سائق جديد</span>
                                             </a>
@@ -1245,7 +1281,7 @@
                 </div>
 
                 <!-- Pagination -->
-                @if(isset($drivers) && $drivers->hasPages())
+                @if (isset($drivers) && $drivers->hasPages())
                     <div class="pagination-info">
                         <div class="pagination-details">
                             عرض {{ $drivers->firstItem() }} - {{ $drivers->lastItem() }} من {{ $drivers->total() }} سائق
@@ -1272,7 +1308,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
-                    <a type="button" class="btn btn-primary" href="{{ route('admin.drivers.details', $driver->id) }}"> عرض صفحة التفاصيل </a>
+                    <a type="button" class="btn btn-primary" href="{{ route('admin.drivers.details', $driver->id) }}">
+                        عرض صفحة التفاصيل </a>
 
                 </div>
             </div>
@@ -1313,7 +1350,7 @@
             $('#searchInput').on('keyup', function() {
                 clearTimeout(searchTimer);
                 const searchValue = $(this).val();
-                
+
                 searchTimer = setTimeout(() => {
                     performSearch(searchValue);
                 }, 500);
@@ -1346,7 +1383,7 @@
                 },
                 success: function(response) {
                     Swal.close();
-                    
+
                     let content = `
                         <div class="driver-info-grid">
                             <div class="info-section">
@@ -1370,21 +1407,21 @@
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">الجنسية:</span>
-                                    <span class="info-value">${response.citizenship == 'saudi' ? 'سعودي' : 'مقيم'}</span>
+                                    <span class="info-value">${response.citizenship == 'saudi' ? 'سعودي' : response.country.name_ar}</span>
                                 </div>
                                 ${response.citizenship == 'saudi' ? 
                                     `<div class="info-row">
-                                        <span class="info-label">الهوية:</span>
-                                        <span class="info-value">${response.national_id}</span>
-                                    </div>` : 
+                                                    <span class="info-label">الهوية:</span>
+                                                    <span class="info-value">${response.national_id}</span>
+                                                </div>` : 
                                     `<div class="info-row">
-                                        <span class="info-label">رقم الإقامة:</span>
-                                        <span class="info-value">${response.iqama_number}</span>
-                                    </div>
-                                    <div class="info-row">
-                                        <span class="info-label">انتهاء الإقامة:</span>
-                                        <span class="info-value">${response.iqama_expiry_date}</span>
-                                    </div>`
+                                                    <span class="info-label">رقم الإقامة:</span>
+                                                    <span class="info-value">${response.iqama_number}</span>
+                                                </div>
+                                                <div class="info-row">
+                                                    <span class="info-label">انتهاء الإقامة:</span>
+                                                    <span class="info-value">${response.iqama_expiry_date}</span>
+                                                </div>`
                                 }
                                 <div class="info-row">
                                     <span class="info-label">تاريخ الميلاد:</span>
@@ -1448,64 +1485,64 @@
                                 
                                 <div class="documents-grid">
                                     ${response.personal_photo ? `
-                                        <div class="document-card" onclick="viewDocument('${response.personal_photo}', 'personal')">
-                                            <div class="document-preview">
-                                                <img src="/storage/${response.personal_photo}" alt="Personal Photo">
-                                            </div>
-                                            <div class="document-name">الصورة الشخصية</div>
-                                            <div class="document-type">صورة شخصية</div>
-                                        </div>
-                                    ` : ''}
+                                                    <div class="document-card" onclick="viewDocument('${response.personal_photo}', 'personal')">
+                                                        <div class="document-preview">
+                                                            <img src="/storage/${response.personal_photo}" alt="Personal Photo">
+                                                        </div>
+                                                        <div class="document-name">الصورة الشخصية</div>
+                                                        <div class="document-type">صورة شخصية</div>
+                                                    </div>
+                                                ` : ''}
                                     
                                     ${response.id_image_front ? `
-                                        <div class="document-card" onclick="viewDocument('${response.id_image_front}', 'id-front')">
-                                            <div class="document-preview">
-                                                <img src="/storage/${response.id_image_front}" alt="ID Front">
-                                            </div>
-                                            <div class="document-name">الهوية - وجه</div>
-                                            <div class="document-type">${response.citizenship == 'saudi' ? 'هوية وطنية' : 'إقامة'}</div>
-                                        </div>
-                                    ` : ''}
+                                                    <div class="document-card" onclick="viewDocument('${response.id_image_front}', 'id-front')">
+                                                        <div class="document-preview">
+                                                            <img src="/storage/${response.id_image_front}" alt="ID Front">
+                                                        </div>
+                                                        <div class="document-name">الهوية - وجه</div>
+                                                        <div class="document-type">${response.citizenship == 'saudi' ? 'هوية وطنية' : 'إقامة'}</div>
+                                                    </div>
+                                                ` : ''}
                                     
                                     ${response.id_image_back ? `
-                                        <div class="document-card" onclick="viewDocument('${response.id_image_back}', 'id-back')">
-                                            <div class="document-preview">
-                                                <img src="/storage/${response.id_image_back}" alt="ID Back">
-                                            </div>
-                                            <div class="document-name">الهوية - ظهر</div>
-                                            <div class="document-type">${response.citizenship == 'saudi' ? 'هوية وطنية' : 'إقامة'}</div>
-                                        </div>
-                                    ` : ''}
+                                                    <div class="document-card" onclick="viewDocument('${response.id_image_back}', 'id-back')">
+                                                        <div class="document-preview">
+                                                            <img src="/storage/${response.id_image_back}" alt="ID Back">
+                                                        </div>
+                                                        <div class="document-name">الهوية - ظهر</div>
+                                                        <div class="document-type">${response.citizenship == 'saudi' ? 'هوية وطنية' : 'إقامة'}</div>
+                                                    </div>
+                                                ` : ''}
                                     
                                     ${response.license_image_front ? `
-                                        <div class="document-card" onclick="viewDocument('${response.license_image_front}', 'license-front')">
-                                            <div class="document-preview">
-                                                <img src="/storage/${response.license_image_front}" alt="License Front">
-                                            </div>
-                                            <div class="document-name">رخصة القيادة - وجه</div>
-                                            <div class="document-type">رخصة قيادة</div>
-                                        </div>
-                                    ` : ''}
+                                                    <div class="document-card" onclick="viewDocument('${response.license_image_front}', 'license-front')">
+                                                        <div class="document-preview">
+                                                            <img src="/storage/${response.license_image_front}" alt="License Front">
+                                                        </div>
+                                                        <div class="document-name">رخصة القيادة - وجه</div>
+                                                        <div class="document-type">رخصة قيادة</div>
+                                                    </div>
+                                                ` : ''}
                                     
                                     ${response.license_image_back ? `
-                                        <div class="document-card" onclick="viewDocument('${response.license_image_back}', 'license-back')">
-                                            <div class="document-preview">
-                                                <img src="/storage/${response.license_image_back}" alt="License Back">
-                                            </div>
-                                            <div class="document-name">رخصة القيادة - ظهر</div>
-                                            <div class="document-type">رخصة قيادة</div>
-                                        </div>
-                                    ` : ''}
+                                                    <div class="document-card" onclick="viewDocument('${response.license_image_back}', 'license-back')">
+                                                        <div class="document-preview">
+                                                            <img src="/storage/${response.license_image_back}" alt="License Back">
+                                                        </div>
+                                                        <div class="document-name">رخصة القيادة - ظهر</div>
+                                                        <div class="document-type">رخصة قيادة</div>
+                                                    </div>
+                                                ` : ''}
                                     
                                     ${response.vehicle_registration_image ? `
-                                        <div class="document-card" onclick="viewDocument('${response.vehicle_registration_image}', 'vehicle-reg')">
-                                            <div class="document-preview">
-                                                <img src="/storage/${response.vehicle_registration_image}" alt="Vehicle Registration">
-                                            </div>
-                                            <div class="document-name">رخصة السير</div>
-                                            <div class="document-type">استمارة مركبة</div>
-                                        </div>
-                                    ` : ''}
+                                                    <div class="document-card" onclick="viewDocument('${response.vehicle_registration_image}', 'vehicle-reg')">
+                                                        <div class="document-preview">
+                                                            <img src="/storage/${response.vehicle_registration_image}" alt="Vehicle Registration">
+                                                        </div>
+                                                        <div class="document-name">رخصة السير</div>
+                                                        <div class="document-type">استمارة مركبة</div>
+                                                    </div>
+                                                ` : ''}
                                 </div>
                             </div>
 
@@ -1538,7 +1575,7 @@
                             </div>
                         </div>
                     `;
-                    
+
                     $('#driverDetailsContent').html(content);
                     $('#driverDetailsModal').modal('show');
                 },
@@ -1673,7 +1710,7 @@
         function toggleStatus(driverId, currentStatus) {
             const newStatus = currentStatus == 'active' ? 'inactive' : 'active';
             const action = newStatus == 'active' ? 'تفعيل' : 'تعطيل';
-            
+
             Swal.fire({
                 title: `${action} السائق`,
                 text: `هل أنت متأكد من ${action} هذا السائق؟`,
@@ -1740,7 +1777,7 @@
                 },
                 success: function(response) {
                     Swal.close();
-                    
+
                     let content = `
                         <div class="wallet-info">
                             <h4 class="text-center mb-4">محفظة السائق</h4>
@@ -1777,7 +1814,7 @@
                                 </thead>
                                 <tbody>
                     `;
-                    
+
                     if (response.transactions && response.transactions.length > 0) {
                         response.transactions.forEach(transaction => {
                             content += `
@@ -1800,13 +1837,13 @@
                             </tr>
                         `;
                     }
-                    
+
                     content += `
                                 </tbody>
                             </table>
                         </div>
                     `;
-                    
+
                     $('#driverDetailsContent').html(content);
                     $('#driverDetailsModal').modal('show');
                 },

@@ -343,7 +343,7 @@
                                                     {{ $chat->other_participant['name'] ?? 'مستخدم' }}
                                                     <span
                                                         class="chat-type badge-{{ $chat->other_participant['type'] ?? 'user' }}">
-                                                        {{ $chat->other_participant['type'] == 'user' ? 'مستخدم' : 'سائق' }}
+                                                        {{ ($chat->other_participant['type'] ?? 'user') == 'user' ? 'مستخدم' : 'سائق' }}
                                                     </span>
                                                 </div>
                                                 <div class="chat-time" bis_skin_checked="1">

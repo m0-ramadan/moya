@@ -717,11 +717,12 @@ class ChatsController extends Controller
 
         // جلب المحادثات التي يكون المشرف طرفاً فيها
         $query = Chat::with(['latestMessage.sender'])
-            ->whereJsonContains('participants', (string)$currentUser->id)
-            ->where(function ($q) {
-                $q->where('type', 'admin_user')
-                    ->orWhere('type', 'admin_driver');
-            });
+            // ->whereJsonContains('participants', (string)$currentUser->id)
+            // ->where(function ($q) {
+            //     $q->where('type', 'admin_user')
+            //         ->orWhere('type', 'admin_driver');
+            // })
+        ;
 
         // فلترة حسب النوع
         if ($request->filled('chat_type')) {

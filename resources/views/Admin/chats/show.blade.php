@@ -646,14 +646,14 @@
 
                                     @if ($message->sender_type != 'admin' && $message->sender_id != auth()->id())
                                         <img src="{{ $message->sender->avatar ?? 'https://via.placeholder.com/40' }}"
-                                            class="message-avatar" alt="{{ $message->sender->name }}"
-                                            title="{{ $message->sender->name }}">
+                                            class="message-avatar" alt="{{ $message->sender?->name }}"
+                                            title="{{ $message->sender?->name }}">
                                     @endif
 
                                     <div class="message-content" bis_skin_checked="1">
                                         @if ($message->sender_type != 'admin' && $message->sender_id != auth()->id())
                                             <div class="message-sender" bis_skin_checked="1">
-                                                {{ $message->sender->name }}
+                                                {{ $message->sender?->name }}
                                                 <small class="text-muted ms-2">
                                                     ({{ $message->sender_type == 'App\Models\User' ? 'مستخدم' : 'سائق' }})
                                                 </small>
@@ -1010,21 +1010,21 @@
             const messageHtml = `
                 <div class="message-wrapper ${message.sender_type === 'admin' ? 'admin' : 'received'}">
                     ${message.sender_type !== 'admin' ? `
-                                    <img src="${message.sender.avatar || 'https://via.placeholder.com/40'}" 
-                                         class="message-avatar" 
-                                         alt="${message.sender.name}"
-                                         title="${message.sender.name}">
-                                ` : ''}
+                                        <img src="${message.sender.avatar || 'https://via.placeholder.com/40'}" 
+                                             class="message-avatar" 
+                                             alt="${message.sender.name}"
+                                             title="${message.sender.name}">
+                                    ` : ''}
                     
                     <div class="message-content">
                         ${message.sender_type !== 'admin' ? `
-                                        <div class="message-sender">
-                                            ${message.sender.name}
-                                            <small class="text-muted ms-2">
-                                                (${message.sender_type === 'App\\Models\\User' ? 'مستخدم' : 'سائق'})
-                                            </small>
-                                        </div>
-                                    ` : ''}
+                                            <div class="message-sender">
+                                                ${message.sender.name}
+                                                <small class="text-muted ms-2">
+                                                    (${message.sender_type === 'App\\Models\\User' ? 'مستخدم' : 'سائق'})
+                                                </small>
+                                            </div>
+                                        ` : ''}
                         
                         <div class="message-bubble">
                             ${getMessageContent(message)}

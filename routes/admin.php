@@ -26,6 +26,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\RegionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\RolesController;
+use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\SocialMediaController;
 use App\Http\Controllers\Admin\StaticPageController;
@@ -43,8 +44,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Add this route BEFORE any middleware groups
-Route::get('admin/categories/tree', [CategoryController::class, 'getTree'])->name('admin.categories.tree.data');
 
 // Authentication Routes
 Route::prefix('admin')->name('admin.')->middleware('guest:admin')->group(function () {
@@ -123,36 +122,6 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         Route::post('/bulk-update', [SocialMediaController::class, 'bulkUpdate'])->name('bulk-update');
     });
 
-    // categories (without tree route)
-    Route::prefix('categories')->as('categories.')->group(function () {
-        Route::get('/', [CategoryController::class, 'index'])->name('index');
-        Route::get('/create', [CategoryController::class, 'create'])->name('create');
-        Route::post('/', [CategoryController::class, 'store'])->name('store');
-        Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('edit');
-        Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
-        Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
-        Route::get('/{category}', [CategoryController::class, 'show'])->name('show');
-        Route::post('/update-order', [CategoryController::class, 'updateOrder'])->name('updateOrder');
-        Route::get('/export', [CategoryController::class, 'export'])->name('export');
-        Route::post('/{category}/duplicate', [CategoryController::class, 'duplicate'])->name('duplicate');
-    });
-
-    // Products
-    Route::prefix('products')->as('products.')->group(function () {
-        Route::get('/', [ProductController::class, 'index'])->name('index');
-        Route::get('/create', [ProductController::class, 'create'])->name('create');
-        Route::post('/', [ProductController::class, 'store'])->name('store');
-        Route::get('/{id}/edit', [ProductController::class, 'edit'])->name('edit');
-
-        Route::delete('/{id}', [ProductController::class, 'destroy'])->name('destroy');
-        Route::get('/show/{id}', [ProductController::class, 'show'])->name('show');
-        Route::post('quick-add', [ProductController::class, 'quickAdd'])->name('quick-add');
-        Route::post('bulk-action', [ProductController::class, 'bulkAction'])->name('bulk-action');
-        Route::get('export', [ProductController::class, 'export'])->name('export');
-        Route::post('{product}/duplicate', [ProductController::class, 'duplicate'])->name('duplicate');
-    });
-    Route::post('products/update/{id}', [ProductController::class, 'update'])->name('products.update');
-
     // Contacts
     Route::prefix('contacts')->as('contact.')->group(function () {
         Route::get('/', [ContactController::class, 'index'])->name('index');
@@ -165,19 +134,14 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         Route::get('/', [SubscribeController::class, 'index'])->name('index');
     });
 
-    // Additional Routes
-    Route::prefix('products')->as('products.')->group(function () {
-        Route::get('/export', [ProductController::class, 'export'])->name('export');
-        Route::post('/{product}/update-image', [ProductController::class, 'updateImage'])
-            ->name('update-image');
-    });
+
 
     // Payment Method
     Route::resource('payment-methods', PaymentMethodController::class);
     Route::patch('payment-methods/{paymentMethod}/toggle-status', [PaymentMethodController::class, 'toggleStatus'])->name('payment-methods.toggle-status');
 
     // Users
-   
+
     // Users Management
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
@@ -187,29 +151,29 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
         Route::put('/{user}', [UserController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
-        
+
         // User Status
         Route::post('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
-        
+
         // User Wallet
         Route::get('/{user}/wallet', [UserController::class, 'wallet'])->name('wallet');
-        
+
         // User Notifications
         Route::post('/{user}/send-notification', [UserController::class, 'sendNotification'])->name('send-notification');
-        
+
         // User Orders
         Route::get('/{user}/orders', [UserController::class, 'orders'])->name('orders');
-        
+
         // User Contracts
         Route::get('/{user}/contracts', [UserController::class, 'contracts'])->name('contracts');
-        
+
         // User Device Tokens
         Route::get('/{user}/devices', [UserController::class, 'devices'])->name('devices');
-        
+
         // Export Users
         Route::get('/export/excel', [UserController::class, 'exportExcel'])->name('export.excel');
         Route::get('/export/pdf', [UserController::class, 'exportPdf'])->name('export.pdf');
-        
+
         // Bulk Actions
         Route::post('/bulk/toggle-status', [UserController::class, 'bulkToggleStatus'])->name('bulk.toggle-status');
         Route::post('/bulk/delete', [UserController::class, 'bulkDelete'])->name('bulk.delete');
@@ -360,7 +324,17 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
             Route::get('/wallet', [DriverController::class, 'wallet'])->name('wallet');
         });
     });
-      // Driver Map
+
+    // Services Management
+    Route::prefix('services')->name('services.')->group(function () {
+        Route::get('/', [ServiceController::class, 'index'])->name('index');
+        Route::post('/', [ServiceController::class, 'store'])->name('store');
+        Route::put('{service}', [ServiceController::class, 'update'])->name('update');
+        Route::delete('{service}', [ServiceController::class, 'destroy'])->name('destroy');
+        Route::post('{service}/toggle-status', [ServiceController::class, 'toggleStatus'])->name('toggle-status');
+    });
+
+    // Driver Map
     Route::prefix('driver-map')->name('drivers.map.')->group(function () {
         Route::get('/', [DriverMapController::class, 'index'])->name('index');
         Route::get('/locations', [DriverMapController::class, 'getLocations'])->name('locations');
