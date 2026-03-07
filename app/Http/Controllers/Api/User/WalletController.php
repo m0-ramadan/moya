@@ -84,7 +84,7 @@ class WalletController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->validationError($validator->errors(), 'خطأ في البيانات المرسلة');
+            return $this->validationError(null, $validator->errors()->first());
         }
         $user = $request->user();
 
