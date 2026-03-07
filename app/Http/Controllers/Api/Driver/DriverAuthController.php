@@ -285,7 +285,7 @@ class DriverAuthController extends Controller
                 'is_verified' => false,
                 'verified_at' => null,
                 'rejection_reason' => null,
-                'status' => $validator->validated()['status'] ?? null,
+                'status' => $validator->validated()['citizenship'] ?? null,
                 'is_active' => false,
             ]);
 
