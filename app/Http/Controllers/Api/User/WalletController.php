@@ -75,17 +75,35 @@ class WalletController extends Controller
      */
     public function withdraw(Request $request)
     {
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'amount' => 'required|numeric|min:50',
+                'bank_account_id' => 'required|exists:bank_accounts,id',
+                'description' => 'nullable|string|max:255',
+                'payment_identifier' => 'required|string|max:255'
+            ],
+            [
+                'amount.required' => 'من فضلك أدخل مبلغ السحب',
+                'amount.numeric' => 'المبلغ يجب أن يكون رقم',
+                'amount.min' => 'الحد الأدنى للسحب هو 50',
 
-        $validator = Validator::make($request->all(), [
-            'amount' => 'required|numeric|min:50',
-            'bank_account_id' => 'required|exists:bank_accounts,id',
-            'description' => 'nullable|string|max:255',
-            'payment_identifier' => 'required|string|max:255'
-        ]);
+                'bank_account_id.required' => 'من فضلك اختر الحساب البنكي',
+                'bank_account_id.exists' => 'الحساب البنكي غير صحيح',
+
+                'description.string' => 'الوصف يجب أن يكون نص',
+                'description.max' => 'الوصف يجب ألا يزيد عن 255 حرف',
+
+                'payment_identifier.required' => 'من فضلك أدخل رقم العملية أو رقم الحوالة',
+                'payment_identifier.string' => 'رقم العملية غير صحيح',
+                'payment_identifier.max' => 'رقم العملية طويل جداً'
+            ]
+        );
 
         if ($validator->fails()) {
             return $this->validationError(null, $validator->errors()->first());
         }
+
         $user = $request->user();
 
         try {
