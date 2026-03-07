@@ -152,7 +152,7 @@ class DriverAuthController extends Controller
                 'national_id' => 'required|string|max:20|unique:drivers,national_id',
                 'id_number' => 'required|string|max:20|unique:drivers,id_number',
                 'id_image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
-                'id_image_back' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+                'id_image_back' => 'required|mimes:jpg,jpeg,png|max:5120',
 
                 'license_number' => 'required|string|max:50|unique:drivers,license_number',
                 'issue_date' => 'required|date',
