@@ -77,7 +77,7 @@ class WalletController extends Controller
     {
 
         $validator = Validator::make($request->all(), [
-            'amount' => 'required|numeric|min:50',
+            'amount' => 'required|numeric',
             'bank_account_id' => 'required|exists:bank_accounts,id',
             'description' => 'nullable|string|max:255',
             'payment_identifier' => 'required|string|max:255'
