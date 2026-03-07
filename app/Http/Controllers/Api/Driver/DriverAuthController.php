@@ -158,9 +158,9 @@ class DriverAuthController extends Controller
                 'issue_date' => 'required|date',
                 'expiry_date' => 'required|date',
                 'license_image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
-                'license_image_back' => 'required|image|mimes:jpg,jpeg,png|max:5120',
 
-                'photo' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+                'license_image_back' => 'required|mimes:jpg,jpeg,png,webp,bmp,gif|max:5120',
+                'photo'              => 'required|mimes:jpg,jpeg,png,webp,bmp,gif|max:5120',
 
                 'vehicle_size' => 'required',
                 'is_vehicle_owner' => 'required',
