@@ -142,7 +142,6 @@ class DriverAuthController extends Controller
 
             // 4️⃣ Validation
             Log::info('Driver Register: validation started');
-
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:100',
                 'date_of_birth' => 'required|date',
@@ -166,20 +165,36 @@ class DriverAuthController extends Controller
                 'vehicle_size' => 'required',
                 'is_vehicle_owner' => 'required',
                 'vehicle_plate_number' => 'required|string|max:20',
-                'vehicle_registration_number' => 'nullable|string|max:50',
-                'vehicle_registration_image' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
 
-                'emergency_contact_name' => 'nullable|string|max:100',
-                'emergency_contact_phone' => 'nullable|string|max:20',
+            ], [
 
-                'preferred_working_hours' => 'nullable|string',
-                'max_daily_orders' => 'nullable|integer|min:1|max:20',
-                'radius_km' => 'nullable|integer|min:5|max:100',
+                'required' => ' :attribute مطلوبه',
+                'string' => 'حقل :attribute يجب أن يكون نص',
+                'max' => 'حقل :attribute يجب ألا يزيد عن :max',
+                'date' => 'حقل :attribute يجب أن يكون تاريخ صحيح',
+                'image' => 'حقل :attribute يجب أن يكون صورة',
+                'mimes' => 'الصورة في :attribute يجب أن تكون بصيغة jpg أو png',
+                'unique' => ':attribute مستخدم من قبل',
+                'exists' => ':attribute غير صحيح',
+                'required_if' => 'حقل :attribute مطلوب',
+            ], [
 
-                'bank_name' => 'nullable|string|max:100',
-                'iban_number' => 'nullable|string|max:34',
-
-                'status' => 'nullable',
+                'name' => 'الاسم',
+                'date_of_birth' => 'تاريخ الميلاد',
+                'citizenship' => 'نوع الجنسية',
+                'country_id' => 'الدولة',
+                'national_id' => 'رقم الهوية',
+                'id_number' => 'رقم الإثبات',
+                'id_image' => 'صورة الهوية الوطنية الأمامية',
+                'id_image_back' => 'صورة الهوية الوطنية الخلفية',
+                'license_number' => 'رقم الرخصة',
+                'issue_date' => 'تاريخ إصدار الرخصة',
+                'expiry_date' => 'تاريخ انتهاء الرخصة',
+                'license_image' => 'صورة الرخصة الأمامية',
+                'license_image_back' => 'صورة الرخصة الخلفية',
+                'photo' => 'الصورة الشخصية',
+                'vehicle_size' => 'حجم المركبة',
+                'vehicle_plate_number' => 'رقم لوحة المركبة',
             ]);
 
             if ($validator->fails()) {
