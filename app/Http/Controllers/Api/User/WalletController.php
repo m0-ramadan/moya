@@ -76,15 +76,9 @@ class WalletController extends Controller
     public function withdraw(Request $request)
     {
 
-        $validator = Validator::make($request->all(), [
-            'amount' => 'required|numeric',
-            'bank_account_id' => 'required|exists:bank_accounts,id',
-            'description' => 'nullable|string|max:255',
-            'payment_identifier' => 'required|string|max:255'
-        ]);
-
+        $validator = Validator::make($request->all(), ['amount' => 'required|numeric', 'bank_account_id' => 'required|exists:bank_accounts,id', 'description' => 'nullable|string|max:255', 'payment_identifier' => 'required|string|max:255']);
         if ($validator->fails()) {
-            return $this->validationError(null, $validator->errors()->first());
+            return $this->validationError($validator->errors(), 'خطأ في البيانات المرسلة');
         }
         $user = $request->user();
 
