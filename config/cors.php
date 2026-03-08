@@ -13,7 +13,7 @@ return [
         'https://www.talaaljazeera.com',
         'https://moy2.vercel.app',
         'https://waytmiah.com',
-        'http://waytmiah.com',
+        'http://waytmiah.com','https://violet-squid-766228.hostingersite.com/'
     ],
 
     'allowed_origins_patterns' => [],
