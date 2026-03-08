@@ -98,40 +98,71 @@ class OrderController extends Controller
     /**
      * إشعار السائقين المتاحين
      */
-    private function notifyAvailableDrivers(Order $order)
-    {
-        // جلب السائقين المتاحين
-        $availableDrivers = Driver::where('is_active', true)
-            ->where('status', 'active')
-            ->whereDoesntHave('orders', function ($query) {
-                $query->whereIn('order_status_id', [1, 2, 3, 4]); // الطلبات النشطة
-            })
-            ->with(relations: 'user.activeDeviceTokens')
-            ->get();
+private function notifyAvailableDrivers(Order $order)
+{
+    $busyStatusIds = OrderStatus::whereIn('name', [
+        'pendding',
+        'in-road',
+    ])->pluck('id');
 
-        // إرسال إشعار Firebase لكل سائق
-        foreach ($availableDrivers as $driver) {
-            $tokens = $driver->user->activeDeviceTokens->pluck('token')->toArray();
+    $availableDrivers = Driver::where('is_active', true)
+        ->where('status', 'active')
+        ->whereHas('user', function ($q) {
+            $q->where('allow_notifications', true);
+        })
+        ->whereDoesntHave('orders', function ($query) use ($busyStatusIds) {
+            $query->whereIn('order_status_id', $busyStatusIds);
+        })
+        ->with('user.activeDeviceTokens')
+        ->get();
 
-            if (! empty($tokens)) {
-                $this->firebaseService->sendToMultipleDevices($tokens, [
+    foreach ($availableDrivers as $driver) {
+        if (!$driver->user) {
+            continue;
+        }
+
+        $user = $driver->user;
+
+        // 1) حفظ الإشعار في قاعدة البيانات
+        $notification = $user->createNotification([
+            'title' => 'طلب توصيل جديد',
+            'message' => 'طلب توصيل مياه جديد متاح! اضغط للموافقة.',
+            'type' => 'new_order_available',
+            'data' => [
+                'order_id' => $order->id,
+                'driver_id' => $driver->id,
+                'user_id' => $user->id,
+                'click_action' => 'NEW_ORDER_ACTION',
+            ],
+        ]);
+
+        // 2) إرسال Firebase لو عنده أجهزة مفعلة
+        $tokens = $user->activeDeviceTokens->pluck('token')->toArray();
+
+        if (!empty($tokens)) {
+            $this->firebaseService->sendToMultipleDevices(
+                $tokens,
+                [
                     'title' => 'طلب توصيل جديد',
                     'body' => 'طلب توصيل مياه جديد متاح! اضغط للموافقة.',
                     'image' => null,
-                ], [
-                    'order_id' => $order->id,
+                ],
+                [
+                    'order_id' => (string) $order->id,
+                    'driver_id' => (string) $driver->id,
+                    'user_id' => (string) $user->id,
+                    'notification_id' => (string) $notification->id,
                     'type' => 'new_order_available',
                     'click_action' => 'NEW_ORDER_ACTION',
-                ]);
-            }
+                ]
+            );
         }
-
-        // Broadcast Event لكل السائقين المتصلين
-        event(new NewOrderAvailable($order));
-
-        // جدولة إلغاء الطلب إذا لم يتم الرد
-        $this->scheduleOrderExpiration($order);
     }
+
+    event(new NewOrderAvailable($order));
+
+    $this->scheduleOrderExpiration($order);
+}
 
     /**
      * قبول السائق للطلب

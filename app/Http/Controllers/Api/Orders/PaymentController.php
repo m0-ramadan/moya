@@ -9,6 +9,7 @@ use App\Http\Resources\WebsiteUser\OrderResource;
 use App\Models\Order;
 use App\Models\OrderStatus;
 use App\Notifications\PaymentSuccessful;
+use App\Services\FirebaseNotificationService;
 use App\Services\Payment\PaymentService;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
@@ -21,10 +22,13 @@ class PaymentController extends Controller
     use ApiResponseTrait;
 
     private PaymentService $paymentService;
+    private $firebaseService;
 
-    public function __construct(PaymentService $paymentService)
+    public function __construct(PaymentService $paymentService, FirebaseNotificationService $firebaseService)
     {
         $this->paymentService = $paymentService;
+        $this->firebaseService = $firebaseService;
+
     }
 
     /**
@@ -96,6 +100,20 @@ class PaymentController extends Controller
                     event(new TripStartedForDriver($order));
 
                     event(new TripStartedForUser($order));
+if ($offer->driver_id) {
+    $this->firebaseService->sendToDriver(
+        $offer->driver_id,
+        [
+            'title' => 'تم بدء الرحلة',
+            'message' => 'تم تعيين الطلب لك، توجه إلى العميل الآن',
+            'type' => 'trip_started',
+            'data' => [
+                'order_id' => $order->id,
+                'offer_id' => $offer->id,
+            ],
+        ]
+    );
+}
                     $paymentUrl = null;
 
                     return [

@@ -160,10 +160,10 @@ class User extends Authenticatable
     /**
      * Clear all notifications (يمكن حذف هذه الدالة لأنها موجودة في الـ trait)
      */
-    public function clearAllNotifications(): int
-    {
-        return $this->clearNotifications();
-    }
+ public function clearAllNotifications(): int
+{
+    return $this->clearCustomNotifications();
+}
 
     public function deviceTokens()
     {

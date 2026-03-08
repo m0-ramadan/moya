@@ -2,15 +2,16 @@
 
 namespace App\Services;
 
-use App\Models\User;
+use App\Models\Driver;
 use App\Models\Notification;
-use Kreait\Firebase\Factory;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\AndroidConfig;
 use Kreait\Firebase\Messaging\ApnsConfig;
 use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\AndroidConfig;
-use Kreait\Firebase\Messaging\WebPushConfig;
 use Kreait\Firebase\Messaging\Notification as FirebaseNotification;
+use Kreait\Firebase\Messaging\WebPushConfig;
 
 class FirebaseNotificationService
 {
@@ -229,43 +230,184 @@ class FirebaseNotificationService
         }
     }
 
-    /**
-     * Send notification and save to database
-     */
-    public function sendAndSaveNotification($user, array $notificationData, array $firebaseData = [], string $deviceToken = null): array
-    {
-        $result = [
-            'database_saved' => false,
-            'firebase_sent' => false,
-            'notification' => null,
-        ];
+public function sendToDriverUser(int $userId, array $notificationData, array $data = []): array
+{
+    try {
+        $user = User::with(['driver', 'activeDeviceTokens'])->findOrFail($userId);
 
-        // Save to database
-        try {
-            $notification = $user->notify($notificationData);
-            $result['database_saved'] = true;
-            $result['notification'] = $notification;
-        } catch (\Exception $e) {
-            Log::error('Failed to save notification to database: ' . $e->getMessage());
+        if (!$user->driver) {
+            return [
+                'success' => false,
+                'message' => 'This user is not a driver',
+                'user_id' => $userId,
+            ];
         }
 
-        // Send to Firebase if device token provided
-        if ($deviceToken) {
-            $result['firebase_sent'] = $this->sendToDevice(
-                $deviceToken,
+        $notification = $user->createNotification([
+            'title' => $notificationData['title'] ?? null,
+            'message' => $notificationData['message'] ?? null,
+            'type' => $notificationData['type'] ?? 'info',
+            'data' => $notificationData['data'] ?? [],
+        ]);
+
+        $tokens = $user->activeDeviceTokens->pluck('token')->toArray();
+
+        $firebaseResult = [
+            'successful' => 0,
+            'failed' => 0,
+            'invalid_tokens' => [],
+        ];
+
+        if (!empty($tokens)) {
+            $firebaseResult = $this->sendToMultipleDevices(
+                $tokens,
                 [
                     'title' => $notificationData['title'] ?? 'Notification',
                     'body' => $notificationData['message'] ?? '',
+                    'image' => $notificationData['image'] ?? null,
                 ],
-                array_merge($firebaseData, [
-                    'notification_id' => $notification->id ?? null,
+                array_merge($data, [
+                    'notification_id' => (string) $notification->id,
                     'type' => $notificationData['type'] ?? 'info',
+                    'user_id' => (string) $user->id,
+                    'driver_id' => (string) optional($user->driver)->id,
                 ])
             );
         }
 
-        return $result;
+        return [
+            'success' => true,
+            'message' => 'Notification sent successfully',
+            'user_id' => $user->id,
+            'driver_id' => optional($user->driver)->id,
+            'notification_id' => $notification->id,
+            'database_saved' => true,
+            'firebase' => $firebaseResult,
+        ];
+    } catch (\Exception $e) {
+        Log::error('Send to driver user failed: ' . $e->getMessage(), [
+            'user_id' => $userId,
+        ]);
+
+        return [
+            'success' => false,
+            'message' => $e->getMessage(),
+            'user_id' => $userId,
+        ];
     }
+}
+
+public function sendToDriver(int $driverId, array $notificationData, array $data = []): array
+{
+    try {
+        $driver = Driver::with(['user.activeDeviceTokens'])->findOrFail($driverId);
+
+        if (!$driver->user) {
+            return [
+                'success' => false,
+                'message' => 'Driver user account not found',
+                'driver_id' => $driverId,
+            ];
+        }
+
+        $user = $driver->user;
+        $tokens = $user->activeDeviceTokens->pluck('token')->toArray();
+
+        // 1) حفظ الإشعار في قاعدة البيانات على اليوزر الخاص بالسواق
+        $notification = $user->createNotification([
+            'title' => $notificationData['title'] ?? null,
+            'message' => $notificationData['message'] ?? null,
+            'type' => $notificationData['type'] ?? 'info',
+            'data' => $notificationData['data'] ?? [],
+        ]);
+
+        // 2) إرسال Firebase
+        $firebaseResult = [
+            'successful' => 0,
+            'failed' => 0,
+            'invalid_tokens' => [],
+        ];
+
+        if (!empty($tokens)) {
+            $firebaseResult = $this->sendToMultipleDevices(
+                $tokens,
+                [
+                    'title' => $notificationData['title'] ?? 'Notification',
+                    'body' => $notificationData['message'] ?? '',
+                    'image' => $notificationData['image'] ?? null,
+                ],
+                array_merge($data, [
+                    'notification_id' => (string) $notification->id,
+                    'type' => $notificationData['type'] ?? 'info',
+                    'driver_id' => (string) $driver->id,
+                    'user_id' => (string) $user->id,
+                ])
+            );
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Notification sent to driver successfully',
+            'driver_id' => $driver->id,
+            'user_id' => $user->id,
+            'notification_id' => $notification->id,
+            'database_saved' => true,
+            'firebase' => $firebaseResult,
+        ];
+    } catch (\Exception $e) {
+        Log::error('Send to driver failed: ' . $e->getMessage(), [
+            'driver_id' => $driverId,
+        ]);
+
+        return [
+            'success' => false,
+            'message' => $e->getMessage(),
+            'driver_id' => $driverId,
+        ];
+    }
+}
+    /**
+     * Send notification and save to database
+     */
+public function sendAndSaveNotification($user, array $notificationData, array $firebaseData = [], string $deviceToken = null): array
+{
+    $result = [
+        'database_saved' => false,
+        'firebase_sent' => false,
+        'notification' => null,
+    ];
+
+    try {
+        $notification = $user->createNotification([
+            'title' => $notificationData['title'] ?? null,
+            'message' => $notificationData['message'] ?? null,
+            'type' => $notificationData['type'] ?? 'info',
+            'data' => $notificationData['data'] ?? [],
+        ]);
+
+        $result['database_saved'] = true;
+        $result['notification'] = $notification;
+    } catch (\Exception $e) {
+        Log::error('Failed to save notification to database: ' . $e->getMessage());
+    }
+
+    if ($deviceToken) {
+        $result['firebase_sent'] = $this->sendToDevice(
+            $deviceToken,
+            [
+                'title' => $notificationData['title'] ?? 'Notification',
+                'body' => $notificationData['message'] ?? '',
+            ],
+            array_merge($firebaseData, [
+                'notification_id' => $notification->id ?? null,
+                'type' => $notificationData['type'] ?? 'info',
+            ])
+        );
+    }
+
+    return $result;
+}
+    
     /**
      * Send notification to user by ID.
      */

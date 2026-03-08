@@ -38,10 +38,9 @@ class NotificationController extends Controller
         $type = $request->get('type');
 
         $notifications = $user->customNotifications()
-            ->when($type, fn($q) => $q->where('type', $type))
+            //->when($type, fn($q) => $q->where('type', $type))
             ->when($request->has('unread_only'), fn($q) => $q->unread())
             ->paginate($request->get('per_page', 15));
-
         return $this->paginated(
             $notifications,
             'تم جلب الإشعارات بنجاح'
