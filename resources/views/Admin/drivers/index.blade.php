@@ -1093,21 +1093,21 @@
                                             <div class="driver-avatar">
                                                 @if ($driver->personal_photo)
                                                     <img src="{{ asset('storage/' . $driver->personal_photo) }}"
-                                                        alt="{{ $driver->user->name }}">
+                                                        alt="{{ $driver->user?->name ?? 'غير متوفر' }}">
                                                 @else
-                                                    {{ substr($driver->user->name, 0, 1) }}
+                                                    {{ substr($driver->user?->name ?? 'غير متوفر', 0, 1) }}
                                                 @endif
                                             </div>
                                             <div class="driver-details">
-                                                <h6>{{ $driver->user->name }}</h6>
+                                                <h6>{{ $driver->user?->name ?? 'غير متوفر' }}</h6>
                                                 <span>
                                                     <i class="fas fa-phone"></i>
-                                                    {{ $driver->user->full_phone ?? $driver->user->phone }}
+                                                    {{ $driver->user->full_phone ?? ($driver->user->phone ?? 'غير متوفر') }}
                                                 </span>
-                                                <span>
+                                                {{-- <span>
                                                     <i class="fas fa-envelope"></i>
                                                     {{ $driver->user->email }}
-                                                </span>
+                                                </span> --}}
                                                 <span>
                                                     <i class="fas fa-id-card"></i>
                                                     {{ $driver->national_id ?? $driver->iqama_number }}
@@ -1411,17 +1411,17 @@
                                 </div>
                                 ${response.citizenship == 'saudi' ? 
                                     `<div class="info-row">
-                                                    <span class="info-label">الهوية:</span>
-                                                    <span class="info-value">${response.national_id}</span>
-                                                </div>` : 
+                                                                        <span class="info-label">الهوية:</span>
+                                                                        <span class="info-value">${response.national_id}</span>
+                                                                    </div>` : 
                                     `<div class="info-row">
-                                                    <span class="info-label">رقم الإقامة:</span>
-                                                    <span class="info-value">${response.iqama_number}</span>
-                                                </div>
-                                                <div class="info-row">
-                                                    <span class="info-label">انتهاء الإقامة:</span>
-                                                    <span class="info-value">${response.iqama_expiry_date}</span>
-                                                </div>`
+                                                                        <span class="info-label">رقم الإقامة:</span>
+                                                                        <span class="info-value">${response.iqama_number}</span>
+                                                                    </div>
+                                                                    <div class="info-row">
+                                                                        <span class="info-label">انتهاء الإقامة:</span>
+                                                                        <span class="info-value">${response.iqama_expiry_date}</span>
+                                                                    </div>`
                                 }
                                 <div class="info-row">
                                     <span class="info-label">تاريخ الميلاد:</span>
@@ -1485,64 +1485,64 @@
                                 
                                 <div class="documents-grid">
                                     ${response.personal_photo ? `
-                                                    <div class="document-card" onclick="viewDocument('${response.personal_photo}', 'personal')">
-                                                        <div class="document-preview">
-                                                            <img src="/storage/${response.personal_photo}" alt="Personal Photo">
-                                                        </div>
-                                                        <div class="document-name">الصورة الشخصية</div>
-                                                        <div class="document-type">صورة شخصية</div>
-                                                    </div>
-                                                ` : ''}
+                                                                        <div class="document-card" onclick="viewDocument('${response.personal_photo}', 'personal')">
+                                                                            <div class="document-preview">
+                                                                                <img src="/storage/${response.personal_photo}" alt="Personal Photo">
+                                                                            </div>
+                                                                            <div class="document-name">الصورة الشخصية</div>
+                                                                            <div class="document-type">صورة شخصية</div>
+                                                                        </div>
+                                                                    ` : ''}
                                     
                                     ${response.id_image_front ? `
-                                                    <div class="document-card" onclick="viewDocument('${response.id_image_front}', 'id-front')">
-                                                        <div class="document-preview">
-                                                            <img src="/storage/${response.id_image_front}" alt="ID Front">
-                                                        </div>
-                                                        <div class="document-name">الهوية - وجه</div>
-                                                        <div class="document-type">${response.citizenship == 'saudi' ? 'هوية وطنية' : 'إقامة'}</div>
-                                                    </div>
-                                                ` : ''}
+                                                                        <div class="document-card" onclick="viewDocument('${response.id_image_front}', 'id-front')">
+                                                                            <div class="document-preview">
+                                                                                <img src="/storage/${response.id_image_front}" alt="ID Front">
+                                                                            </div>
+                                                                            <div class="document-name">الهوية - وجه</div>
+                                                                            <div class="document-type">${response.citizenship == 'saudi' ? 'هوية وطنية' : 'إقامة'}</div>
+                                                                        </div>
+                                                                    ` : ''}
                                     
                                     ${response.id_image_back ? `
-                                                    <div class="document-card" onclick="viewDocument('${response.id_image_back}', 'id-back')">
-                                                        <div class="document-preview">
-                                                            <img src="/storage/${response.id_image_back}" alt="ID Back">
-                                                        </div>
-                                                        <div class="document-name">الهوية - ظهر</div>
-                                                        <div class="document-type">${response.citizenship == 'saudi' ? 'هوية وطنية' : 'إقامة'}</div>
-                                                    </div>
-                                                ` : ''}
+                                                                        <div class="document-card" onclick="viewDocument('${response.id_image_back}', 'id-back')">
+                                                                            <div class="document-preview">
+                                                                                <img src="/storage/${response.id_image_back}" alt="ID Back">
+                                                                            </div>
+                                                                            <div class="document-name">الهوية - ظهر</div>
+                                                                            <div class="document-type">${response.citizenship == 'saudi' ? 'هوية وطنية' : 'إقامة'}</div>
+                                                                        </div>
+                                                                    ` : ''}
                                     
                                     ${response.license_image_front ? `
-                                                    <div class="document-card" onclick="viewDocument('${response.license_image_front}', 'license-front')">
-                                                        <div class="document-preview">
-                                                            <img src="/storage/${response.license_image_front}" alt="License Front">
-                                                        </div>
-                                                        <div class="document-name">رخصة القيادة - وجه</div>
-                                                        <div class="document-type">رخصة قيادة</div>
-                                                    </div>
-                                                ` : ''}
+                                                                        <div class="document-card" onclick="viewDocument('${response.license_image_front}', 'license-front')">
+                                                                            <div class="document-preview">
+                                                                                <img src="/storage/${response.license_image_front}" alt="License Front">
+                                                                            </div>
+                                                                            <div class="document-name">رخصة القيادة - وجه</div>
+                                                                            <div class="document-type">رخصة قيادة</div>
+                                                                        </div>
+                                                                    ` : ''}
                                     
                                     ${response.license_image_back ? `
-                                                    <div class="document-card" onclick="viewDocument('${response.license_image_back}', 'license-back')">
-                                                        <div class="document-preview">
-                                                            <img src="/storage/${response.license_image_back}" alt="License Back">
-                                                        </div>
-                                                        <div class="document-name">رخصة القيادة - ظهر</div>
-                                                        <div class="document-type">رخصة قيادة</div>
-                                                    </div>
-                                                ` : ''}
+                                                                        <div class="document-card" onclick="viewDocument('${response.license_image_back}', 'license-back')">
+                                                                            <div class="document-preview">
+                                                                                <img src="/storage/${response.license_image_back}" alt="License Back">
+                                                                            </div>
+                                                                            <div class="document-name">رخصة القيادة - ظهر</div>
+                                                                            <div class="document-type">رخصة قيادة</div>
+                                                                        </div>
+                                                                    ` : ''}
                                     
                                     ${response.vehicle_registration_image ? `
-                                                    <div class="document-card" onclick="viewDocument('${response.vehicle_registration_image}', 'vehicle-reg')">
-                                                        <div class="document-preview">
-                                                            <img src="/storage/${response.vehicle_registration_image}" alt="Vehicle Registration">
-                                                        </div>
-                                                        <div class="document-name">رخصة السير</div>
-                                                        <div class="document-type">استمارة مركبة</div>
-                                                    </div>
-                                                ` : ''}
+                                                                        <div class="document-card" onclick="viewDocument('${response.vehicle_registration_image}', 'vehicle-reg')">
+                                                                            <div class="document-preview">
+                                                                                <img src="/storage/${response.vehicle_registration_image}" alt="Vehicle Registration">
+                                                                            </div>
+                                                                            <div class="document-name">رخصة السير</div>
+                                                                            <div class="document-type">استمارة مركبة</div>
+                                                                        </div>
+                                                                    ` : ''}
                                 </div>
                             </div>
 
