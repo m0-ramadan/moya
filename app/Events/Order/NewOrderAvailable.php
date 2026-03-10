@@ -50,10 +50,10 @@ class NewOrderAvailable implements ShouldBroadcast
             'order' => [
                 'id' => $this->order->id,
                 'user_name' => $this->order->user->name,
-                'user_phone' => $this->order->user->phone, // Ensure phone is populated
+                'user_phone' => $this->order->user->phone, 
                 'service_name' => $this->order->service->name,
                 'avatar' => get_user_image($this->order->user->avatar),
-                'water_type' => $this->order->waterType ? $this->order->waterType->name : 'غير محدد', // Fix null case
+                'water_type' => $this->order->waterType ? $this->order->waterType->name : 'غير محدد',
                 'location' => [
                     'address' => $savedLocation ? $savedLocation->address : null,
                     'latitude' => $savedLocation ? $savedLocation->latitude : null,
