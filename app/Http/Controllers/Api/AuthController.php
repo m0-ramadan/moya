@@ -60,7 +60,7 @@ class AuthController extends Controller
             $otp = $request->input('otp');
 
             $res = $this->authService->verifyOtp($fullPhone, $otp);
-            $deviceToken = DeviceToken::where('session_id', $request->input('session_id'))->first();
+            $deviceToken = DeviceToken::where('token', $request->input('session_id'))->first();
             if ($deviceToken) {
                 $deviceToken->update(['user_id' => $res['user']->id]);
             }
