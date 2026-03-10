@@ -13,9 +13,7 @@ use App\Models\Country;
 use App\Models\DeviceToken;
 use App\Models\Driver;
 use App\Models\User;
-use App\Models\Vehicle;
 use App\Services\AuthService;
-use App\Services\FirebaseNotificationService;
 use App\Traits\ApiResponseTrait;
 use App\Traits\UploadFileTrait;
 use Illuminate\Http\Request;
@@ -39,6 +37,9 @@ class DriverAuthController extends Controller
      */
     public function sendOtp(Request $request)
     {
+            Log::info('Send OTP Request', [
+        'data' => $request->all(),
+    ]);
         try {
             $request->validate([
                 'phone_number' => ['required', 'string'],
@@ -67,6 +68,9 @@ class DriverAuthController extends Controller
      */
     public function verifyOtp(VerifyOtpRequest $request)
     {
+            Log::info('Verify OTP Request', [
+        'data' => $request->all(),
+    ]);
         try {
             $fullPhone = $request->input('phone_number');
             $otp = $request->input('otp');
