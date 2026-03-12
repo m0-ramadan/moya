@@ -110,6 +110,12 @@
                </a>
            </li>
            <li class="menu-item">
+               <a href="{{ route('admin.contracts.index') }}" class="menu-link">
+                   <i class="menu-icon ti ti-file-text"></i>
+                   <div>العقود</div>
+               </a>
+           </li>
+           <li class="menu-item">
                <a href="{{ route('admin.drivers.map.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-map-pin"></i>
                    <div>خريطة السائقين</div>
@@ -188,12 +194,12 @@
                </a>
            </li>
 
-           {{-- <li class="menu-item ">
-               <a href="#/admin/order-reports" class="menu-link">
-                   <i class="menu-icon ti ti-message-report"></i>
-                   <div>الشكاوي</div>
+           <li class="menu-item ">
+               <a href="{{ route('admin.visitors.index') }}" class="menu-link">
+                   <i class="menu-icon ti ti-users"></i>
+                   <div>الزوار</div>
                </a>
-           </li> --}}
+           </li>
 
 
            <li class="menu-item ">
@@ -209,6 +215,12 @@
                            <i class="menu-icon ti ti-file-description"></i>
                            <div> الصفحات الثابته
                            </div>
+                       </a>
+                   </li>
+                   <li class="menu-item ">
+                       <a href="{{ route('admin.faqs.index') }}" class="menu-link">
+                           <i class="menu-icon ti ti-help"></i>
+                           <div>الأسئلة الشائعة</div>
                        </a>
                    </li>
                </ul>
@@ -239,23 +251,6 @@
                </a>
 
                <ul class="menu-sub">
-                   {{-- <li class="menu-item">
-                       <a href="#/admin/settings/languages" class="menu-link">
-                           <div>اللغات</div>
-                       </a>
-                   </li> --}}
-
-                   {{-- <li class="menu-item">
-                       <a href="#/admin/settings/api" class="menu-link">
-                           <div>واجهة الـ API</div>
-                       </a>
-                   </li> --}}
-                   {{-- 
-                   <li class="menu-item">
-                       <a href="#/admin/settings/pages/Orders" class="menu-link">
-                           <div>الطلبات</div>
-                       </a>
-                   </li> --}}
 
                    <li class="menu-item">
                        <a href="#/admin/settings/pages/SMTP" class="menu-link">

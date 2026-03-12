@@ -947,9 +947,50 @@
 
                             @if ($orders->hasPages())
                                 <div class="m-3">
-                                    {{ $orders->withQueryString()->links() }}
+                                    <nav>
+                                        <ul class="pagination">
+                                            {{-- Previous Page Link --}}
+                                            @if ($orders->onFirstPage())
+                                                <li class="page-item disabled" aria-disabled="true">
+                                                    <span class="page-link waves-effect" aria-hidden="true">‹</span>
+                                                </li>
+                                            @else
+                                                <li class="page-item">
+                                                    <a class="page-link waves-effect"
+                                                        href="{{ $orders->previousPageUrl() }}" rel="prev">‹</a>
+                                                </li>
+                                            @endif
+
+                                            {{-- Pagination Elements --}}
+                                            @foreach ($orders->links()->elements[0] as $page => $url)
+                                                @if ($page == $orders->currentPage())
+                                                    <li class="page-item active" aria-current="page">
+                                                        <span class="page-link waves-effect">{{ $page }}</span>
+                                                    </li>
+                                                @else
+                                                    <li class="page-item">
+                                                        <a class="page-link waves-effect"
+                                                            href="{{ $url }}">{{ $page }}</a>
+                                                    </li>
+                                                @endif
+                                            @endforeach
+
+                                            {{-- Next Page Link --}}
+                                            @if ($orders->hasMorePages())
+                                                <li class="page-item">
+                                                    <a class="page-link waves-effect"
+                                                        href="{{ $orders->nextPageUrl() }}" rel="next">›</a>
+                                                </li>
+                                            @else
+                                                <li class="page-item disabled" aria-disabled="true">
+                                                    <span class="page-link waves-effect" aria-hidden="true">›</span>
+                                                </li>
+                                            @endif
+                                        </ul>
+                                    </nav>
                                 </div>
                             @endif
+
                         @endif
                     </div>
                 </div>

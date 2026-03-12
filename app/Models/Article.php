@@ -36,16 +36,33 @@ class Article extends Model
         'related_articles'
     ];
 
-    protected $casts = [
-        'is_featured' => 'boolean',
-        'is_sponsored' => 'boolean',
-        'allow_comments' => 'boolean',
-        'published_at' => 'datetime',
-        'meta_keywords' => 'array',
-        'tags' => 'array',
-        'related_articles' => 'array'
-    ];
+protected $casts = [
+    'is_featured' => 'boolean',
+    'is_sponsored' => 'boolean',
+    'allow_comments' => 'boolean',
+    'published_at' => 'datetime',
+    'meta_keywords' => 'array',
+    'tags' => 'array',
+    'related_articles' => 'array'
+];
+public function getTagLinksAttribute()
+{
+    if (empty($this->tags) || !is_array($this->tags)) {
+        return [];
+    }
 
+    return collect($this->tags)->map(function ($tag) {
+        return [
+            'name' => $tag,
+            'url'  => route('articles.tag', ['tag' => $tag]),
+            'slug' => \Illuminate\Support\Str::slug($tag),
+        ];
+    })->toArray();
+}
+public function scopeByTag($query, $tag)
+{
+    return $query->whereJsonContains('tags', $tag);
+}
     // إضافة Accessor لـ reading_time
     protected $appends = ['formatted_reading_time'];
 
@@ -107,7 +124,7 @@ class Article extends Model
     // العلاقات
     public function author()
     {
-        return $this->belongsTo(User::class, 'author_id');
+        return $this->belongsTo(Admin::class, 'author_id');
     }
 
     public function category()

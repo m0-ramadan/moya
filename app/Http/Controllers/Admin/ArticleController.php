@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin;
 use App\Models\Article;
 use App\Models\ArticleCategory;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ArticleController extends Controller
 {
@@ -18,7 +19,7 @@ class ArticleController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Article::with(['category', 'author', 'tags']);
+        $query = Article::with(['category', 'author']);
 
         // البحث
         if ($request->has('search')) {
@@ -38,9 +39,9 @@ class ArticleController extends Controller
         // الحالة
         if ($request->has('status')) {
             if ($request->status === 'active') {
-                $query->where('is_active', true);
+                $query->where('status', 'published');
             } elseif ($request->status === 'inactive') {
-                $query->where('is_active', false);
+                $query->where('status', 'unpublished');
             } elseif ($request->status === 'featured') {
                 $query->where('is_featured', true);
             } elseif ($request->status === 'published') {
@@ -74,15 +75,13 @@ class ArticleController extends Controller
 
         $articles = $query->paginate(15);
         $categories = ArticleCategory::active()->get();
-        $authors = User::whereHas('roles', function ($q) {
-            $q->whereIn('name', ['admin', 'author', 'editor']);
-        })->get();
+        $authors = Admin::all();
 
         // الإحصائيات
         $stats = [
             'total' => Article::count(),
-            'active' => Article::where('is_active', true)->count(),
-            'inactive' => Article::where('is_active', false)->count(),
+            'active' => Article::where('status', 'published')->count(),
+            'inactive' => Article::where('status', 'unpublished')->count(),
             'featured' => Article::where('is_featured', true)->count(),
             'total_views' => Article::sum('views_count'),
             'draft' => Article::whereNull('published_at')
@@ -99,141 +98,178 @@ class ArticleController extends Controller
     public function create()
     {
         $categories = ArticleCategory::active()->get();
-        $tags = Tag::all();
-        $authors = User::whereHas('roles', function ($q) {
-            $q->whereIn('name', ['admin', 'author', 'editor']);
-        })->get();
+       // $tags = Tag::all();
+        $authors = Admin::all();
 
-        return view('Admin.articles.create', compact('categories', 'tags', 'authors'));
+        return view('Admin.articles.create', compact('categories',  'authors'));
     }
+// في ArticleController (الـ Frontend)
+public function byTag($tag)
+{
+    $articles = Article::where('status', 'published')
+        ->where('published_at', '<=', now())
+        ->whereJsonContains('tags', $tag)
+        ->orderBy('published_at', 'desc')
+        ->paginate(12);
 
+    return view('frontend.articles.by-tag', compact('articles', 'tag'));
+}
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'excerpt' => 'nullable|string|max:500',
-            'category_id' => 'required|exists:article_categories,id',
-            'author_id' => 'required|exists:users,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'image_alt' => 'nullable|string|max:255',
-            'meta_title' => 'nullable|string|max:255',
-            'meta_description' => 'nullable|string|max:500',
-            'meta_keywords' => 'nullable|string|max:255',
-            'is_active' => 'boolean',
-            'is_featured' => 'boolean',
-            'published_at' => 'nullable|date',
-            'tags' => 'nullable|array',
-            'tags.*' => 'exists:tags,id',
-        ]);
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'title' => 'required|string|max:255',
+        'content' => 'required|string',
+        'excerpt' => 'nullable|string|max:500',
+        'category_id' => 'required|exists:article_categories,id',
+        'author_id' => 'required|exists:admins,id',
+        'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        'meta_title' => 'nullable|string|max:70',
+        'meta_description' => 'nullable|string|max:160',
+        'meta_keywords' => 'nullable|string',
+        'is_active' => 'boolean',
+        'is_featured' => 'boolean',
+        'is_sponsored' => 'boolean',
+        'allow_comments' => 'boolean',
+        'published_at' => 'nullable|date',
+        'tags' => 'nullable|string',
+    ]);
 
-        // إنشاء slug
-        $validated['slug'] = Str::slug($validated['title']) . '-' . Str::random(6);
+    // إنشاء slug
+    $validated['slug'] = Str::slug($validated['title']) . '-' . Str::random(6);
 
-        // رفع الصورة إذا وجدت
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('articles', 'public');
-            $validated['image'] = $imagePath;
-        }
-
-        // حساب وقت القراءة
-        $validated['reading_time'] = $this->calculateReadingTime($validated['content']);
-
-        // إنشاء المقال
-        $article = Article::create($validated);
-
-        // إضافة التاغات
-        if ($request->has('tags')) {
-            $article->tags()->sync($request->tags);
-        }
-
-        return redirect()->route('admin.articles.index')
-            ->with('success', 'تم إنشاء المقال بنجاح');
+    // رفع الصورة
+    if ($request->hasFile('featured_image')) {
+        $validated['featured_image'] = $request->file('featured_image')->store('articles', 'public');
     }
 
+    // معالجة الـ Tags
+    if (isset($validated['tags'])) {
+        $tags = array_map('trim', explode(',', $validated['tags']));
+        $tags = array_filter($tags);
+        $tags = array_unique($tags);
+        $validated['tags'] = array_values($tags);
+    } else {
+        $validated['tags'] = [];
+    }
+
+    // معالجة الكلمات المفتاحية
+    if (isset($validated['meta_keywords'])) {
+        $keywords = array_map('trim', explode(',', $validated['meta_keywords']));
+        $validated['meta_keywords'] = array_filter($keywords);
+    }
+
+    // حساب وقت القراءة
+    $wordCount = str_word_count(strip_tags($validated['content']));
+    $validated['reading_time'] = ceil($wordCount / 200);
+
+    // إنشاء المقال
+    $article = Article::create($validated);
+
+    return redirect()->route('admin.articles.index')
+        ->with('success', 'تم إنشاء المقال بنجاح');
+}
     /**
      * Display the specified resource.
      */
-    public function show(Article $article)
+    public function show( $article)
     {
-        $article->load(['category', 'author', 'tags', 'comments.user']);
+     
+        $article = Article::where('id', $article)->firstOrFail();
+        $article->load(['category', 'author', 'comments.user']);
         return view('Admin.articles.show', compact('article'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Article $article)
+    public function edit( $article)
     {
+       $article = Article::where('id', $article)->firstOrFail();
         $categories = ArticleCategory::active()->get();
-        $tags = Tag::all();
-        $authors = User::whereHas('roles', function ($q) {
-            $q->whereIn('name', ['admin', 'author', 'editor']);
-        })->get();
-        $article->load('tags');
+       // $tags = Tag::all();
+        $authors = Admin::all();
+  
 
-        return view('Admin.articles.edit', compact('article', 'categories', 'tags', 'authors'));
+        return view('Admin.articles.edit', compact('article', 'categories', 'authors'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Article $article)
-    {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'excerpt' => 'nullable|string|max:500',
-            'category_id' => 'required|exists:article_categories,id',
-            'author_id' => 'required|exists:users,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'image_alt' => 'nullable|string|max:255',
-            'meta_title' => 'nullable|string|max:255',
-            'meta_description' => 'nullable|string|max:500',
-            'meta_keywords' => 'nullable|string|max:255',
-            'is_active' => 'boolean',
-            'is_featured' => 'boolean',
-            'published_at' => 'nullable|date',
-            'tags' => 'nullable|array',
-            'tags.*' => 'exists:tags,id',
-        ]);
+public function update(Request $request, Article $article)
+{
+    $validated = $request->validate([
+        'title' => 'required|string|max:255',
+        'slug' => 'nullable|string|unique:articles,slug,' . $article->id,
+        'content' => 'required|string',
+        'excerpt' => 'nullable|string|max:500',
+        'category_id' => 'required|exists:article_categories,id',
+        'subcategory_id' => 'nullable|exists:article_categories,id',
+        'author_id' => 'required|exists:admins,id',
+        'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        'meta_title' => 'nullable|string|max:70',
+        'meta_description' => 'nullable|string|max:160',
+        'meta_keywords' => 'nullable|string',
+        'is_active' => 'boolean',
+        'is_featured' => 'boolean',
+        'is_sponsored' => 'boolean',
+        'allow_comments' => 'boolean',
+        'published_at' => 'nullable|date',
+        'reading_time' => 'nullable|integer|min:1',
+        'tags' => 'nullable|string', // تأكد من أنها string
+        'related_articles' => 'nullable|array',
+    ]);
 
-        // تحديث slug إذا تغير العنوان
-        if ($validated['title'] !== $article->title) {
-            $validated['slug'] = Str::slug($validated['title']) . '-' . Str::random(6);
+    // إنشاء slug إذا كان فارغاً
+    if (empty($validated['slug'])) {
+        $validated['slug'] = Str::slug($validated['title']) . '-' . Str::random(6);
+    }
+
+    // معالجة الصورة
+    if ($request->hasFile('featured_image')) {
+        if ($article->featured_image) {
+            Storage::disk('public')->delete($article->featured_image);
         }
+        $validated['featured_image'] = $request->file('featured_image')->store('articles', 'public');
+    }
 
-        // رفع صورة جديدة إذا وجدت
-        if ($request->hasFile('image')) {
-            // حذف الصورة القديمة
-            if ($article->image) {
-                Storage::disk('public')->delete($article->image);
-            }
+    // معالجة الـ Tags (تحويل من string إلى array)
+    if (isset($validated['tags'])) {
+        // تنظيف وتقسيم الـ tags
+        $tags = array_map('trim', explode(',', $validated['tags']));
+        $tags = array_filter($tags); // إزالة القيم الفارغة
+        $tags = array_unique($tags); // إزالة التكرار
+        $validated['tags'] = array_values($tags); // إعادة ترتيب المفاتيح
+    } else {
+        $validated['tags'] = [];
+    }
 
-            $imagePath = $request->file('image')->store('articles', 'public');
-            $validated['image'] = $imagePath;
-        }
+    // معالجة الكلمات المفتاحية
+    if (isset($validated['meta_keywords'])) {
+        $keywords = array_map('trim', explode(',', $validated['meta_keywords']));
+        $validated['meta_keywords'] = array_filter($keywords);
+    }
 
-        // حساب وقت القراءة
-        $validated['reading_time'] = $this->calculateReadingTime($validated['content']);
+    // حساب وقت القراءة
+    if (empty($validated['reading_time'])) {
+        $wordCount = str_word_count(strip_tags($validated['content']));
+        $validated['reading_time'] = ceil($wordCount / 200);
+    }
 
-        // تحديث المقال
-        $article->update($validated);
+    // تحديث المقال
+    $article->update($validated);
 
-        // تحديث التاغات
-        if ($request->has('tags')) {
-            $article->tags()->sync($request->tags);
-        } else {
-            $article->tags()->detach();
-        }
-
-        return redirect()->route('admin.articles.index')
+    if ($request->action === 'save_and_continue') {
+        return redirect()->route('admin.articles.edit', $article)
             ->with('success', 'تم تحديث المقال بنجاح');
     }
 
+    return redirect()->route('admin.articles.index')
+        ->with('success', 'تم تحديث المقال بنجاح');
+}
     /**
      * Remove the specified resource from storage.
      */
@@ -257,16 +293,22 @@ class ArticleController extends Controller
     /**
      * Toggle article status.
      */
-    public function toggleStatus(Article $article)
-    {
-        $article->update(['is_active' => !$article->is_active]);
+public function toggleStatus($article)
+{
+    $article = Article::findOrFail($article);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'تم تغيير حالة المقال بنجاح',
-            'is_active' => $article->is_active
-        ]);
-    }
+    $article->status = $article->status === 'published'
+        ? 'unpublished'
+        : 'published';
+
+    $article->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'تم تغيير حالة المقال بنجاح',
+        'status' => $article->status
+    ]);
+}
 
     /**
      * Toggle featured status.

@@ -5,10 +5,10 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\ArticleController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BannerItemController;
-use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ChatsController;
 use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\ContactUsController;
+use App\Http\Controllers\Admin\ContractController;
 use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DriverController;
@@ -19,10 +19,10 @@ use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\LogisticServiceController;
 use App\Http\Controllers\Admin\ManagerController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PermissionsController;
-use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\RegionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\RolesController;
@@ -44,7 +44,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-
 // Authentication Routes
 Route::prefix('admin')->name('admin.')->middleware('guest:admin')->group(function () {
     Route::get('login', [AdminAuthController::class, 'loginPage'])->name('login.page');
@@ -62,6 +61,7 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
     // Dashboard
     Route::get('/', [AdminController::class, 'index'])->name('index');
     Route::post('logout', [AdminAuthController::class, 'logout'])->name('logout');
+    Route::get('/visitors', [VisitorController::class, 'index'])->name('visitors.index');
     Route::get('/visitors/chart', [VisitorController::class, 'chartData'])
         ->name('visitors.chart');
 
@@ -133,8 +133,6 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
     Route::prefix('subscriptions')->as('subscribe.')->group(function () {
         Route::get('/', [SubscribeController::class, 'index'])->name('index');
     });
-
-
 
     // Payment Method
     Route::resource('payment-methods', PaymentMethodController::class);
@@ -244,10 +242,83 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
 
     Route::prefix('articles')->name('articles.')->group(function () {
         // مقالات
-        Route::resource('/', ArticleController::class);
-        Route::post('/bulk-actions', [ArticleController::class, 'bulkActions'])->name('bulk-actions');
-        Route::patch('/{article}/toggle-status', [ArticleController::class, 'toggleStatus'])->name('toggle-status');
-        Route::patch('/{article}/toggle-featured', [ArticleController::class, 'toggleFeatured'])->name('toggle-featured');
+        Route::get('/', [ArticleController::class, 'index'])->name('index');
+
+        Route::get('/create', [ArticleController::class, 'create'])->name('create');
+
+        Route::post('/', [ArticleController::class, 'store'])->name('store');
+
+        Route::get('/{article}', [ArticleController::class, 'show'])->name('show');
+
+        Route::get('/{article}/edit', [ArticleController::class, 'edit'])->name('edit');
+        // للموقع العام
+        Route::get('/tag/{tag}', [ArticleController::class, 'byTag'])->name('by-tag');
+        Route::put('/{article}', [ArticleController::class, 'update'])->name('update');
+        Route::patch('/{article}', [ArticleController::class, 'update'])->name('update');
+
+        Route::delete('/{article}', [ArticleController::class, 'destroy'])->name('destroy');
+        Route::post('bulk-actions', [ArticleController::class, 'bulkActions'])->name('bulk-actions');
+        Route::patch('{article}/toggle-status', [ArticleController::class, 'toggleStatus'])->name('toggle-status');
+        Route::patch('{article}/toggle-featured', [ArticleController::class, 'toggleFeatured'])->name('toggle-featured');
+
+    });
+
+    // Contracts Management - Complete Routes
+    Route::prefix('contracts')->name('contracts.')->group(function () {
+        // Main CRUD
+        Route::get('/', [ContractController::class, 'index'])->name('index');
+        Route::get('/create', [ContractController::class, 'create'])->name('create');
+        Route::post('/', [ContractController::class, 'store'])->name('store');
+        Route::get('/{contract}', [ContractController::class, 'show'])->name('show');
+        Route::get('/{contract}/edit', [ContractController::class, 'edit'])->name('edit');
+        Route::put('/{contract}', [ContractController::class, 'update'])->name('update');
+        Route::patch('/{contract}', [ContractController::class, 'update'])->name('update');
+        Route::delete('/{contract}', [ContractController::class, 'destroy'])->name('destroy');
+
+        // Bulk Actions
+        Route::post('/bulk-actions', [ContractController::class, 'bulkActions'])->name('bulk-actions');
+
+        // Status Management
+        Route::patch('/{contract}/toggle-status', [ContractController::class, 'toggleStatus'])->name('toggle-status');
+        Route::patch('/{contract}/extend', [ContractController::class, 'extend'])->name('extend');
+
+        // Payments Routes
+        Route::get('/{contract}/payments', [ContractController::class, 'payments'])->name('payments');
+        Route::get('/{contract}/payments/create', [ContractController::class, 'createPayment'])->name('payments.create');
+        Route::post('/{contract}/payments', [ContractController::class, 'storePayment'])->name('payments.store');
+        Route::get('/{contract}/payments/export', [ContractController::class, 'exportPayments'])->name('payments.export');
+
+        // Orders Routes
+        Route::get('/{contract}/orders', [ContractController::class, 'orders'])->name('orders');
+
+        // Delivery Locations
+        Route::post('/{contract}/locations', [ContractController::class, 'storeLocation'])->name('locations.store');
+        Route::delete('/{contract}/locations/{location}', [ContractController::class, 'destroyLocation'])->name('locations.destroy');
+
+        // Documents
+        Route::post('/{contract}/documents/upload', [ContractController::class, 'uploadDocument'])->name('documents.upload');
+        Route::post('/{contract}/documents/remove', [ContractController::class, 'removeDocument'])->name('documents.remove');
+
+        // AJAX Routes
+        Route::get('/users', [ContractController::class, 'getUsers'])->name('users');
+        Route::get('/users/{user}/locations', [ContractController::class, 'getUserLocations'])->name('user-locations');
+        Route::get('/check-number', [ContractController::class, 'checkContractNumber'])->name('check-number');
+        Route::get('/generate-number', [ContractController::class, 'generateNumber'])->name('generate-number');
+        Route::get('/statistics', [ContractController::class, 'statistics'])->name('statistics');
+
+        // Export
+        Route::post('/export', [ContractController::class, 'export'])->name('export');
+    });
+
+    // Separate Payment Routes (if you have a PaymentController)
+    Route::prefix('payments')->name('payments.')->group(function () {
+        Route::get('/{payment}', [PaymentController::class, 'show'])->name('show');
+        Route::get('/{payment}/edit', [PaymentController::class, 'edit'])->name('edit');
+        Route::put('/{payment}', [PaymentController::class, 'update'])->name('update');
+        Route::get('/{payment}/receipt', [PaymentController::class, 'receipt'])->name('receipt');
+        Route::get('/{payment}/print', [PaymentController::class, 'print'])->name('print');
+        Route::post('/{payment}/refund', [PaymentController::class, 'refund'])->name('refund');
+        Route::delete('/{payment}', [PaymentController::class, 'destroy'])->name('destroy');
     });
 
     // إحصائيات المقالات
@@ -261,6 +332,23 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         Route::resource('/', StaticPageController::class);
         Route::post('/bulk-action', [StaticPageController::class, 'bulkAction'])
             ->name('bulk-action');
+    });
+    Route::prefix('faq')->name('faqs.')->group(function () {
+        Route::get('/', [FaqController::class, 'index'])->name('index');
+        Route::post('/', [FaqController::class, 'store'])->name('store');
+        Route::put('/{faq}', [FaqController::class, 'update'])->name('update');
+        Route::patch('/{faq}', [FaqController::class, 'update'])->name('update');
+        Route::delete('/{faq}', [FaqController::class, 'destroy'])->name('destroy');
+
+        Route::post('/toggle-status/{faq}', [FaqController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/update-order', [FaqController::class, 'updateOrder'])->name('update-order');
+    });
+
+    Route::prefix('visitors')->name('visitors.')->group(function () {
+        Route::get('/stats', [VisitorController::class, 'apiStats'])->name('stats');
+        Route::get('/{id}', [VisitorController::class, 'show'])->name('show');
+        Route::get('/export', [VisitorController::class, 'export'])->name('export');
+        Route::get('/clear-old', [VisitorController::class, 'clearOld'])->name('clear-old');
     });
 
     // المحادثات

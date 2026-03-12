@@ -710,8 +710,8 @@
                                                 <td>
                                                     <div class="d-flex flex-column gap-1" bis_skin_checked="1">
                                                         <span
-                                                            class="badge-status status-{{ $article->is_active ? 'active' : 'inactive' }}">
-                                                            {{ $article->is_active ? 'نشط' : 'غير نشط' }}
+                                                            class="badge-status status-{{ $article->status==='published' ? 'active' : 'inactive' }}">
+                                                            {{ $article->status==='published' ? 'نشط' : 'غير نشط' }}
                                                         </span>
                                                         <small class="text-muted">
                                                             @if ($article->published_at && $article->published_at <= now())
@@ -722,6 +722,7 @@
                                                         </small>
                                                     </div>
                                                 </td>
+                                            
                                                 <td>
                                                     {{ $article->published_at?->translatedFormat('d M Y') ?? 'غير محدد' }}
                                                     <br>
@@ -739,17 +740,17 @@
                                                             class="btn btn-sm btn-warning" title="تعديل">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
-                                                        <a href="{{ route('articles.show', $article->slug) }}"
+                                                        <a href="{{ route('admin.articles.show', $article->id) }}"
                                                             class="btn btn-sm btn-success" target="_blank"
                                                             title="عرض في الموقع">
                                                             <i class="fas fa-external-link-alt"></i>
                                                         </a>
-                                                        <button type="button"
-                                                            class="btn btn-sm {{ $article->is_active ? 'btn-secondary' : 'btn-success' }} toggle-status-btn"
-                                                            data-id="{{ $article->id }}"
-                                                            title="{{ $article->is_active ? 'تعطيل' : 'تفعيل' }}">
-                                                            <i class="fas fa-power-off"></i>
-                                                        </button>
+<button type="button"
+    class="btn btn-sm {{ $article->status === 'published' ? 'btn-success' : 'btn-secondary' }} toggle-status-btn"
+    data-url="{{ route('admin.articles.toggle-status', $article->id) }}"
+    title="{{ $article->status === 'published' ? 'تعطيل' : 'تفعيل' }}">
+    <i class="fas fa-power-off"></i>
+</button>
                                                         <button type="button"
                                                             class="btn btn-sm {{ $article->is_featured ? 'btn-warning' : 'btn-outline-warning' }} toggle-featured-btn"
                                                             data-id="{{ $article->id }}"
@@ -842,56 +843,60 @@
                     applyFilters();
                 }, 500);
             });
+$('.toggle-status-btn').on('click', function () {
+    const btn = $(this);
+    const url = btn.data('url');
 
-            // تبديل الحالة
-            $('.toggle-status-btn').on('click', function() {
-                const articleId = $(this).data('id');
-                const btn = $(this);
+    $.ajax({
+        url: url,
+        type: 'POST',
+        data: {
+            _token: "{{ csrf_token() }}",
+            _method: 'PATCH'
+        },
+        success: function (response) {
+            if (response.success) {
+                btn.toggleClass('btn-secondary btn-success');
 
-                $.ajax({
-                    url: "{{ route('admin.articles.toggle-status', '') }}/" + articleId,
-                    type: 'POST',
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        _method: 'PATCH'
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            btn.toggleClass('btn-secondary btn-success');
-                            btn.find('i').toggleClass('fa-toggle-on fa-toggle-off');
+                const statusBadge = btn.closest('tr').find('.badge-status');
 
-                            // تحديث البادج
-                            const statusBadge = btn.closest('tr').find('.badge-status');
-                            if (response.is_active) {
-                                statusBadge.removeClass('status-inactive').addClass(
-                                    'status-active').text('نشط');
-                            } else {
-                                statusBadge.removeClass('status-active').addClass(
-                                    'status-inactive').text('غير نشط');
-                            }
+                if (response.status === 'published') {
+                    statusBadge.removeClass('status-inactive')
+                        .addClass('status-active')
+                        .text('منشور');
 
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'تم التغيير',
-                                text: response.message,
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'خطأ',
-                            text: 'حدث خطأ أثناء التحديث',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-                    }
+                    btn.attr('title', 'تعطيل');
+                } else {
+                    statusBadge.removeClass('status-active')
+                        .addClass('status-inactive')
+                        .text('غير منشور');
+
+                    btn.attr('title', 'تفعيل');
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'تم التغيير',
+                    text: response.message,
+                    timer: 1500,
+                    showConfirmButton: false
                 });
-            });
+            }
+        },
+        error: function (xhr) {
+            console.log(xhr.responseText);
 
-            // تبديل التمييز
+            Swal.fire({
+                icon: 'error',
+                title: 'خطأ',
+                text: 'حدث خطأ أثناء التحديث',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+    });
+});   
+    // تبديل التمييز
             $('.toggle-featured-btn').on('click', function() {
                 const articleId = $(this).data('id');
                 const btn = $(this);
