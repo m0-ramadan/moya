@@ -122,10 +122,25 @@
             margin-bottom: 10px;
         }
 
-        .device-icon.desktop { background: rgba(23, 162, 184, 0.2); color: #17a2b8; }
-        .device-icon.mobile { background: rgba(40, 167, 69, 0.2); color: #28a745; }
-        .device-icon.tablet { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
-        .device-icon.bot { background: rgba(108, 117, 125, 0.2); color: #6c757d; }
+        .device-icon.desktop {
+            background: rgba(23, 162, 184, 0.2);
+            color: #17a2b8;
+        }
+
+        .device-icon.mobile {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+
+        .device-icon.tablet {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .device-icon.bot {
+            background: rgba(108, 117, 125, 0.2);
+            color: #6c757d;
+        }
 
         .device-name {
             font-size: 14px;
@@ -185,10 +200,29 @@
             gap: 5px;
         }
 
-        .badge-desktop { background: rgba(23, 162, 184, 0.2); color: #17a2b8; border: 1px solid rgba(23, 162, 184, 0.3); }
-        .badge-mobile { background: rgba(40, 167, 69, 0.2); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.3); }
-        .badge-tablet { background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); }
-        .badge-bot { background: rgba(108, 117, 125, 0.2); color: #6c757d; border: 1px solid rgba(108, 117, 125, 0.3); }
+        .badge-desktop {
+            background: rgba(23, 162, 184, 0.2);
+            color: #17a2b8;
+            border: 1px solid rgba(23, 162, 184, 0.3);
+        }
+
+        .badge-mobile {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+
+        .badge-tablet {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .badge-bot {
+            background: rgba(108, 117, 125, 0.2);
+            color: #6c757d;
+            border: 1px solid rgba(108, 117, 125, 0.3);
+        }
 
         .flag-icon {
             width: 24px;
@@ -355,7 +389,7 @@
             .visitors-table {
                 overflow-x: auto;
             }
-            
+
             .toolbar {
                 flex-direction: column;
             }
@@ -448,7 +482,7 @@
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="stats-card">
                     <h6 class="mb-3">الأجهزة</h6>
-                    
+
                     <div class="device-card mb-2">
                         <div class="d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center gap-2">
@@ -523,16 +557,18 @@
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="stats-card">
                     <h6 class="mb-3">أشهر المتصفحات</h6>
-                    
-                    @foreach($browserStats as $browser)
+
+                    @foreach ($browserStats as $browser)
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div class="d-flex align-items-center gap-2">
-                                <i class="fab fa-{{ strtolower($browser->browser) }} fa-fw" style="color: var(--primary-color);"></i>
+                                <i class="fab fa-{{ strtolower($browser->browser) }} fa-fw"
+                                    style="color: var(--primary-color);"></i>
                                 <span>{{ $browser->browser }}</span>
                             </div>
                             <div>
                                 <span class="fw-bold">{{ number_format($browser->total) }}</span>
-                                <span class="text-muted small">({{ round(($browser->total / max($stats['total_visitors'], 1)) * 100, 1) }}%)</span>
+                                <span
+                                    class="text-muted small">({{ round(($browser->total / max($stats['total_visitors'], 1)) * 100, 1) }}%)</span>
                             </div>
                         </div>
                     @endforeach
@@ -543,16 +579,18 @@
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="stats-card">
                     <h6 class="mb-3">أنظمة التشغيل</h6>
-                    
-                    @foreach($platformStats as $platform)
+
+                    @foreach ($platformStats as $platform)
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div class="d-flex align-items-center gap-2">
-                                <i class="fab fa-{{ strtolower($platform->platform) }} fa-fw" style="color: var(--primary-color);"></i>
+                                <i class="fab fa-{{ strtolower($platform->platform) }} fa-fw"
+                                    style="color: var(--primary-color);"></i>
                                 <span>{{ $platform->platform }}</span>
                             </div>
                             <div>
                                 <span class="fw-bold">{{ number_format($platform->total) }}</span>
-                                <span class="text-muted small">({{ round(($platform->total / max($stats['total_visitors'], 1)) * 100, 1) }}%)</span>
+                                <span
+                                    class="text-muted small">({{ round(($platform->total / max($stats['total_visitors'], 1)) * 100, 1) }}%)</span>
                             </div>
                         </div>
                     @endforeach
@@ -563,14 +601,13 @@
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="stats-card">
                     <h6 class="mb-3">أشهر الدول</h6>
-                    
-                    @foreach($countryStats as $country)
+
+                    @foreach ($countryStats as $country)
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div class="country-info">
-                                @if($country->country)
-                                    <img src="https://flagcdn.com/16x12/{{ strtolower($country->country_iso ?? 'unknown') }}.png" 
-                                         class="flag-icon" 
-                                         onerror="this.style.display='none'">
+                                @if ($country->country)
+                                    <img src="https://flagcdn.com/16x12/{{ strtolower($country->country_iso ?? 'unknown') }}.png"
+                                        class="flag-icon" onerror="this.style.display='none'">
                                     <span>{{ $country->country }}</span>
                                 @else
                                     <span>غير معروف</span>
@@ -578,7 +615,8 @@
                             </div>
                             <div>
                                 <span class="fw-bold">{{ number_format($country->total) }}</span>
-                                <span class="text-muted small">({{ round(($country->total / max($stats['total_visitors'], 1)) * 100, 1) }}%)</span>
+                                <span
+                                    class="text-muted small">({{ round(($country->total / max($stats['total_visitors'], 1)) * 100, 1) }}%)</span>
                             </div>
                         </div>
                     @endforeach
@@ -591,7 +629,7 @@
             <div class="col-12">
                 <div class="stats-card">
                     <h6 class="mb-3">المسارات الأكثر زيارة</h6>
-                    
+
                     <div class="table-responsive">
                         <table class="table table-sm">
                             <thead>
@@ -602,14 +640,15 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($pathStats as $path)
+                                @foreach ($pathStats as $path)
                                     <tr>
                                         <td class="path-info">{{ $path->path }}</td>
                                         <td>{{ number_format($path->total) }}</td>
                                         <td>
-                                            <div class="progress" style="height: 20px; background: rgba(255,255,255,0.1);">
-                                                <div class="progress-bar" 
-                                                     style="width: {{ ($path->total / max($pathStats->first()->total, 1)) * 100 }}%; 
+                                            <div class="progress"
+                                                style="height: 20px; background: rgba(255,255,255,0.1);">
+                                                <div class="progress-bar"
+                                                    style="width: {{ ($path->total / max($pathStats->first()->total, 1)) * 100 }}%; 
                                                             background: var(--primary-gradient);">
                                                     {{ round(($path->total / max($stats['total_visitors'], 1)) * 100, 1) }}%
                                                 </div>
@@ -646,41 +685,38 @@
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <div class="filter-label">بحث</div>
-                        <input type="text" name="search" class="filter-input" 
-                               value="{{ request('search') }}" 
-                               placeholder="IP, مسار, دولة, متصفح...">
+                        <input type="text" name="search" class="filter-input" value="{{ request('search') }}"
+                            placeholder="IP, مسار, دولة, متصفح...">
                     </div>
-                    
+
                     <div class="col-md-2 mb-3">
                         <div class="filter-label">الجهاز</div>
                         <select name="device" class="filter-input">
                             <option value="">الكل</option>
-                            <option value="desktop" {{ request('device') == 'desktop' ? 'selected' : '' }}>Desktop</option>
+                            <option value="desktop" {{ request('device') == 'desktop' ? 'selected' : '' }}>Desktop
+                            </option>
                             <option value="mobile" {{ request('device') == 'mobile' ? 'selected' : '' }}>Mobile</option>
                             <option value="tablet" {{ request('device') == 'tablet' ? 'selected' : '' }}>Tablet</option>
                             <option value="bot" {{ request('device') == 'bot' ? 'selected' : '' }}>Bot</option>
                         </select>
                     </div>
-                    
+
                     <div class="col-md-2 mb-3">
                         <div class="filter-label">الدولة</div>
-                        <input type="text" name="country" class="filter-input" 
-                               value="{{ request('country') }}" 
-                               placeholder="مثال: Egypt">
+                        <input type="text" name="country" class="filter-input" value="{{ request('country') }}"
+                            placeholder="مثال: Egypt">
                     </div>
-                    
+
                     <div class="col-md-2 mb-3">
                         <div class="filter-label">من تاريخ</div>
-                        <input type="date" name="date_from" class="filter-input" 
-                               value="{{ request('date_from') }}">
+                        <input type="date" name="date_from" class="filter-input" value="{{ request('date_from') }}">
                     </div>
-                    
+
                     <div class="col-md-2 mb-3">
                         <div class="filter-label">إلى تاريخ</div>
-                        <input type="date" name="date_to" class="filter-input" 
-                               value="{{ request('date_to') }}">
+                        <input type="date" name="date_to" class="filter-input" value="{{ request('date_to') }}">
                     </div>
-                    
+
                     <div class="col-md-1 mb-3 d-flex align-items-end">
                         <button type="submit" class="filter-btn w-100">
                             <i class="fas fa-search"></i>
@@ -721,28 +757,27 @@
                             </td>
                             <td>
                                 <div class="country-info">
-                                    @if($visitor->country)
-                                        <img src="https://flagcdn.com/16x12/{{ strtolower($visitor->country_iso ?? 'unknown') }}.png" 
-                                             class="flag-icon" 
-                                             onerror="this.style.display='none'">
+                                    @if ($visitor->country)
+                                        <img src="https://flagcdn.com/16x12/{{ strtolower($visitor->country_iso ?? 'unknown') }}.png"
+                                            class="flag-icon" onerror="this.style.display='none'">
                                         <span>{{ $visitor->country }}</span>
                                     @else
                                         -
                                     @endif
                                 </div>
-                                @if($visitor->city)
+                                @if ($visitor->city)
                                     <small class="text-muted d-block">{{ $visitor->city }}</small>
                                 @endif
                             </td>
                             <td>
                                 <i class="fab fa-{{ strtolower($visitor->browser) }} me-1"></i>
                                 {{ $visitor->browser }}
-                                @if($visitor->browser_version)
+                                @if ($visitor->browser_version)
                                     <small class="text-muted">v{{ $visitor->browser_version }}</small>
                                 @endif
                             </td>
                             <td>
-                                @if($visitor->is_desktop)
+                                @if ($visitor->is_desktop)
                                     <span class="badge-device badge-desktop">
                                         <i class="fas fa-desktop"></i> Desktop
                                     </span>
@@ -766,7 +801,8 @@
                                 <small class="time-info">{{ $visitor->created_at->format('H:i:s') }}</small>
                             </td>
                             <td>
-                                <a href="javascript:void(0)" class="detail-link" onclick="viewDetails({{ $visitor->id }})">
+                                <a href="javascript:void(0)" class="detail-link"
+                                    onclick="viewDetails({{ $visitor->id }})">
                                     <i class="fas fa-info-circle"></i>
                                 </a>
                             </td>
@@ -781,51 +817,51 @@
                     @endforelse
                 </tbody>
             </table>
-  @if ($visitors->hasPages())
-                                <div class="m-3">
-                                    <nav>
-                                        <ul class="pagination">
-                                            {{-- Previous Page Link --}}
-                                            @if ($visitors->onFirstPage())
-                                                <li class="page-item disabled" aria-disabled="true">
-                                                    <span class="page-link waves-effect" aria-hidden="true">‹</span>
-                                                </li>
-                                            @else
-                                                <li class="page-item">
-                                                    <a class="page-link waves-effect"
-                                                        href="{{ $visitors->previousPageUrl() }}" rel="prev">‹</a>
-                                                </li>
-                                            @endif
-
-                                            {{-- Pagination Elements --}}
-                                            @foreach ($visitors->links()->elements[0] as $page => $url)
-                                                @if ($page == $visitors->currentPage())
-                                                    <li class="page-item active" aria-current="page">
-                                                        <span class="page-link waves-effect">{{ $page }}</span>
-                                                    </li>
-                                                @else
-                                                    <li class="page-item">
-                                                        <a class="page-link waves-effect"
-                                                            href="{{ $url }}">{{ $page }}</a>
-                                                    </li>
-                                                @endif
-                                            @endforeach
-
-                                            {{-- Next Page Link --}}
-                                            @if ($visitors->hasMorePages())
-                                                <li class="page-item">
-                                                    <a class="page-link waves-effect"
-                                                        href="{{ $visitors->nextPageUrl() }}" rel="next">›</a>
-                                                </li>
-                                            @else
-                                                <li class="page-item disabled" aria-disabled="true">
-                                                    <span class="page-link waves-effect" aria-hidden="true">›</span>
-                                                </li>
-                                            @endif
-                                        </ul>
-                                    </nav>
-                                </div>
+            @if ($visitors->hasPages())
+                <div class="m-3">
+                    <nav>
+                        <ul class="pagination">
+                            {{-- Previous Page Link --}}
+                            @if ($visitors->onFirstPage())
+                                <li class="page-item disabled" aria-disabled="true">
+                                    <span class="page-link waves-effect" aria-hidden="true">‹</span>
+                                </li>
+                            @else
+                                <li class="page-item">
+                                    <a class="page-link waves-effect" href="{{ $visitors->previousPageUrl() }}"
+                                        rel="prev">‹</a>
+                                </li>
                             @endif
+
+                            {{-- Pagination Elements --}}
+                            @foreach ($visitors->links()->elements[0] as $page => $url)
+                                @if ($page == $visitors->currentPage())
+                                    <li class="page-item active" aria-current="page">
+                                        <span class="page-link waves-effect">{{ $page }}</span>
+                                    </li>
+                                @else
+                                    <li class="page-item">
+                                        <a class="page-link waves-effect"
+                                            href="{{ $url }}">{{ $page }}</a>
+                                    </li>
+                                @endif
+                            @endforeach
+
+                            {{-- Next Page Link --}}
+                            @if ($visitors->hasMorePages())
+                                <li class="page-item">
+                                    <a class="page-link waves-effect" href="{{ $visitors->nextPageUrl() }}"
+                                        rel="next">›</a>
+                                </li>
+                            @else
+                                <li class="page-item disabled" aria-disabled="true">
+                                    <span class="page-link waves-effect" aria-hidden="true">›</span>
+                                </li>
+                            @endif
+                        </ul>
+                    </nav>
+                </div>
+            @endif
 
         </div>
     </div>
@@ -836,7 +872,8 @@
             <div class="modal-content" style="background: var(--dark-card);">
                 <div class="modal-header">
                     <h5 class="modal-title text-white">تفاصيل الزائر</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row" id="visitorDetails"></div>
@@ -858,15 +895,14 @@
     <script>
         // بيانات الرسم البياني
         const dailyVisits = @json($dailyVisits);
-        
+
         // رسم بياني للزيارات
         const ctx = document.getElementById('visitsChart').getContext('2d');
         new Chart(ctx, {
             type: 'line',
             data: {
                 labels: dailyVisits.map(v => v.date).reverse(),
-                datasets: [
-                    {
+                datasets: [{
                         label: 'إجمالي الزيارات',
                         data: dailyVisits.map(v => v.total).reverse(),
                         borderColor: '#696cff',
@@ -874,14 +910,14 @@
                         tension: 0.4,
                         fill: true
                     },
-          {
-    label: 'زوار فريدين',
-    data: dailyVisits.map(v => v.unique_visitors).reverse(),
-    borderColor: '#28a745',
-    backgroundColor: 'rgba(40, 167, 69, 0.1)',
-    tension: 0.4,
-    fill: true
-}
+                    {
+                        label: 'زوار فريدين',
+                        data: dailyVisits.map(v => v.unique_visitors).reverse(),
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
                 ]
             },
             options: {
@@ -922,13 +958,13 @@
                 type: 'GET',
                 success: function(visitor) {
                     let html = '';
-                    
+
                     for (let [key, value] of Object.entries(visitor)) {
                         if (value && !['id', 'created_at', 'updated_at'].includes(key)) {
                             if (typeof value === 'object') {
                                 value = JSON.stringify(value, null, 2);
                             }
-                            
+
                             html += `
                                 <div class="col-md-6 mb-3">
                                     <div class="p-3" style="background: rgba(255,255,255,0.05); border-radius: 8px;">
@@ -939,7 +975,7 @@
                             `;
                         }
                     }
-                    
+
                     $('#visitorDetails').html(html);
                     $('#visitorModal').modal('show');
                 }
@@ -948,7 +984,7 @@
 
         // تصدير البيانات
         function exportData() {
-            window.location.href = '{{ route("admin.visitors.export") }}' + window.location.search;
+            window.location.href = '{{ route('admin.visitors.export') }}' + window.location.search;
         }
 
         // حذف البيانات القديمة
@@ -977,7 +1013,7 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: '{{ route("admin.visitors.clear-old") }}',
+                        url: '{{ route('admin.visitors.clear-old') }}',
                         type: 'POST',
                         data: {
                             _token: '{{ csrf_token() }}',
@@ -1001,7 +1037,7 @@
 
         // إعادة تعيين الفلاتر
         function resetFilters() {
-            window.location.href = '{{ route("admin.visitors.index") }}';
+            window.location.href = '{{ route('admin.visitors.index') }}';
         }
 
         // تحديث تلقائي كل 30 ثانية
