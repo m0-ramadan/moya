@@ -60,7 +60,7 @@ class OrderResource extends JsonResource
             'payment_status' => $this->payment_status,
             'payment_method' => $this->payment_method,
             'created_at' => $this->created_at->format('Y-m-d H:i'),
-
+            'contract_ref' => 'moya_' . $this->id,
             'expires_at' => $this->expires_at,
         ];
     }
