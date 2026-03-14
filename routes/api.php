@@ -111,7 +111,6 @@ Route::prefix('v1')->group(function () {
                     Route::post('/{orderId}/rate-user', [RatingController::class, 'rateUser']);
                 });
             });
-
             // للمستخدمين
             Route::post('/{orderId}/confirm-driver', [OrderController::class, 'confirmDriver']);
         });

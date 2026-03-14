@@ -151,7 +151,7 @@ class ChatController extends Controller
             'message' => 'nullable|string',
             'message_type' => 'required|in:text,image,voice,location,file',
             'file_url' => 'nullable|url',
-            'file' => 'nullable|max:102400', // Max 100MB
+            'file' => 'nullable|max:102400',
             'duration' => 'nullable|integer|min:1|max:600',
             'file_size' => 'nullable|string',
             'file_name' => 'nullable|string',
@@ -166,11 +166,20 @@ class ChatController extends Controller
             'metadata' => $request->metadata
         ];
 
-        // Add file details for voice/image/file messages
         if (in_array($request->message_type, ['voice', 'image', 'file'])) {
-            $messageData['file_url'] = $request->file_url;
-            $messageData['file_name'] = $request->file_name;
-            $messageData['file_size'] = $request->file_size;
+
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+                $path = $file->store('chat_media/' . $chat->id, 'public');
+
+                $messageData['file_url'] = asset('storage/' . $path);
+                $messageData['file_name'] = $file->getClientOriginalName();
+                $messageData['file_size'] = $file->getSize();
+            } else {
+                $messageData['file_url'] = $request->file_url;
+                $messageData['file_name'] = $request->file_name;
+                $messageData['file_size'] = $request->file_size;
+            }
 
             if ($request->message_type === 'voice') {
                 $messageData['duration'] = $request->duration;
@@ -179,13 +188,11 @@ class ChatController extends Controller
 
         $message = $chat->messages()->create($messageData);
 
-        // Update chat last message
         $chat->update([
             'last_message' => $this->getLastMessagePreview($message),
             'last_message_at' => now()
         ]);
 
-        // Log before broadcasting
         Log::info('Attempting to broadcast message', [
             'message_id' => $message->id,
             'chat_uuid' => $chat->chat_uuid,
@@ -193,7 +200,6 @@ class ChatController extends Controller
             'event' => 'MessageSent'
         ]);
 
-        // Broadcast event
         broadcast(new MessageSent($message))->toOthers();
 
         Log::info('Broadcast event fired', [
@@ -208,7 +214,6 @@ class ChatController extends Controller
             'broadcast_event' => 'MessageSent'
         ]);
     }
-
     /**
      * رفع جزء من ملف (Chunk Upload)
      */
