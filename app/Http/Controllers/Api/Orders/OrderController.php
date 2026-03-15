@@ -98,15 +98,14 @@ class OrderController extends Controller
     /**
      * إشعار السائقين المتاحين
      */
-private function notifyAvailableDrivers(Order $order)
+private function notifyAvailableDrivers(Order $order): void
 {
     $busyStatusIds = OrderStatus::whereIn('name', [
         'pendding',
         'in-road',
-    ])->pluck('id');
+    ])->pluck('id')->toArray();
 
-    $availableDrivers = Driver::where('is_active', true)
-        ->where('status', 'active')
+    $availableDrivers = Driver::where('is_active', 1)
         ->whereHas('user', function ($q) {
             $q->where('allow_notifications', true);
         })
@@ -123,7 +122,6 @@ private function notifyAvailableDrivers(Order $order)
 
         $user = $driver->user;
 
-        // 1) حفظ الإشعار في قاعدة البيانات
         $notification = $user->createNotification([
             'title' => 'طلب توصيل جديد',
             'message' => 'طلب توصيل مياه جديد متاح! اضغط للموافقة.',
@@ -136,8 +134,12 @@ private function notifyAvailableDrivers(Order $order)
             ],
         ]);
 
-        // 2) إرسال Firebase لو عنده أجهزة مفعلة
-        $tokens = $user->activeDeviceTokens->pluck('token')->toArray();
+        $tokens = $user->activeDeviceTokens
+            ->pluck('token')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
 
         if (!empty($tokens)) {
             $this->firebaseService->sendToMultipleDevices(
@@ -151,7 +153,7 @@ private function notifyAvailableDrivers(Order $order)
                     'order_id' => (string) $order->id,
                     'driver_id' => (string) $driver->id,
                     'user_id' => (string) $user->id,
-                    'notification_id' => (string) $notification->id,
+                    'notification_id' => (string) ($notification->id ?? ''),
                     'type' => 'new_order_available',
                     'click_action' => 'NEW_ORDER_ACTION',
                 ]
