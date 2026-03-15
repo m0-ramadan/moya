@@ -2,20 +2,30 @@
 
 namespace App\Http\Resources\WebsiteUser;
 
-use Carbon\Carbon;
-use Illuminate\Http\Request;
 use App\Http\Resources\AppUser\UserResource;
-use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\WebsiteUser\ContractDeliveryLocationResource;
 use App\Http\Resources\WebsiteUser\OrderResource;
 use App\Http\Resources\WebsiteUser\PaymentResource;
-use App\Http\Resources\WebsiteUser\ContractDeliveryLocationResource;
+use App\Models\Service;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 
 
 class ContractResource extends JsonResource
 {
+    private const SERVICES = [
+        'service_6_ton',
+        'service_12_ton',
+        'service_18_ton',
+        'service_19_ton',
+        'service_20_ton',
+        'service_32_ton',
+    ];
     public function toArray($request)
     {
+        $services = Service::all();
         return [
             'id' => $this->id,
             'contract_number' => $this->contract_number,
@@ -45,9 +55,19 @@ class ContractResource extends JsonResource
 
             // إحصائيات
             'stats' => $this->getStats(),
+            'services' => $this->getServices(),
         ];
     }
+    private function getServices()
+    {
+        $data = [];
 
+        foreach (self::SERVICES as $service) {
+            $data[$service] = rand(1, 100);
+        }
+
+        return $data;
+    }
     private function getStatusArabic()
     {
         $statuses = [

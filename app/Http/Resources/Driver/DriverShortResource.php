@@ -60,8 +60,12 @@ class DriverShortResource extends JsonResource
             'is_verified' => (bool) $driver->is_verified,
             'verified_at' => $driver->verified_at,
             'rejection_reason' => $driver->rejection_reason,
-
+            /* ================= Ratings ================= */
+            'average_rating' => $driver->ratings()->exists()
+                ? round((float) $driver->ratings()->avg('rating'), 2)
+                : 0,
             'currect_location' => $driver->currectLocation ?? null,
+
 
             /* ================= Meta ================= */
             'created_at' => $driver->created_at?->toDateTimeString(),
