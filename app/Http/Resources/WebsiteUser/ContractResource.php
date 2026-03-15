@@ -33,6 +33,7 @@ class ContractResource extends JsonResource
             'company_name' => $this->company_name,
             'applicant_name' => $this->applicant_name,
             'duration_type' => $this->duration_type,
+            'phone' => $this->phone??'',
             'start_date' => $this->start_date->format('Y-m-d'),
             'end_date' => $this->end_date->format('Y-m-d'),
             'renewal_date' => $this->renewal_date ? $this->renewal_date->format('Y-m-d') : null,
