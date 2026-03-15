@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CreateContractRequest;
+use App\Http\Resources\WebsiteUser\ContractResource;
 use App\Models\Contract;
 use App\Models\ContractDeliveryLocation;
 use App\Models\Payment;
@@ -140,7 +141,7 @@ class ContractController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'contract' => $contract,
+                'contract' =>new ContractResource($contract),
                 'payment_proof_url' => $contract->payment_proof ? url('storage/'.$contract->payment_proof) : null,
                 'stats' => $stats,
             ],
