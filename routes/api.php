@@ -340,4 +340,6 @@ Route::prefix('v1')->group(function () {
     Route::get('delete/account/{phone_number}', [AuthController::class, 'deleteAccount']);
     Route::get('/all-status', [OrderController::class, 'getOrderStatus']);
     Route::get('/support/apps', [SupportController::class, 'getApps']);
+       Route::get('testimonials', [HomeController::class, 'testimonials'])->name('testimonials'); 
+
 });

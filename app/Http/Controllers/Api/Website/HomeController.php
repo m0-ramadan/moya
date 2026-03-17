@@ -40,4 +40,18 @@ class HomeController extends Controller
             ]);
         }
     }
+    public function testimonials(Request $request, $locale = 'ar')
+    {
+        try {
+            $testimonials = \App\Models\Testimonial::where('is_active', true)
+                ->orderBy('sort_order')
+                ->get();
+
+            return $this->success($testimonials, 'تم جلب الشهادات بنجاح');
+        } catch (\Exception $e) {
+            return $this->error('حدث خطأ أثناء جلب الشهادات', 500, [
+                'exception' => $e->getMessage(),
+            ]);
+        }
+    }
 }
