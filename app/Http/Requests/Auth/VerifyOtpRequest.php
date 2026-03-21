@@ -15,7 +15,7 @@ class VerifyOtpRequest extends FormRequest
     {
         return [
             'phone_number' => ['required', 'string'],
-            'session_id'=> ['required','string'],
+            'session_id' => ['nullable', 'string'],
             'otp' => ['required', 'string', 'size:6', 'regex:/^[0-9]{6}$/']
         ];
     }
