@@ -37,9 +37,9 @@ class DriverAuthController extends Controller
      */
     public function sendOtp(Request $request)
     {
-            Log::info('Send OTP Request', [
-        'data' => $request->all(),
-    ]);
+        Log::info('Send OTP Request', [
+            'data' => $request->all(),
+        ]);
         try {
             $request->validate([
                 'phone_number' => ['required', 'string'],
@@ -68,15 +68,19 @@ class DriverAuthController extends Controller
      */
     public function verifyOtp(VerifyOtpRequest $request)
     {
-            Log::info('Verify OTP Request', [
-        'data' => $request->all(),
-    ]);
+        Log::info('Verify OTP Request', [
+            'data' => $request->all(),
+        ]);
         try {
             $fullPhone = $request->input('phone_number');
             $otp = $request->input('otp');
             $drivers = User::where('type', 'driver')->count();
             $res = $this->authService->verifyOtp($fullPhone, $otp);
-            $deviceToken = DeviceToken::where('token', $request->input('session_id'))->first();
+
+            $deviceToken = null;
+            if ($request->input('session_id')) {
+                $deviceToken = DeviceToken::where('token', $request->input('session_id'))->first();
+            }
             if ($deviceToken) {
                 $deviceToken->update(['user_id' => $res['user']->id]);
             }
