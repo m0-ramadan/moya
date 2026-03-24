@@ -123,7 +123,9 @@ class AuthService
             throw new OtpException('فشل إرسال رمز التحقق عبر SMS.');
         }
 
-        if ($request->input('otp_method') === 'sms') {
+        // if ($request->input('otp_method') === 'sms') {
+        if (true) {
+
             $sms = $this->twilio->sendSms(
                 $data->full_phone,
                 "رمز التحقق الخاص بك هو: $otp\nصالح لمدة 10 دقائق"
