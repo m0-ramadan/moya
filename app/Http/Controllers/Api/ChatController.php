@@ -106,9 +106,9 @@ class ChatController extends Controller
         $user = Auth::user();
         $participantId = (int) $validated['participant_id'];
 
-        if (!Driver::where('user_id', $participantId)->exists() && $user->type !== 'user') {
-            $participantId = (int) ('888888' . $participantId);
-        }
+        // if (!Driver::where('user_id', $participantId)->exists() && !$user->type == 'user') {
+        //     $participantId = (int) ('888888' . $participantId);
+        // }
         $participants = [$user->id, $participantId];
         sort($participants);
 
