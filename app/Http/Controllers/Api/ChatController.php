@@ -32,12 +32,12 @@ class ChatController extends Controller
 
         // جمع IDs للطرف الآخر (في user_user فقط)
         $otherUserIds = collect($chats->items())
-            ->filter(fn ($chat) => $chat->type === 'user_user')
+            ->filter(fn($chat) => $chat->type === 'user_user')
             ->map(function ($chat) use ($userId) {
                 $participants = collect($chat->participants ?? [])
-                    ->map(fn ($id) => (int) $id); // مهم جدًا
+                    ->map(fn($id) => (int) $id); // مهم جدًا
 
-                return $participants->first(fn ($id) => $id !== $userId);
+                return $participants->first(fn($id) => $id !== $userId);
             })
             ->filter()
             ->unique()
@@ -52,9 +52,9 @@ class ChatController extends Controller
         // إضافة بيانات الطرف الآخر لكل Chat
         $chats->getCollection()->transform(function ($chat) use ($userId, $otherUsers) {
             $participants = collect($chat->participants ?? [])
-                ->map(fn ($id) => (int) $id);
+                ->map(fn($id) => (int) $id);
 
-            $otherId = $participants->first(fn ($id) => $id !== $userId);
+            $otherId = $participants->first(fn($id) => $id !== $userId);
 
             $chat->other_participant = null;
 
@@ -64,7 +64,7 @@ class ChatController extends Controller
                 $chat->other_participant = $u ? [
                     'id' => $u->id,
                     'name' => $u->name,
-                    'avatar' => $u->avatar ? asset('storage/'.ltrim($u->avatar, '/')) : null,
+                    'avatar' => $u->avatar ? asset('storage/' . ltrim($u->avatar, '/')) : null,
                 ] : null;
             }
 
@@ -106,8 +106,8 @@ class ChatController extends Controller
         $user = Auth::user();
         $participantId = (int) $validated['participant_id'];
 
-        if (!Driver::where('user_id', $participantId)->exists()) {
-            $participantId =(int) ('888888'.$participantId);
+        if (!Driver::where('user_id', $participantId)->exists() && $user->type !== 'user') {
+            $participantId = (int) ('888888' . $participantId);
         }
         $participants = [$user->id, $participantId];
         sort($participants);
@@ -199,13 +199,13 @@ class ChatController extends Controller
                         default => $file->getClientOriginalExtension() ?: 'audio',
                     };
 
-                    $fileName = uniqid('voice_').'.'.$extension;
-                    $path = $file->storeAs('chat_media/'.$chat->id, $fileName, 'public');
+                    $fileName = uniqid('voice_') . '.' . $extension;
+                    $path = $file->storeAs('chat_media/' . $chat->id, $fileName, 'public');
                 } else {
-                    $path = $file->store('chat_media/'.$chat->id, 'public');
+                    $path = $file->store('chat_media/' . $chat->id, 'public');
                 }
 
-                $messageData['file_url'] = asset('storage/'.$path);
+                $messageData['file_url'] = asset('storage/' . $path);
                 $messageData['file_name'] = $fileName ?? $file->getClientOriginalName();
                 $messageData['file_size'] = $file->getSize();
                 $messageData['metadata'] = array_merge($request->metadata ?? [], [
@@ -232,7 +232,7 @@ class ChatController extends Controller
         Log::info('Attempting to broadcast message', [
             'message_id' => $message->id,
             'chat_uuid' => $chat->chat_uuid,
-            'channel' => 'chat.'.$chat->chat_uuid,
+            'channel' => 'chat.' . $chat->chat_uuid,
             'event' => 'MessageSent',
         ]);
 
@@ -246,7 +246,7 @@ class ChatController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => $message->load('sender'),
-            'broadcast_channel' => 'chat.'.$chat->chat_uuid,
+            'broadcast_channel' => 'chat.' . $chat->chat_uuid,
             'broadcast_event' => 'MessageSent',
         ]);
     }
@@ -338,10 +338,10 @@ class ChatController extends Controller
 
             // Generate unique filename
             $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-            $fileName = Str::uuid().'.'.$extension;
+            $fileName = Str::uuid() . '.' . $extension;
 
             // Final file path
-            $folder = 'chat_media/'.$chat->id.'/'.date('Y/m');
+            $folder = 'chat_media/' . $chat->id . '/' . date('Y/m');
             $finalPath = "{$folder}/{$fileName}";
 
             // Create directory if not exists
@@ -377,7 +377,7 @@ class ChatController extends Controller
             }
 
             // Create file URL
-            $fileUrl = asset('storage/'.$finalPath);
+            $fileUrl = asset('storage/' . $finalPath);
 
             // Create message
             $messageData = [
@@ -423,11 +423,11 @@ class ChatController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            Log::error('Error combining chunks: '.$e->getMessage());
+            Log::error('Error combining chunks: ' . $e->getMessage());
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to combine chunks: '.$e->getMessage(),
+                'message' => 'Failed to combine chunks: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -447,7 +447,7 @@ class ChatController extends Controller
             // Delete from database
             FileChunk::where('upload_id', $uploadId)->delete();
         } catch (\Exception $e) {
-            Log::error('Error cleaning up chunks: '.$e->getMessage());
+            Log::error('Error cleaning up chunks: ' . $e->getMessage());
         }
     }
 
@@ -509,7 +509,7 @@ class ChatController extends Controller
                 return (int) ceil($fileInfo['playtime_seconds']);
             }
         } catch (\Exception $e) {
-            Log::error('Error getting audio duration: '.$e->getMessage());
+            Log::error('Error getting audio duration: ' . $e->getMessage());
         }
 
         return null;
@@ -531,7 +531,7 @@ class ChatController extends Controller
         return match ($message->message_type) {
             'voice' => '🎤 Voice message',
             'image' => '📷 Photo',
-            'file' => '📄 '.$message->file_name,
+            'file' => '📄 ' . $message->file_name,
             'location' => '📍 Location shared',
             default => Str::limit($message->message, 50)
         };
