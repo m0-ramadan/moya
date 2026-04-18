@@ -19,8 +19,8 @@ class ContractResource extends JsonResource
         'service_6_ton',
         'service_12_ton',
         'service_18_ton',
-        'service_19_ton',
-        'service_20_ton',
+        // 'service_19_ton',
+        // 'service_20_ton',
         'service_32_ton',
     ];
     public function toArray($request)
@@ -33,7 +33,7 @@ class ContractResource extends JsonResource
             'company_name' => $this->company_name,
             'applicant_name' => $this->applicant_name,
             'duration_type' => $this->duration_type,
-            'phone' => $this->phone??'',
+            'phone' => $this->phone ?? '',
             'start_date' => $this->start_date->format('Y-m-d'),
             'end_date' => $this->end_date->format('Y-m-d'),
             'renewal_date' => $this->renewal_date ? $this->renewal_date->format('Y-m-d') : null,
