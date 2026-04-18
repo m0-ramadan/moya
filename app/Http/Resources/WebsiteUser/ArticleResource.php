@@ -21,7 +21,8 @@ class ArticleResource extends JsonResource
             'excerpt' => $this->excerpt,
             'content' => $this->when($request->route()->getName() === 'articles.show', $this->content),
             'summary' => $this->summary,
-            'featured_image' => $this->featured_image ? asset('storage/' . $this->featured_image) : null,
+            'featured_image' => $this->featured_image ?? null,
+
             'reading_time' => $this->reading_time,
             'views_count' => $this->views_count,
             'likes_count' => $this->likes_count,
