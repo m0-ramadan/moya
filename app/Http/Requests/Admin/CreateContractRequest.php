@@ -33,7 +33,7 @@ class CreateContractRequest extends FormRequest
     {
         return [
             'company_name.required_if' => 'اسم الشركة مطلوب عند اختيار نوع العقد كمؤسسة',
-            'delivery_locations.required' => 'يجب تحديد موقع توصيل واحد على الأقل',
+            // 'delivery_locations.nullable' => 'يجب تحديد موقع توصيل واحد على الأقل',
             'delivery_locations.*.saved_location_id.exists' => 'الموقع المحدد غير موجود',
         ];
     }

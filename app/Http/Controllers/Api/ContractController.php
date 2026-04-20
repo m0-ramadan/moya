@@ -77,15 +77,16 @@ class ContractController extends Controller
             ]);
 
             // إضافة مواقع التوصيل
-            foreach ($data['delivery_locations'] as $location) {
-                ContractDeliveryLocation::create([
-                    'contract_id' => $contract->id,
-                    'saved_location_id' => $location['saved_location_id'],
-                    'priority' => $location['priority'] ?? 1,
-                    'notes' => $location['notes'] ?? null,
-                ]);
+            if (isset($data['delivery_locations']) && is_array($data['delivery_locations'])) {
+                foreach ($data['delivery_locations'] as $location) {
+                    ContractDeliveryLocation::create([
+                        'contract_id' => $contract->id,
+                        'saved_location_id' => $location['saved_location_id'],
+                        'priority' => $location['priority'] ?? 1,
+                        'notes' => $location['notes'] ?? null,
+                    ]);
+                }
             }
-
             DB::commit();
 
             return response()->json([
@@ -98,7 +99,7 @@ class ContractController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'حدث خطأ أثناء إنشاء العقد: '.$e->getMessage(),
+                'message' => 'حدث خطأ أثناء إنشاء العقد: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -141,8 +142,8 @@ class ContractController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'contract' =>new ContractResource($contract),
-                'payment_proof_url' => $contract->payment_proof ? url('storage/'.$contract->payment_proof) : null,
+                'contract' => new ContractResource($contract),
+                'payment_proof_url' => $contract->payment_proof ? url('storage/' . $contract->payment_proof) : null,
                 'stats' => $stats,
             ],
             'message' => 'تم جلب تفاصيل العقد بنجاح',
@@ -209,7 +210,7 @@ class ContractController extends Controller
                 $file = $request->file('payment_proof');
 
                 // اسم ملف منظم
-                $filename = 'contract_renewal_'.$contract->id.'_'.time().'_'.Str::random(8).'.'.$file->getClientOriginalExtension();
+                $filename = 'contract_renewal_' . $contract->id . '_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
 
                 // تخزين داخل storage/app/public/payment_proofs
                 $paymentProofPath = $file->storeAs('payment_proofs', $filename, 'public');
@@ -254,16 +255,15 @@ class ContractController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $newContract->load(['deliveryLocations.savedLocation']),
-                'payment_proof_url' => $paymentProofPath ? url('storage/'.$paymentProofPath) : null,
+                'payment_proof_url' => $paymentProofPath ? url('storage/' . $paymentProofPath) : null,
                 'message' => 'تم إنشاء عقد تجديد جديد',
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
             return response()->json([
                 'success' => false,
-                'message' => 'حدث خطأ أثناء تجديد العقد: '.$e->getMessage(),
+                'message' => 'حدث خطأ أثناء تجديد العقد: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -368,7 +368,7 @@ class ContractController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'حدث خطأ أثناء إضافة الدفعة: '.$e->getMessage(),
+                'message' => 'حدث خطأ أثناء إضافة الدفعة: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -510,7 +510,7 @@ class ContractController extends Controller
         $date = now()->format('Ymd');
         $random = strtoupper(substr(uniqid(), -6));
 
-        return $prefix.$date.'-'.$random;
+        return $prefix . $date . '-' . $random;
     }
 
     /**
@@ -522,7 +522,7 @@ class ContractController extends Controller
         $date = now()->format('Ymd');
         $random = strtoupper(substr(uniqid(), -6));
 
-        return $prefix.$date.'-'.$random;
+        return $prefix . $date . '-' . $random;
     }
 
     /**
