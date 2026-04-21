@@ -543,6 +543,29 @@ class DriverAuthController extends Controller
         }
         return $this->successResponse(new DriverWithRatingResource($driver), '');
     }
+
+    public function updateAvailability(Request $request)
+    {
+        $request->validate([
+            'is_available' => 'required|boolean'
+        ]);
+
+        $driver = auth()->user()->driver;
+
+        if (!$driver) {
+            return $this->successResponse(null, 'لا يوجد سائق بهذا ال id', 404);
+        }
+        if (!$driver->is_active || $driver->status !== 'active') {
+            return $this->successResponse(null, 'لا يمكنك تغيير حالة التوفر لأن حسابك غير نشط أو لم يتم تفعيله بعد', 403);
+        }
+        $driver->update([
+            'is_available' => $request->is_available
+        ]);
+        return $this->successResponse([
+            'is_available' => $driver->is_available,
+        ], 'تم تحديث حالة التوفر بنجاح');
+    }
+
     // ========== الدوال المساعدة ==========
 
     /**

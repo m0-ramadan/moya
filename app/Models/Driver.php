@@ -18,6 +18,7 @@ class Driver extends Model
         // الجنسية
         'citizenship',
         'country_id',
+        'is_available',
 
         // بيانات شخصية
         'date_of_birth',
@@ -88,7 +89,7 @@ class Driver extends Model
 
     public function orders()
     {
-        return $this->hasMany(Order::class,'driver_id');
+        return $this->hasMany(Order::class, 'driver_id');
     }
 
     /**
