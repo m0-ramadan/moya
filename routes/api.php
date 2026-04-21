@@ -308,7 +308,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/check-registration', [DriverAuthController::class, 'checkRegistration']);
             });
         });
-        Route::post('/availability', [DriverAuthController::class, 'updateAvailability']);
+        Route::middleware('auth:sanctum')->post('/availability', [DriverAuthController::class, 'updateAvailability']);
         // الحصول على الدول
         // Dashboard للسائق (تتطلب مصادقة وتأكيد السائق)
         Route::middleware(['auth:sanctum', 'driver.only'])->group(function () {
