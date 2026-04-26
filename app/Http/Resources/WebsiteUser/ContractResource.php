@@ -19,9 +19,11 @@ class ContractResource extends JsonResource
         'service_6_ton',
         'service_12_ton',
         'service_18_ton',
-        // 'service_19_ton',
-        // 'service_20_ton',
         'service_32_ton',
+        'usage_service_6_ton',
+        'usage_service_12_ton',
+        'usage_service_18_ton',
+        'usage_service_32_ton',
     ];
     public function toArray($request)
     {
