@@ -11,7 +11,7 @@ class OrderResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $driver = $this->driverOrder ?? $this->driver;
+        $driver = $this->driverOrder ?? $this->driver ?? $this->acceptedOffer?->driver;
 
         return [
             'id' => $this->id,
