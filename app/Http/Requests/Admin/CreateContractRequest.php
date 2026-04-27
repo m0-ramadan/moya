@@ -21,9 +21,9 @@ class CreateContractRequest extends FormRequest
             'total_orders_limit' => 'nullable|integer|min:1',
             'total_amount' => 'nullable|numeric|min:0',
             'start_date' => 'nullable|date',
-            'delivery_locations' => 'nullable|array|min:1',
-            'delivery_locations.*.saved_location_id' => 'nullable|exists:saved_locations,id',
-            'delivery_locations.*.priority' => 'integer|min:1',
+            // 'delivery_locations' => 'nullable|array|min:1',
+            // 'delivery_locations.*.saved_location_id' => 'nullable|exists:saved_locations,id',
+            // 'delivery_locations.*.priority' => 'integer|min:1',
             'notes' => 'nullable|string',
             'phone' => 'nullable|string|max:20',
         ];
@@ -34,7 +34,7 @@ class CreateContractRequest extends FormRequest
         return [
             'company_name.required_if' => 'اسم الشركة مطلوب عند اختيار نوع العقد كمؤسسة',
             // 'delivery_locations.nullable' => 'يجب تحديد موقع توصيل واحد على الأقل',
-            'delivery_locations.*.saved_location_id.exists' => 'الموقع المحدد غير موجود',
+            // 'delivery_locations.*.saved_location_id.exists' => 'الموقع المحدد غير موجود',
         ];
     }
 }
