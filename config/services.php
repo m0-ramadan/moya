@@ -44,9 +44,9 @@ return [
         'password' => env('PAYMOB_PASSWORD'),
         'api_key' => env('PAYMOB_API_KEY'),
         'hmac_secret' => env('PAYMOB_HMAC_SECRET'),
-        'integration_id' => env('PAYMOB_INTEGRATION_ID', '19293'),
+        'integration_id' => env('PAYMOB_INTEGRATION_ID', '19691'),
         'iframe_id' => env('PAYMOB_IFRAME_ID', '11784'),
-        'mode' => env('PAYMOB_MODE', 'test'),        // test أو live
+        'mode' => env('PAYMOB_MODE', 'live'),        // test أو live
         'currency' => env('PAYMOB_CURRENCY', 'SAR'),
         'base_url' => env('PAYMOB_BASE_URL', 'https://ksa.paymob.com'),
 
