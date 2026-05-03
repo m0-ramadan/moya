@@ -173,12 +173,12 @@
                </a>
            </li> --}}
 
-           <li class="menu-item ">
+           {{-- <li class="menu-item ">
                <a href="{{ route('admin.coupons.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-discount"></i>
                    <div>الكوبونات</div>
                </a>
-           </li>
+           </li> --}}
            <li class="menu-item">
                <a href="{{ route('admin.articles.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-article"></i>
@@ -252,11 +252,11 @@
 
                <ul class="menu-sub">
 
-                   <li class="menu-item">
+                   {{-- <li class="menu-item">
                        <a href="#/admin/settings/pages/SMTP" class="menu-link">
                            <div>إعدادات البريد (SMTP)</div>
                        </a>
-                   </li>
+                   </li> --}}
 
                    <li class="menu-item">
                        <a href="#/admin/settings/pages/General" class="menu-link">
@@ -282,11 +282,11 @@
                        </a>
                    </li> --}}
 
-                   <li class="menu-item">
+                   {{-- <li class="menu-item">
                        <a href="#/admin/settings/pages/Files" class="menu-link">
                            <div>إدارة الملفات</div>
                        </a>
-                   </li>
+                   </li> --}}
                </ul>
            </li>
 
