@@ -43,7 +43,7 @@ class ExpireOrderOfferJob implements ShouldQueue
             }
 
             // التحقق من أن وقت الانتهاء قد حان
-            if (!$offer->expired_at || Carbon::now()->lessThan($offer->expired_at)) {
+            if (!$offer->expires_at || Carbon::now()->lessThan($offer->expires_at)) {
                 Log::info("Offer {$this->offerId} hasn't expired yet");
                 return;
             }
@@ -59,7 +59,7 @@ class ExpireOrderOfferJob implements ShouldQueue
             Log::info("Offer {$this->offerId} has been expired", [
                 'order_id' => $offer->order_id,
                 'driver_id' => $offer->driver_id,
-                'expired_at' => $offer->expired_at,
+                'expires_at' => $offer->expires_at,
             ]);
 
             // إرسال إشعار للسائق بأن عرضه انتهى

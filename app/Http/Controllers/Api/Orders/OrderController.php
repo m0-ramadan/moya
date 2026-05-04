@@ -256,7 +256,7 @@ private function notifyAvailableDrivers(Order $order): void
             'price' => $validated['price'],
             'delivery_duration_minutes' => $validated['delivery_duration_minutes'],
             'status' => 'pending',
-            'expired_at' => $expiredAt, // 
+            'expires_at' => $expiredAt, // 
         ]);
             DB::commit();
 
