@@ -2,7 +2,7 @@
 
 namespace App\Events\Order;
 
-use App\Models\Order;
+use App\Models\OrderOffer;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -13,49 +13,59 @@ class OfferExpired implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $order;
+    public $offer;
     public $expiredAt;
 
-    public function __construct(Order $order)
+    public function __construct(OrderOffer $offer)
     {
-        $this->order = $order;
+        $this->offer = $offer;
         $this->expiredAt = now();
 
-        // Load necessary relationships
-        $this->order->load(['user']);
+        // تحميل العلاقات المطلوبة
+        $this->offer->load([
+            'order.user', 
+            'driver.user'
+        ]);
     }
 
     public function broadcastOn()
     {
-        $channels = [
-            new Channel('user.' . $this->order->user_id),
-            new Channel('order.' . $this->order->id),
-        ];
-
-        // لكل السائقين الذين تقدموا للطلب
-        $drivers = \App\Models\OrderOffer::where('order_id', $this->order->id)
-            ->pluck('driver_id');
-
-        foreach ($drivers as $driverId) {
-            $channels[] = new Channel('driver.' . $driverId);
+        $channels = [];
+        
+        // قناة السائق صاحب العرض
+        if ($this->offer->driver && $this->offer->driver->user) {
+            $channels[] = new Channel('driver.' . $this->offer->driver->user->id);
         }
+        
+        // قناة المستخدم صاحب الطلب
+        if ($this->offer->order && $this->offer->order->user) {
+            $channels[] = new Channel('user.' . $this->offer->order->user->id);
+        }
+        
+        // قناة الطلب العامة
+        $channels[] = new Channel('order.' . $this->offer->order_id);
 
         return $channels;
     }
 
     public function broadcastAs()
     {
-        return 'OrderExpired';
+        return 'OfferExpired';
     }
 
     public function broadcastWith()
     {
         return [
-            'order_id' => $this->order->id,
+            'offer_id' => $this->offer->id,
+            'order_id' => $this->offer->order_id,
+            'driver_id' => $this->offer->driver_id,
             'status' => 'expired',
-            'message' => 'انتهت صلاحية الطلب',
-            'expired_at' => $this->expiredAt->format('Y-m-d H:i:s'), // Consistent format
-            'reason' => 'انتهت مدة الانتظار بدون تأكيد من المستخدم',
+            'message' => 'انتهت صلاحية عرض السائق',
+            'message_ar' => 'انتهت صلاحية العرض دون استجابة من المستخدم',
+            'expired_at' => $this->expiredAt->format('Y-m-d H:i:s'),
+            'reason' => 'انتهت مدة الانتظار المحددة للعرض',
+            'price' => $this->offer->price,
+            'delivery_duration' => $this->offer->delivery_duration_minutes,
         ];
     }
 }

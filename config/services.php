@@ -101,6 +101,7 @@ return [
 
     'orders' => [
         'expiration_minutes' => env('ORDER_EXPIRATION_MINUTES', 10),
+        'offer_expiration_minutes' => env('OFFER_EXPIRATION_MINUTES', 1),
     ],
     'region' => [
         'default' => env('APP_TIMEZONE', 'asia/riyadh'),

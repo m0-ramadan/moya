@@ -9,6 +9,7 @@ use App\Events\Order\UserConfirmedDriver;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\WebsiteUser\OrderResource;
 use App\Jobs\ExpireOrderJob;
+use App\Jobs\ExpireOrderOfferJob;
 use App\Models\Driver;
 use App\Models\Order;
 use App\Models\OrderOffer;
@@ -245,19 +246,27 @@ private function notifyAvailableDrivers(Order $order): void
                 return $this->errorResponse('لقد قدمت بالفعل على هذا الطلب', 400);
             }
 
-            $offer = OrderOffer::create([
-                'order_id' => $orderId,
-                'driver_id' => $driver->id,
-                'price' => $validated['price'],
-                'delivery_duration_minutes' => $validated['delivery_duration_minutes'],
-                'status' => 'pending',
-            ]);
+        // ✅ إضافة وقت انتهاء الصلاحية للعرض (مثلاً 3 دقائق)
+        $offerExpirationMinutes = config('orders.offer_expiration_minutes', 1);
+        $expiredAt = Carbon::now()->addMinutes($offerExpirationMinutes);
 
+        $offer = OrderOffer::create([
+            'order_id' => $orderId,
+            'driver_id' => $driver->id,
+            'price' => $validated['price'],
+            'delivery_duration_minutes' => $validated['delivery_duration_minutes'],
+            'status' => 'pending',
+            'expired_at' => $expiredAt, // 
+        ]);
             DB::commit();
 
-            // إرسال إشعار للمستخدم
-            $this->notifyUserAboutNewOffer($offer);
-            Log::info('--'.$orderId.'--'.$driver->id.$offer);
+        // ✅ جدولة Job لانتهاء صلاحية العرض
+        ExpireOrderOfferJob::dispatch($offer->id)
+            ->delay($expiredAt)
+            ->onQueue('offers');
+
+        // إرسال إشعار للمستخدم
+        $this->notifyUserAboutNewOffer($offer);
             // Broadcast Event
             event(new DriverAcceptOrder($offer));
 
@@ -276,25 +285,77 @@ private function notifyAvailableDrivers(Order $order): void
     /**
      * إشعار المستخدم بعرض جديد
      */
-    private function notifyUserAboutNewOffer(OrderOffer $offer)
-    {
-        $user = $offer->order->user;
-        $tokens = $user->activeDeviceTokens->pluck('token')->toArray();
+/**
+ * إشعار المستخدم بعرض جديد
+ */
+private function notifyUserAboutNewOffer(OrderOffer $offer)
+{
+    $user = $offer->order->user;
+    $tokens = $user->activeDeviceTokens->pluck('token')->toArray();
 
-        if (! empty($tokens)) {
-            $this->firebaseService->sendToMultipleDevices($tokens, [
-                'title' => 'عرض جديد للطلب',
-                'body' => 'قام سائق بتقديم عرض لطلبك! اضغط لعرض العروض.',
-                'image' => null,
-            ], [
+    if (!empty($tokens)) {
+        // تحميل العلاقات المطلوبة
+        $offer->load(['driver.user', 'order.service', 'order.waterType']);
+        
+        $driver = $offer->driver;
+        $driverName = $driver->user?->name ?? 'سائق';
+        $price = number_format($offer->price, 2);
+        $duration = $offer->delivery_duration_minutes;
+        $serviceName = $offer->order?->service?->name ?? 'التوصيل';
+        $waterType = $offer->order?->waterType?->name ?? '';
+        
+        // بناء رسالة مخصصة
+        $body = "🚚 {$driverName}";
+        $body .= "\n💰 السعر: {$price} ريال";
+        $body .= "\n⏱️ مدة التوصيل: {$duration} دقيقة";
+        
+        if ($waterType) {
+            $body .= "\n💧 نوع المياه: {$waterType}";
+        }
+        
+        $body .= "\n📋 اضغط لعرض تفاصيل العرض";
+
+        // إنشاء إشعار في قاعدة البيانات
+        $notification = $user->createNotification([
+            'title' => '🔔 عرض جديد لطلبك',
+            'message' => $body,
+            'type' => 'new_offer',
+            'data' => [
                 'order_id' => $offer->order_id,
                 'offer_id' => $offer->id,
+                'driver_id' => $driver->id,
+                'driver_name' => $driverName,
+                'price' => $offer->price,
+                'delivery_duration_minutes' => $duration,
+                'service' => $serviceName,
+                'water_type' => $waterType,
+                'click_action' => 'NEW_OFFER_ACTION',
+            ],
+        ]);
+
+        $this->firebaseService->sendToMultipleDevices(
+            $tokens,
+            [
+                'title' => '🔔 عرض جديد لطلبك',
+                'body' => $body,
+                'image' => $driver->user->profile_photo_url ?? null,
+            ],
+            [
+                'order_id' => (string) $offer->order_id,
+                'offer_id' => (string) $offer->id,
+                'driver_id' => (string) $driver->id,
+                'driver_name' => $driverName,
+                'price' => (string) $offer->price,
+                'delivery_duration_minutes' => (string) $duration,
+                'service' => $serviceName,
+                'water_type' => $waterType,
+                'notification_id' => (string) ($notification->id ?? ''),
                 'type' => 'new_offer',
                 'click_action' => 'NEW_OFFER_ACTION',
-            ]);
-        }
+            ]
+        );
     }
-
+}
     /**
      * تأكيد المستخدم على سائق
      */
