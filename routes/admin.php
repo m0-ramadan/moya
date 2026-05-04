@@ -88,21 +88,21 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
     ]);
 
     // coupons
-    Route::prefix('coupons')->name('coupons.')->group(function () {
-        //  Route::resource('/', CouponController::class);
-        Route::get('/', [CouponController::class, 'index'])->name('index');
-        Route::get('/create', [CouponController::class, 'create'])->name('create');
-        Route::post('/', [CouponController::class, 'store'])->name('store');
-        Route::get('/{coupon}/edit', [CouponController::class, 'edit'])->name('edit');
-        Route::put('/{coupon}', [CouponController::class, 'update'])->name('update');
-        Route::delete('/{coupon}', [CouponController::class, 'destroy'])->name('destroy');
-        Route::get('/{coupon}', [CouponController::class, 'show'])->name('show');
-        Route::post('bulk-action', [CouponController::class, 'bulkAction'])->name('bulk-action');
-        Route::post('{coupon}/duplicate', [CouponController::class, 'duplicate'])->name('duplicate');
-        Route::post('generate-code', [CouponController::class, 'generateCode'])->name('generate-code');
-        Route::post('validate-code', [CouponController::class, 'validateCode'])->name('validate-code');
-        Route::get('export', [CouponController::class, 'export'])->name('export');
-    });
+    // Route::prefix('coupons')->name('coupons.')->group(function () {
+    //     //  Route::resource('/', CouponController::class);
+    //     Route::get('/', [CouponController::class, 'index'])->name('index');
+    //     Route::get('/create', [CouponController::class, 'create'])->name('create');
+    //     Route::post('/', [CouponController::class, 'store'])->name('store');
+    //     Route::get('/{coupon}/edit', [CouponController::class, 'edit'])->name('edit');
+    //     Route::put('/{coupon}', [CouponController::class, 'update'])->name('update');
+    //     Route::delete('/{coupon}', [CouponController::class, 'destroy'])->name('destroy');
+    //     Route::get('/{coupon}', [CouponController::class, 'show'])->name('show');
+    //     Route::post('bulk-action', [CouponController::class, 'bulkAction'])->name('bulk-action');
+    //     Route::post('{coupon}/duplicate', [CouponController::class, 'duplicate'])->name('duplicate');
+    //     Route::post('generate-code', [CouponController::class, 'generateCode'])->name('generate-code');
+    //     Route::post('validate-code', [CouponController::class, 'validateCode'])->name('validate-code');
+    //     Route::get('export', [CouponController::class, 'export'])->name('export');
+    // });
 
     // errors
     Route::prefix('errors')->name('errors.')->group(function () {
@@ -186,14 +186,14 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         Route::put('/{banner}', [BannerController::class, 'update'])->name('update');
         Route::delete('/{banner}', [BannerController::class, 'destroy'])->name('destroy');
         Route::post('/{banner}/toggle-status', [BannerController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/items/reorder', [BannerController::class, 'updateOrder'])->name('items.reorder');
 
         // Banner Items Routes - إضافة route للعرض
-        Route::get('/items/{bannerItem}', [BannerItemController::class, 'show'])->name('items.show'); // أضف هذا السطر
-        Route::post('/items', [BannerItemController::class, 'store'])->name('items.store');
-        Route::put('/items/{bannerItem}', [BannerItemController::class, 'update'])->name('items.update');
-        Route::delete('/items/{bannerItem}', [BannerItemController::class, 'destroy'])->name('items.destroy');
-        Route::post('/items/{bannerItem}/toggle-status', [BannerItemController::class, 'toggleStatus'])->name('items.toggle-status');
-        Route::post('/items/reorder', [BannerItemController::class, 'reorder'])->name('items.reorder');
+        // Route::get('/items/{bannerItem}', [BannerItemController::class, 'show'])->name('items.show'); // أضف هذا السطر
+        // Route::post('/items', [BannerItemController::class, 'store'])->name('items.store');
+        // Route::put('/items/{bannerItem}', [BannerItemController::class, 'update'])->name('items.update');
+        // Route::delete('/items/{bannerItem}', [BannerItemController::class, 'destroy'])->name('items.destroy');
+        // Route::post('/items/{bannerItem}/toggle-status', [BannerItemController::class, 'toggleStatus'])->name('items.toggle-status');
     });
 
     // Orders

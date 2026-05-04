@@ -144,7 +144,7 @@ class OrderController extends Controller
     {
         $users = User::where('status', 'active')->latest()->get();
         $services = Service::where('is_active', true)->get();
-        $waterTypes = WaterType::where('is_active', true)->get();
+        $waterTypes = WaterType::get();
         $orderStatuses = OrderStatus::all();
 
         return view('Admin.orders.create', compact('users', 'services', 'waterTypes', 'orderStatuses'));

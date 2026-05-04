@@ -14,6 +14,6 @@ class Slider extends Model
         'image',
         'link',
         'order',
-        'is_active',
+        'is_active','type'
     ];
 }
