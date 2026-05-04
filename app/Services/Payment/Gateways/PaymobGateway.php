@@ -285,13 +285,13 @@ class PaymobGateway extends BaseGateway
                 'amount_cents' => $amountCents,
                 'currency' => $this->currency,
                 'reference_id' => $orderId,
-                'payment_methods' => [$this->integrationId],
+               'payment_methods' => (string) $this->integrationId,
                 'full_name' => $user->name ?? 'Customer',
                 'email' => $user->email ?? 'customer@example.com',
                 'is_live' => env('PAYMOB_MODE',true),
                 'phone_number' => $user->phone ?? '+966500000000',
-                'redirect_url' => url("/payment/success?order_id={$orderId}"),
-                'cancel_url' => url("/payment/cancel?order_id={$orderId}"),
+                // 'redirect_url' => url("/payment/success?order_id={$orderId}"),
+                // 'cancel_url' => url("/payment/cancel?order_id={$orderId}"),
             ];
 
             if ($callbackUrl) {
@@ -300,7 +300,7 @@ class PaymobGateway extends BaseGateway
             $response = Http::withToken($authToken)
                 ->asForm()
                 ->post($this->baseUrl.'/api/ecommerce/payment-links', $payload);
-                //  dd($response->body());
+                  dd($response->body(), $payload);
             if ($response->failed()) {
                 return [
                     'success' => false,
