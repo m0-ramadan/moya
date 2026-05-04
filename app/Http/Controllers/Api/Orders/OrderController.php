@@ -13,7 +13,9 @@ use App\Models\Driver;
 use App\Models\Order;
 use App\Models\OrderOffer;
 use App\Models\OrderStatus;
+use App\Models\SavedLocation;
 use App\Services\FirebaseNotificationService;
+use App\Services\LocationValidationService;
 use App\Traits\ApiResponseTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -25,12 +27,14 @@ class OrderController extends Controller
     use ApiResponseTrait;
 
     protected $firebaseService;
+    protected $locationValidationService;
 
     /**
      * إنشاء طلب جديد
      */
-    public function __construct(FirebaseNotificationService $firebaseService)
+    public function __construct(FirebaseNotificationService $firebaseService, LocationValidationService $locationValidationService)
     {
+                $this->locationValidationService = $locationValidationService;
         $this->firebaseService = $firebaseService;
     }
 
@@ -49,7 +53,33 @@ class OrderController extends Controller
 
         try {
             DB::beginTransaction();
+    // ✅ جلب الموقع المحفوظ
+            $savedLocation = SavedLocation::with('user')->findOrFail($validated['saved_location_id']);
 
+            // ✅ التحقق من أن الموقع ينتمي للمستخدم الحالي
+            if ($savedLocation->user_id !== auth()->id()) {
+                return $this->errorResponse('الموقع غير مصرح به', 403);
+            }
+
+            // ✅ التحقق من نطاق الخدمة (الرياض فقط)
+            $isWithinRiyadh = $this->locationValidationService->isWithinCity(
+                $savedLocation->latitude,
+                $savedLocation->longitude
+            );
+
+            if (!$isWithinRiyadh) {
+                // الحصول على اسم المدينة لإظهاره في الرسالة
+                $cityName = $this->locationValidationService->getCityName(
+                    $savedLocation->latitude,
+                    $savedLocation->longitude
+                );
+
+                $message = $cityName 
+                    ? "عذراً، الطلبات متاحة حالياً داخل مدينة الرياض فقط.\nأنت حالياً في {$cityName}.\nسوف نصل إليك قريباً!"
+                    : "عذراً، الطلبات متاحة حالياً داخل مدينة الرياض فقط.\nسوف نصل إليك قريباً!";
+
+                return $this->errorResponse($message, 400);
+            }
             // Get saved location details
             //    $savedLocation = \App\Models\SavedLocation::findOrFail($validated['saved_location_id']);
             $statusOrder = null;

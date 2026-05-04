@@ -557,18 +557,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         let itemIndex = 0;
-        let products = @json(
-            $products->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'price' => $product->price,
-                    'final_price' => $product->final_price,
-                    'stock' => $product->stock,
-                    'image' => $product->image ? asset('storage/' . $product->image) : asset('images/default-product.png'),
-                    'category' => $product->category->name ?? 'غير مصنف',
-                ];
-            }));
+
 
 
         $(document).ready(function() {
