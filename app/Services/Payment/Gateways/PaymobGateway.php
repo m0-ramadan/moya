@@ -300,6 +300,10 @@ class PaymobGateway extends BaseGateway
             $response = Http::withToken($authToken)
                 ->asForm()
                 ->post($this->baseUrl.'/api/ecommerce/payment-links', $payload);
+                Log::info('Paymob payment link response', [
+                    'response' => $response->body(),
+                    'payload' => $payload,
+                ]);
                 //   dd($response->body(), $payload);
             if ($response->failed()) {
                 return [
