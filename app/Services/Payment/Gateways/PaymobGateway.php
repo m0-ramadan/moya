@@ -98,7 +98,9 @@ class PaymobGateway extends BaseGateway
             }
 
             // 🔹 Create new reference ID
-            $referenceId = 'ORD-'.$orderId.'-'.now()->timestamp;
+            // $referenceId = 'ORD-'.$orderId.'-'.now()->timestamp;
+            $referenceId = $orderId;
+
 
             $paymentLink = $this->createPaymentLink(
                 $authToken,
