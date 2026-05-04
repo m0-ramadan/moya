@@ -170,13 +170,13 @@ class PaymobService implements PaymentGatewayInterface
                 'amount_cents' => $amountCents,
                 'currency' => $this->currency,
                 'reference_id' => $orderId,
-                'payment_methods' => [$this->integrationId], // تأكد من أن هذا صحيح
+                'payment_methods' => (string) $this->integrationId, // تأكد من أن هذا صحيح
                 'full_name' => isset($user->name) ? trim(preg_replace('/\d+/', '', $user->name)) : 'Customer',
                 'email' =>  'customer@talaaljazeera.com',
                 'phone_number' => $user->phone ?? $user->full_phone ?? '+966500000000',
                 'expires_at' => now()->setTimezone('Asia/Riyadh')->addHours(2)->format('Y-m-d\TH:i:s'),
                 'save_selection' => true,
-                'is_live' => config('services.paymob.mode') === 'live',
+                               'is_live' => env('PAYMOB_MODE',true),
                 'redirect_url' => url("/payment/success?order_id={$orderId}"),
                 'cancel_url' => url("/payment/cancel?order_id={$orderId}"),
             ];
