@@ -37,14 +37,14 @@ class PaymentGatewayFactory
 public function getAvailableGateways(): array
 {
     return [
-        // 'paymob' => [
-        //     'name' => 'Paymob',
-        //     'description' => 'البطاقات الائتمانية ومدى',
-        //     'methods' => ['credit_card', 'mada'],
-        //     'icon' => 'credit-card',
-        //     'image' => asset('/images/payments/paymob.png'), // الصورة هنا
-        //     'supports_save_card' => true,
-        // ],
+        'paymob' => [
+            'name' => 'Paymob',
+            'description' => 'البطاقات الائتمانية ومدى',
+            'methods' => ['credit_card', 'mada'],
+            'icon' => 'credit-card',
+            'image' => asset('/images/payments/paymob.png'), // الصورة هنا
+            'supports_save_card' => true,
+        ],
         'tamara' => [
             'name' => 'تمارا',
             'description' => 'الدفع بالتقسيط',
