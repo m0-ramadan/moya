@@ -99,7 +99,7 @@ class OrderController extends Controller
                 'notes' => $validated['notes'] ?? null,
                 'code_confirmation' => random_int(100000, 999999),
                 'created_at' => Carbon::now(),
-                'expires_at' => Carbon::now()->addMinutes(env('ORDER_EXPIRATION_MINUTES', 5)),
+                'expires_at' => Carbon::now()->addMinutes(env('ORDER_EXPIRATION_MINUTES', 15)),
                 // Add price if needed
                 'price' => null, // Will be set when driver accepts
             ]);
@@ -247,7 +247,7 @@ private function notifyAvailableDrivers(Order $order): void
             }
 
         // ✅ إضافة وقت انتهاء الصلاحية للعرض (مثلاً 3 دقائق)
-        $offerExpirationMinutes = config('orders.offer_expiration_minutes', 1);
+        $offerExpirationMinutes = env('OFFER_EXPIRATION_MINUTES', 3);
         $expiredAt = Carbon::now()->addMinutes($offerExpirationMinutes);
 
         $offer = OrderOffer::create([

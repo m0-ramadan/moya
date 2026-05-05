@@ -124,7 +124,7 @@ class RequestRatingJob implements ShouldQueue
 
         self::dispatch($this->order, $this->attempt + 1)
             ->delay(now()->addSeconds($nextDelay))
-            ->onQueue('rating-requests');
+            ->onQueue('rating_requests');
     }
 
     /**
@@ -136,7 +136,7 @@ class RequestRatingJob implements ShouldQueue
 
         self::dispatch($this->order, $nextAttempt)
             ->delay(now()->addSeconds($delay))
-            ->onQueue('rating-requests');
+            ->onQueue('rating_requests');
     }
 
     /**

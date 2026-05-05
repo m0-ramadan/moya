@@ -674,7 +674,7 @@ class DriverOrderController extends Controller
         // Job لطلب التقييم
         \App\Jobs\RequestRatingJob::dispatch($order)
             ->delay(now()->addMinutes($delayMinutes))
-            ->onQueue('rating-requests');
+            ->onQueue('rating_requests');
 
         Log::info('Rating request scheduled', [
             'order_id' => $order->id,

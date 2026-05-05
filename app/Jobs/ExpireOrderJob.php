@@ -34,7 +34,7 @@ class ExpireOrderJob implements ShouldQueue
         DB::transaction(function () {
             // تحديث حالة الطلب
             $this->order->update([
-                'order_status_id' => 5, // expired
+                'order_status_id' => 7, // expired
             ]);
 
             // تحديث جميع العروض

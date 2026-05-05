@@ -90,7 +90,7 @@ class DriverLocationController extends Controller
 
             // إذا كان السائق في طلب، بث الموقع إلى مستخدم الطلب
             $activeOrder = $driver->orders()
-                ->whereIn('status', ['accepted', 'picked_up', 'on_the_way'])
+                ->whereIn('order_status_id', [1])
                 ->latest()
                 ->first();
 
