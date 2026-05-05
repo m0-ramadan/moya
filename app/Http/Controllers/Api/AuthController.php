@@ -54,106 +54,106 @@ class AuthController extends Controller
     }
 
     // Verify
-    // public function verifyOtp(VerifyOtpRequest $request)
-    // {
-    //     try {
-    //         $fullPhone = $request->input('phone_number'); // expects full (with country code) per request rules
-    //         $otp = $request->input('otp');
+    public function verifyOtp(VerifyOtpRequest $request)
+    {
+        try {
+            $fullPhone = $request->input('phone_number'); // expects full (with country code) per request rules
+            $otp = $request->input('otp');
 
-    //         $res = $this->authService->verifyOtp($fullPhone, $otp);
+            $res = $this->authService->verifyOtp($fullPhone, $otp);
 
-    //         $deviceToken = null;
-    //         if ($request->input('session_id')) {
-    //             $deviceToken = DeviceToken::where('token', $request->input('session_id'))->first();
-    //         }
-    //         if ($deviceToken) {
-    //             $deviceToken->update(['user_id' => $res['user']->id]);
-    //         }
+            $deviceToken = null;
+            if ($request->input('session_id')) {
+                $deviceToken = DeviceToken::where('token', $request->input('session_id'))->first();
+            }
+            if ($deviceToken) {
+                $deviceToken->update(['user_id' => $res['user']->id]);
+            }
 
-    //         return $this->successResponse([
-    //             'user' => [
-    //                 'id' => $res['user']->id,
-    //                 'phone' => $res['user']->full_phone,
-    //                 'name' => $res['user']->name,
-    //                 'is_verified' => true,
-    //             ],
-    //             'token' => $res['token'],
-    //             'token_type' => 'Bearer',
-    //         ], 'تم التحقق من رمز OTP بنجاح');
-    //     } catch (\Exception $e) {
-    //         return $this->validationError(['otp' => [$e->getMessage()]]);
-    //     }
-    // }
-
-
-public function verifyOtp(Request $request)
-{
-    Log::info('OTP Verification started', [
-        'phone_number' => $request->input('phone_number'),
-        'session_id' => $request->input('session_id'),
-    ]);
-
-    try {
-        $fullPhone = $request->input('phone_number');
-        $otp = $request->input('otp');
-
-        Log::info('Calling authService verifyOtp', [
-            'phone' => $fullPhone,
-            'otp' => $otp,
-        ]);
-
-        $res = $this->authService->verifyOtp($fullPhone, $otp);
-
-        Log::info('OTP verified successfully', [
-            'user_id' => $res['user']->id ?? null,
-        ]);
-
-        $deviceToken = null;
-
-        if ($request->input('session_id')) {
-            Log::info('Searching device token', [
-                'session_id' => $request->input('session_id'),
-            ]);
-
-            $deviceToken = DeviceToken::where('token', $request->input('session_id'))->first();
-
-            Log::info('Device token result', [
-                'found' => $deviceToken ? true : false,
-            ]);
+            return $this->successResponse([
+                'user' => [
+                    'id' => $res['user']->id,
+                    'phone' => $res['user']->full_phone,
+                    'name' => $res['user']->name,
+                    'is_verified' => true,
+                ],
+                'token' => $res['token'],
+                'token_type' => 'Bearer',
+            ], 'تم التحقق من رمز OTP بنجاح');
+        } catch (\Exception $e) {
+            return $this->validationError(['otp' => [$e->getMessage()]]);
         }
-
-        if ($deviceToken) {
-            $deviceToken->update(['user_id' => $res['user']->id]);
-
-            Log::info('Device token linked to user', [
-                'user_id' => $res['user']->id,
-                'device_token_id' => $deviceToken->id,
-            ]);
-        }
-
-        Log::info('OTP verification completed successfully');
-
-        return $this->successResponse([
-            'user' => [
-                'id' => $res['user']->id,
-                'phone' => $res['user']->full_phone,
-                'name' => $res['user']->name,
-                'is_verified' => true,
-            ],
-            'token' => $res['token'],
-            'token_type' => 'Bearer',
-        ], 'تم التحقق من رمز OTP بنجاح');
-
-    } catch (\Exception $e) {
-        Log::error('OTP verification failed', [
-            'message' => $e->getMessage(),
-            'phone' => $request->input('phone_number'),
-            'trace' => $e->getTraceAsString(),
-        ]);
-
-        return $this->validationError(['otp' => [$e->getMessage()]]);
     }
-}
+
+
+// public function verifyOtp(Request $request)
+// {
+//     Log::info('OTP Verification started', [
+//         'phone_number' => $request->input('phone_number'),
+//         'session_id' => $request->input('session_id'),
+//     ]);
+
+//     try {
+//         $fullPhone = $request->input('phone_number');
+//         $otp = $request->input('otp');
+
+//         Log::info('Calling authService verifyOtp', [
+//             'phone' => $fullPhone,
+//             'otp' => $otp,
+//         ]);
+
+//         $res = $this->authService->verifyOtp($fullPhone, $otp);
+
+//         Log::info('OTP verified successfully', [
+//             'user_id' => $res['user']->id ?? null,
+//         ]);
+
+//         $deviceToken = null;
+
+//         if ($request->input('session_id')) {
+//             Log::info('Searching device token', [
+//                 'session_id' => $request->input('session_id'),
+//             ]);
+
+//             $deviceToken = DeviceToken::where('token', $request->input('session_id'))->first();
+
+//             Log::info('Device token result', [
+//                 'found' => $deviceToken ? true : false,
+//             ]);
+//         }
+
+//         if ($deviceToken) {
+//             $deviceToken->update(['user_id' => $res['user']->id]);
+
+//             Log::info('Device token linked to user', [
+//                 'user_id' => $res['user']->id,
+//                 'device_token_id' => $deviceToken->id,
+//             ]);
+//         }
+
+//         Log::info('OTP verification completed successfully');
+
+//         return $this->successResponse([
+//             'user' => [
+//                 'id' => $res['user']->id,
+//                 'phone' => $res['user']->full_phone,
+//                 'name' => $res['user']->name,
+//                 'is_verified' => true,
+//             ],
+//             'token' => $res['token'],
+//             'token_type' => 'Bearer',
+//         ], 'تم التحقق من رمز OTP بنجاح');
+
+//     } catch (\Exception $e) {
+//         Log::error('OTP verification failed', [
+//             'message' => $e->getMessage(),
+//             'phone' => $request->input('phone_number'),
+//             'trace' => $e->getTraceAsString(),
+//         ]);
+
+//         return $this->validationError(['otp' => [$e->getMessage()]]);
+//     }
+// }
 
     // Complete profile
     public function completeProfile(Request $request)
