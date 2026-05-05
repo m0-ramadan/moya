@@ -356,64 +356,7 @@ private function notifyUserAboutNewOffer(OrderOffer $offer)
         );
     }
 }
-    /**
-     * تأكيد المستخدم على سائق
-     */
 
-    // public function confirmDriver(Request $request, $orderId)
-    // {
-    //     $validated = $request->validate([
-    //         'driver_id' => 'required|exists:drivers,id',
-    //         'offer_id' => 'required|exists:order_offers,id',
-    //     ]);
-
-    //     $order = Order::where('user_id', auth()->id())
-    //         ->where('id', $orderId)
-    //         ->firstOrFail();
-
-    //     if ($order->order_status_id != 1) { // pending
-    //         return $this->errorResponse('لا يمكن تأكيد سائق لهذا الطلب', 400);
-    //     }
-
-    //     try {
-    //         DB::beginTransaction();
-
-    //         // تحديث حالة جميع العروض
-    //         OrderOffer::where('order_id', $orderId)
-    //             ->update(['status' => 'rejected']);
-
-    //         // قبول العرض المختار
-    //         $acceptedOffer = OrderOffer::where('id', $validated['offer_id'])
-    //             ->where('driver_id', $validated['driver_id'])
-    //             ->firstOrFail();
-
-    //         $acceptedOffer->update(['status' => 'accepted']);
-
-    //         // تحديث الطلب
-    //         $order->update([
-    //             'driver_id' => $validated['driver_id'],
-    //             'order_status_id' => 2, // accepted
-    //             'price' => $acceptedOffer->price,
-    //         ]);
-
-    //         DB::commit();
-
-    //         // إرسال إشعارات
-    //         $this->notifyConfirmedDriver($order);
-    //         $this->notifyOtherDrivers($order, $validated['driver_id']);
-
-    //         // Broadcast Event
-    //         event(new UserConfirmedDriver($order));
-
-    //         return $this->successResponse(
-    //             new OrderResource($order),
-    //             'تم تأكيد السائق بنجاح'
-    //         );
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return $this->errorResponse($e->getMessage(), 500);
-    //     }
-    // }
 
     /**
      * إشعار السائق المؤكد

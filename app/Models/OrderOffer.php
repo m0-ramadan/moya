@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class OrderOffer extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'order_id',
@@ -16,7 +16,7 @@ class OrderOffer extends Model
         'price',
         'status',
         'delivery_duration_minutes',
-        'expired_at','expires_at'
+        'expired_at','expires_at','deleted_at'
     ];
 
     protected $casts = [
