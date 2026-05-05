@@ -243,7 +243,11 @@ private function notifyAvailableDrivers(Order $order): void
                 ->first();
 
             if ($existingOffer) {
+                if($existingOffer->status === 'expired') {
+                    $existingOffer->forceDelete(); 
+                }else {
                 return $this->errorResponse('لقد قدمت بالفعل على هذا الطلب', 400);
+                }
             }
 
         // ✅ إضافة وقت انتهاء الصلاحية للعرض (مثلاً 3 دقائق)
