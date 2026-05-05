@@ -48,19 +48,8 @@ class ExpireOrderOfferJob implements ShouldQueue
                 return;
             }
 
-            // تحديث حالة العرض إلى expired
-            $offer->update([
-                'status' => 'expired'
-            ]);
-
-            // تحميل العلاقات المطلوبة
+            // تحميل العلاقات المطلوبة قبل الحذف
             $offer->load(['order.user', 'driver.user']);
-
-            Log::info("Offer {$this->offerId} has been expired", [
-                'order_id' => $offer->order_id,
-                'driver_id' => $offer->driver_id,
-                'expires_at' => $offer->expires_at,
-            ]);
 
             // إرسال إشعار للسائق بأن عرضه انتهى
             $this->notifyDriverAboutExpiredOffer($offer, $firebaseService);
@@ -73,7 +62,15 @@ class ExpireOrderOfferJob implements ShouldQueue
 
             // التحقق من حالة الطلب - إذا كانت كل العروض منتهية
             $this->checkOrderStatus($offer->order);
-$offer->forceDelete();
+
+            // حذف العرض فوراً بعد انتهاء صلاحيته
+            $offer->forceDelete();
+
+            Log::info("Offer {$this->offerId} has been expired and deleted", [
+                'order_id' => $offer->order_id,
+                'driver_id' => $offer->driver_id,
+                'expires_at' => $offer->expires_at,
+            ]);
 
         } catch (\Exception $e) {
             Log::error("Error in ExpireOrderOfferJob for offer {$this->offerId}: " . $e->getMessage(), [
