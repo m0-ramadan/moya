@@ -57,7 +57,17 @@ class OrderOffer extends Model
 
         return false;
     }
+public function deleteIfExpired(): bool
+{
+    if ($this->expired_at && now()->greaterThan($this->expired_at)) {
 
+        $this->update(['status' => 'expired']);
+
+        return $this->forceDelete();
+    }
+
+    return false;
+}
     /**
      * التحقق مما إذا كان العرض نشطاً
      */
