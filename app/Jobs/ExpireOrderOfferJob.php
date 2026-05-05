@@ -48,9 +48,7 @@ class ExpireOrderOfferJob implements ShouldQueue
                 return;
             }
 
-            // تحميل العلاقات المطلوبة قبل الحذف
-            $offer->load(['order.user', 'driver.user']);
-
+  
             // إرسال إشعار للسائق بأن عرضه انتهى
             $this->notifyDriverAboutExpiredOffer($offer, $firebaseService);
 
@@ -61,7 +59,7 @@ class ExpireOrderOfferJob implements ShouldQueue
             event(new OfferExpired($offer));
 
             // التحقق من حالة الطلب - إذا كانت كل العروض منتهية
-            $this->checkOrderStatus($offer->order);
+          //  $this->checkOrderStatus($offer->order);
 
             // حذف العرض فوراً بعد انتهاء صلاحيته
             $offer->forceDelete();
