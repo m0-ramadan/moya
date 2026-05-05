@@ -84,7 +84,7 @@ class AuthController extends Controller
     //         return $this->validationError(['otp' => [$e->getMessage()]]);
     //     }
     // }
-    use Illuminate\Support\Facades\Log;
+
 
 public function verifyOtp(VerifyOtpRequest $request)
 {
