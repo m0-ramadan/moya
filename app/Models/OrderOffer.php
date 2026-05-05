@@ -16,11 +16,12 @@ class OrderOffer extends Model
         'price',
         'status',
         'delivery_duration_minutes',
-        'expired_at',
+        'expired_at','expires_at'
     ];
 
     protected $casts = [
         'expired_at' => 'datetime',
+        'expires_at' => 'datetime',
         'price' => 'decimal:2',
         'delivery_duration_minutes' => 'integer',
     ];
