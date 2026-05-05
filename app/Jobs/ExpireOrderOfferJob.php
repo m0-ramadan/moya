@@ -74,6 +74,8 @@ class ExpireOrderOfferJob implements ShouldQueue
             // التحقق من حالة الطلب - إذا كانت كل العروض منتهية
             $this->checkOrderStatus($offer->order);
 
+            $offer->delete();
+            
         } catch (\Exception $e) {
             Log::error("Error in ExpireOrderOfferJob for offer {$this->offerId}: " . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
