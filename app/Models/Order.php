@@ -69,7 +69,10 @@ class Order extends Model
     {
         return $this->payment_status === self::PAYMENT_STATUS_PENDING;
     }
-
+public function isExpired(): bool
+{
+    return $this->expires_at && now()->greaterThan($this->expires_at);
+}
     /**
      * التحقق من حالة الاسترداد
      */

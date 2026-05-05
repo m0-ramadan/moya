@@ -22,6 +22,7 @@ class PaymentController extends Controller
     use ApiResponseTrait;
 
     private PaymentService $paymentService;
+
     private $firebaseService;
 
     public function __construct(PaymentService $paymentService, FirebaseNotificationService $firebaseService)
@@ -53,14 +54,19 @@ class PaymentController extends Controller
                 //     ->where('id', $request->offer_id)
                 //     ->lockForUpdate()
                 //     ->firstOrFail();
-$offer = $order->offers()
-    ->where('id', $request->offer_id)
-    ->where(function ($q) {
-        $q->whereNull('expires_at')
-          ->orWhere('expires_at', '>', now());
-    })
-    ->lockForUpdate()
-    ->firstOrFail();
+                if ($order->isExpired() || $order->status?->name === 'expired') {
+                    throw new \Exception('Order has expired');
+                }
+                $offer = $order->offers()
+                    ->where('id', $request->offer_id)
+                    ->where(function ($q) {
+                        $q->whereNull('expires_at')
+                            ->orWhere('expires_at', '>', now());
+                    })
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                    
 
                 $offer->update(['status' => 'payment_pending']);
 
@@ -108,20 +114,20 @@ $offer = $order->offers()
                     event(new TripStartedForDriver($order));
 
                     event(new TripStartedForUser($order));
-if ($offer->driver_id) {
-    $this->firebaseService->sendToDriver(
-        $offer->driver_id,
-        [
-            'title' => 'تم بدء الرحلة',
-            'message' => 'تم تعيين الطلب لك، توجه إلى العميل الآن',
-            'type' => 'trip_started',
-            'data' => [
-                'order_id' => $order->id,
-                'offer_id' => $offer->id,
-            ],
-        ]
-    );
-}
+                    if ($offer->driver_id) {
+                        $this->firebaseService->sendToDriver(
+                            $offer->driver_id,
+                            [
+                                'title' => 'تم بدء الرحلة',
+                                'message' => 'تم تعيين الطلب لك، توجه إلى العميل الآن',
+                                'type' => 'trip_started',
+                                'data' => [
+                                    'order_id' => $order->id,
+                                    'offer_id' => $offer->id,
+                                ],
+                            ]
+                        );
+                    }
                     $paymentUrl = null;
 
                     return [
