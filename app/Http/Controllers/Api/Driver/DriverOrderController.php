@@ -233,9 +233,9 @@ class DriverOrderController extends Controller
         if (! $order) {
             return $this->errorResponse('الطلب غير موجود أو لا يخصك', 404);
         }
-        $status=OrderStatus::find($validated['status_id']);
-        if($status->name=='delivered' && $order->code_confirmation){
-            if($validated['code_confirmation'] != $order->code_confirmation){
+        $status = OrderStatus::find($validated['status_id']);
+        if ($status->name == 'delivered' && $order->code_confirmation) {
+            if ($validated['code_confirmation'] != $order->code_confirmation) {
                 return $this->errorResponse('كود التأكيد غير صحيح', 400);
             }
             // else{
@@ -282,11 +282,18 @@ class DriverOrderController extends Controller
             // إرسال إشعارات
             $this->sendStatusNotifications($order, $oldStatus, $validated['status_id']);
 
+            $location = DriverLocation::create([
+                'driver_id' => $driver->id,
+                'order_id' => $order->id,
+                'latitude' => $validated['location_lat'],
+                'longitude' => $validated['location_lng'],
+            ]);
+
             // Broadcast Events
             event(new OrderStatusUpdated($order, $oldStatus));
 
             if (! empty($validated['location_lat']) && ! empty($validated['location_lng'])) {
-                event(new DriverLocationUpdated($driver, $order, $validated['location_lat'], $validated['location_lng']));
+                event(new DriverLocationUpdated($driver, $order, $location));
             }
 
             return $this->successResponse(
@@ -673,8 +680,8 @@ class DriverOrderController extends Controller
 
         // Job لطلب التقييم
         \App\Jobs\RequestRatingJob::dispatch($order)
-            ->delay(now()->addMinutes($delayMinutes))
-            ->onQueue('rating_requests');
+            ->onQueue('rating_requests')
+            ->delay(now()->addMinutes($delayMinutes));
 
         Log::info('Rating request scheduled', [
             'order_id' => $order->id,
@@ -693,7 +700,7 @@ class DriverOrderController extends Controller
                 'completed_at' => now(),
                 'delivery_duration_minutes' => $this->calculateDeliveryDuration($order),
                 'total_distance_km' => $this->calculateTotalDistance($order),
-                'final_price' => (float)$order->price,
+                'final_price' => (float) $order->price,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

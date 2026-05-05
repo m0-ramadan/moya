@@ -49,10 +49,18 @@ class PaymentController extends Controller
 
             $result = DB::transaction(function () use ($request, $order, $user, &$paymentUrl) {
 
-                $offer = $order->offers()
-                    ->where('id', $request->offer_id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+                // $offer = $order->offers()
+                //     ->where('id', $request->offer_id)
+                //     ->lockForUpdate()
+                //     ->firstOrFail();
+$offer = $order->offers()
+    ->where('id', $request->offer_id)
+    ->where(function ($q) {
+        $q->whereNull('expires_at')
+          ->orWhere('expires_at', '>', now());
+    })
+    ->lockForUpdate()
+    ->firstOrFail();
 
                 $offer->update(['status' => 'payment_pending']);
 
