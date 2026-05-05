@@ -222,7 +222,7 @@ class RatingController extends Controller
         $order = Order::where('user_id', $user->id)
             ->findOrFail($orderId);
 
-        $offers = OrderOffer::where('order_id', $orderId)
+        $offers = OrderOffer::where('order_id', $orderId)->whereNot('status', 'expired')
             ->orderBy('created_at', 'desc')
             ->get();
 
