@@ -86,7 +86,7 @@ class AuthController extends Controller
     // }
 
 
-public function verifyOtp(VerifyOtpRequest $request)
+public function verifyOtp(Request $request)
 {
     Log::info('OTP Verification started', [
         'phone_number' => $request->input('phone_number'),
