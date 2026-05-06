@@ -571,95 +571,99 @@ class ChatController extends Controller
     /**
      * إرسال إشعار Firebase للطرف الآخر عند استلام رسالة جديدة
      */
-    private function sendFirebaseNotification(Message $message, Chat $chat)
-    {
-        try {
-            $sender = $message->sender;
-            $senderId = Auth::id();
+/**
+ * إرسال إشعار Firebase للطرف الآخر عند استلام رسالة جديدة
+ */
+private function sendFirebaseNotification(Message $message, Chat $chat)
+{
+    try {
+        $sender = $message->sender;
+        $senderId = Auth::id();
 
-            // الحصول على معرفات المستقبلين
-            $participants = collect($chat->participants ?? [])
-                ->map(fn($id) => (int) $id)
-                ->filter(fn($id) => $id !== $senderId)
-                ->values()
-                ->all();
+        // الحصول على معرفات المستقبلين
+        $participants = collect($chat->participants ?? [])
+            ->map(fn($id) => (int) $id)
+            ->filter(fn($id) => $id !== $senderId)
+            ->values()
+            ->all();
 
-            if (empty($participants)) {
-                return;
-            }
-
-            // جلب أجهزة المستقبلين النشطة
-            $tokens = \App\Models\User::whereIn('id', $participants)
-                ->with('activeDeviceTokens')
-                ->get()
-                ->flatMap(function ($user) {
-                    // إذا أردت دعم الإشعارات للسائقين أيضاً عبر user_id
-                    return $user->activeDeviceTokens->pluck('token');
-                })
-                ->filter() // إزالة القيم الفارغة أو null
-                ->unique()
-                ->values()
-                ->toArray();
-
-            if (empty($tokens)) {
-                Log::info('No active device tokens found for chat recipients', [
-                    'chat_id' => $chat->id,
-                    'recipients' => $participants,
-                ]);
-                return;
-            }
-
-            // إعداد بيانات الإشعار
-            $notificationTitle = $sender->name ?? 'New Message';
-            $notificationBody = $this->getNotificationBody($message);
-
-            $notificationData = [
-                'title' => $notificationTitle,
-                'body' => $notificationBody,
-                'image' => $sender->avatar ? asset('storage/' . ltrim($sender->avatar, '/')) : null,
-            ];
-
-            $customData = [
-                'chat_id' => (string) $chat->id,
-                'chat_uuid' => $chat->chat_uuid,
-                'message_id' => (string) $message->id,
-                'sender_id' => (string) $senderId,
-                'message_type' => $message->message_type,
-                'type' => 'new_message',
-                'click_action' => 'CHAT_MESSAGE_ACTION',
-            ];
-
-            // إنشاء إشعار في قاعدة البيانات لكل مستقبل
-            foreach ($participants as $participantId) {
-                $recipient = \App\Models\User::find($participantId);
-                if ($recipient && method_exists($recipient, 'createNotification')) {
-                    $recipient->createNotification([
-                        'title' => $notificationTitle,
-                        'message' => $notificationBody,
-                        'type' => 'new_message',
-                        'data' => $customData,
-                    ]);
-                }
-            }
-
-            // إرسال الإشعار عبر Firebase
-            $firebaseService = app(FirebaseNotificationService::class);
-            $firebaseService->sendToMultipleDevices($tokens, $notificationData, $customData);
-
-            Log::info('Firebase notification sent for message', [
-                'message_id' => $message->id,
-                'chat_id' => $chat->id,
-                'recipients_count' => count($tokens),
-                'sender_id' => $senderId,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error sending Firebase notification: ' . $e->getMessage(), [
-                'message_id' => $message->id ?? null,
-                'chat_id' => $chat->id ?? null,
-                'trace' => $e->getTraceAsString(),
-            ]);
+        if (empty($participants)) {
+            return;
         }
+
+        // جلب أجهزة المستقبلين النشطة
+        $tokens = \App\Models\User::whereIn('id', $participants)
+            ->with('activeDeviceTokens')
+            ->get()
+            ->flatMap(function ($user) {
+                return $user->activeDeviceTokens->pluck('token');
+            })
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        if (empty($tokens)) {
+            Log::info('No active device tokens found for chat recipients', [
+                'chat_id' => $chat->id,
+                'recipients' => $participants,
+            ]);
+            return;
+        }
+
+        // إعداد بيانات الإشعار
+        $notificationTitle = $sender->name ?? 'New Message';
+        $notificationBody = $this->getNotificationBody($message);
+
+        $notificationData = [
+            'title' => $notificationTitle,
+            'body' => $notificationBody,
+            'image' => $sender->avatar ? asset('storage/' . ltrim($sender->avatar, '/')) : null,
+        ];
+
+        // ⚠️ هام: تجنب استخدام الكلمات المحجوزة في FCM
+        // تم تغيير message_type -> msg_type
+        $customData = [
+            'chat_id' => (string) $chat->id,
+            'chat_uuid' => $chat->chat_uuid,
+            'message_id' => (string) $message->id,
+            'sender_id' => (string) $senderId,
+            'msg_type' => $message->message_type, // ✅ تم التغيير من message_type إلى msg_type
+            'type' => 'new_message',
+            'click_action' => 'CHAT_MESSAGE_ACTION',
+        ];
+
+        // إنشاء إشعار في قاعدة البيانات لكل مستقبل
+        foreach ($participants as $participantId) {
+            $recipient = \App\Models\User::find($participantId);
+            if ($recipient && method_exists($recipient, 'createNotification')) {
+                $recipient->createNotification([
+                    'title' => $notificationTitle,
+                    'message' => $notificationBody,
+                    'type' => 'new_message',
+                    'data' => $customData,
+                ]);
+            }
+        }
+
+        // إرسال الإشعار عبر Firebase
+        $firebaseService = app(FirebaseNotificationService::class);
+        $firebaseService->sendToMultipleDevices($tokens, $notificationData, $customData);
+
+        Log::info('Firebase notification sent for message', [
+            'message_id' => $message->id,
+            'chat_id' => $chat->id,
+            'recipients_count' => count($tokens),
+            'sender_id' => $senderId,
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error sending Firebase notification: ' . $e->getMessage(), [
+            'message_id' => $message->id ?? null,
+            'chat_id' => $chat->id ?? null,
+            'trace' => $e->getTraceAsString(),
+        ]);
     }
+}
 
     /**
      * الحصول على نص الإشعار بناءً على نوع الرسالة
