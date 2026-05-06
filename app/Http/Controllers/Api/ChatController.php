@@ -9,6 +9,7 @@ use App\Models\Chat;
 use App\Models\Driver;
 use App\Models\FileChunk;
 use App\Models\Message;
+use App\Services\FirebaseNotificationService; // <-- تأكد من استيراد الخدمة
 use getID3;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +19,9 @@ use Illuminate\Support\Str;
 
 class ChatController extends Controller
 {
+    /**
+     * عرض قائمة المحادثات
+     */
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -77,6 +81,9 @@ class ChatController extends Controller
         ]);
     }
 
+    /**
+     * إنشاء أو جلب محادثة
+     */
     public function getOrCreateChat(Request $request)
     {
         $messages = [
@@ -106,9 +113,6 @@ class ChatController extends Controller
         $user = Auth::user();
         $participantId = (int) $validated['participant_id'];
 
-        // if (!Driver::where('user_id', $participantId)->exists() && !$user->type == 'user') {
-        //     $participantId = (int) ('888888' . $participantId);
-        // }
         $participants = [$user->id, $participantId];
         sort($participants);
 
@@ -132,6 +136,9 @@ class ChatController extends Controller
         ]);
     }
 
+    /**
+     * جلب رسائل محادثة
+     */
     public function getMessages(Chat $chat)
     {
         $this->authorize('view', $chat);
@@ -414,6 +421,9 @@ class ChatController extends Controller
                 'file_size' => $totalSize,
             ]);
 
+            // Send Firebase notification for the combined file message
+            $this->sendFirebaseNotification($message, $chat);
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'File uploaded and combined successfully',
@@ -559,7 +569,7 @@ class ChatController extends Controller
     }
 
     /**
-     * إرسال إشعار Firebase للطرف الآخر
+     * إرسال إشعار Firebase للطرف الآخر عند استلام رسالة جديدة
      */
     private function sendFirebaseNotification(Message $message, Chat $chat)
     {
@@ -582,7 +592,13 @@ class ChatController extends Controller
             $tokens = \App\Models\User::whereIn('id', $participants)
                 ->with('activeDeviceTokens')
                 ->get()
-                ->flatMap(fn($user) => $user->activeDeviceTokens->pluck('token'))
+                ->flatMap(function ($user) {
+                    // إذا أردت دعم الإشعارات للسائقين أيضاً عبر user_id
+                    return $user->activeDeviceTokens->pluck('token');
+                })
+                ->filter() // إزالة القيم الفارغة أو null
+                ->unique()
+                ->values()
                 ->toArray();
 
             if (empty($tokens)) {
@@ -604,18 +620,31 @@ class ChatController extends Controller
             ];
 
             $customData = [
-                'chat_id' => $chat->id,
+                'chat_id' => (string) $chat->id,
                 'chat_uuid' => $chat->chat_uuid,
-                'message_id' => $message->id,
-                'sender_id' => $senderId,
+                'message_id' => (string) $message->id,
+                'sender_id' => (string) $senderId,
                 'message_type' => $message->message_type,
                 'type' => 'new_message',
                 'click_action' => 'CHAT_MESSAGE_ACTION',
             ];
 
-            // إرسال الإشعار
-            app(\App\Services\FirebaseNotificationService::class)
-                ->sendToMultipleDevices($tokens, $notificationData, $customData);
+            // إنشاء إشعار في قاعدة البيانات لكل مستقبل
+            foreach ($participants as $participantId) {
+                $recipient = \App\Models\User::find($participantId);
+                if ($recipient && method_exists($recipient, 'createNotification')) {
+                    $recipient->createNotification([
+                        'title' => $notificationTitle,
+                        'message' => $notificationBody,
+                        'type' => 'new_message',
+                        'data' => $customData,
+                    ]);
+                }
+            }
+
+            // إرسال الإشعار عبر Firebase
+            $firebaseService = app(FirebaseNotificationService::class);
+            $firebaseService->sendToMultipleDevices($tokens, $notificationData, $customData);
 
             Log::info('Firebase notification sent for message', [
                 'message_id' => $message->id,
