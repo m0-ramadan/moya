@@ -123,12 +123,14 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
     });
 
     // Contacts
+    // Contacts Routes
     Route::prefix('contacts')->as('contact.')->group(function () {
         Route::get('/', [ContactController::class, 'index'])->name('index');
-        Route::get('read/{id}', [ContactController::class, 'read'])->name('read');
-        Route::delete('delete/{id}', [ContactController::class, 'destroy'])->name('destroy');
+        Route::get('/show/{id}', [ContactController::class, 'show'])->name('show');
+        Route::post('/read/{id}', [ContactController::class, 'read'])->name('read');
+        Route::post('/mark-all-read', [ContactController::class, 'markAllRead'])->name('mark-all-read');
+        Route::delete('/delete/{id}', [ContactController::class, 'destroy'])->name('destroy');
     });
-
     // Subscriptions
     Route::prefix('subscriptions')->as('subscribe.')->group(function () {
         Route::get('/', [SubscribeController::class, 'index'])->name('index');
@@ -152,7 +154,7 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
 
         // User Status
         Route::post('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
-
+   Route::get('/{user}/locations', [UserController::class, 'locations'])->name('locations');
         // User Wallet
         Route::get('/{user}/wallet', [UserController::class, 'wallet'])->name('wallet');
 

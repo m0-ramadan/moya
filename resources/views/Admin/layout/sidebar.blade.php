@@ -188,7 +188,7 @@
 
 
            <li class="menu-item ">
-               <a href="#/admin/contact-us" class="menu-link">
+               <a href="{{ route('admin.contact.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-messages"></i>
                    <div>تواصل معنا</div>
                </a>

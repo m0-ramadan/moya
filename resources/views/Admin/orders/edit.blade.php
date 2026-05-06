@@ -12,9 +12,6 @@
             --danger-color: #dc3545;
             --warning-color: #ffc107;
             --info-color: #17a2b8;
-            --light-bg: #f8f9fa;
-            --border-color: #e9ecef;
-            --text-muted: #6c757d;
             --dark-bg: #1e1e2d;
             --dark-card: #2b3b4c;
         }
@@ -50,6 +47,12 @@
             background: rgba(133, 100, 4, 0.2);
             color: #ffc107;
             border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .status-processing {
+            background: rgba(0, 64, 133, 0.2);
+            color: #0dcaf0;
+            border: 1px solid rgba(13, 202, 240, 0.3);
         }
 
         .status-in-road {
@@ -137,121 +140,6 @@
             border: 1px solid rgba(12, 99, 228, 0.2);
         }
 
-        .alert-guide h6 {
-            color: var(--primary-color);
-            margin-bottom: 15px;
-        }
-
-        .alert-guide ul {
-            margin-bottom: 0;
-            padding-right: 20px;
-        }
-
-        .alert-guide li {
-            margin-bottom: 8px;
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-
-        .items-table th {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 12px;
-            text-align: right;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.8);
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .items-table td {
-            padding: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            vertical-align: middle;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .item-row:hover {
-            background: rgba(105, 108, 255, 0.1);
-        }
-
-        .driver-info {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .driver-detail {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .driver-detail:last-child {
-            margin-bottom: 0;
-        }
-
-        .driver-icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: var(--primary-gradient);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 14px;
-        }
-
-        .summary-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-        }
-
-        .summary-row:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        .summary-label {
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .summary-value {
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .total-row {
-            font-size: 18px;
-            color: #20c997;
-        }
-
-        .help-text {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 5px;
-        }
-
         .info-card {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
@@ -270,20 +158,19 @@
         }
 
         .info-row:last-child {
+            border-bottom: none;
             margin-bottom: 0;
             padding-bottom: 0;
-            border-bottom: none;
         }
 
         .info-label {
-            min-width: 120px;
+            min-width: 130px;
             font-weight: 600;
             color: rgba(255, 255, 255, 0.8);
         }
 
         .info-value {
             color: rgba(255, 255, 255, 0.9);
-            font-weight: 500;
         }
 
         .form-control, .form-select {
@@ -342,7 +229,6 @@
 
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.3);
         }
 
         .btn-outline-danger {
@@ -355,43 +241,37 @@
             color: white;
         }
 
-        .badge-gateway {
-            background: rgba(105, 108, 255, 0.2);
-            color: var(--primary-color);
-            padding: 4px 12px;
-            border-radius: 15px;
+        .summary-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .help-text {
             font-size: 12px;
-            border: 1px solid rgba(105, 108, 255, 0.3);
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
         }
 
         @media (max-width: 768px) {
-            .order-edit-card {
-                padding: 20px;
-            }
-
-            .items-table {
-                display: block;
-                overflow-x: auto;
-            }
-
             .info-row {
                 flex-direction: column;
                 align-items: flex-start;
             }
-
-            .info-label {
-                min-width: auto;
-                margin-bottom: 5px;
-            }
-
             .summary-row {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 10px;
-            }
-
-            .summary-row .input-group {
-                width: 100% !important;
+                gap: 5px;
             }
         }
     </style>
@@ -417,6 +297,7 @@
         <div class="row">
             <div class="col-12">
                 <div class="order-edit-card">
+                    {{-- Header --}}
                     <div class="order-edit-header">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -444,8 +325,6 @@
                                             @case('refunded')
                                                 <i class="fas fa-undo-alt me-1"></i>مسترد
                                                 @break
-                                            @default
-                                                {{ $order->payment_status }}
                                         @endswitch
                                     </span>
                                 </div>
@@ -461,39 +340,31 @@
                         </div>
                     </div>
 
-                    <!-- معلومات الطلب -->
+                    {{-- معلومات أساسية عن الطلب --}}
                     <div class="info-card">
                         <h6 class="mb-3">معلومات الطلب</h6>
-
                         <div class="info-row">
                             <div class="info-label">رقم الطلب:</div>
                             <div class="info-value">#{{ $order->id }}</div>
                         </div>
-
                         <div class="info-row">
                             <div class="info-label">تاريخ الطلب:</div>
                             <div class="info-value">
                                 {{ $order->order_date ? $order->order_date->translatedFormat('d M Y - h:i A') : $order->created_at->translatedFormat('d M Y - h:i A') }}
                             </div>
                         </div>
-
                         <div class="info-row">
                             <div class="info-label">آخر تحديث:</div>
-                            <div class="info-value">
-                                {{ $order->updated_at->translatedFormat('d M Y - h:i A') }}
-                            </div>
+                            <div class="info-value">{{ $order->updated_at->translatedFormat('d M Y - h:i A') }}</div>
                         </div>
-
                         <div class="info-row">
                             <div class="info-label">الخدمة:</div>
                             <div class="info-value">{{ $order->service->name ?? 'غير محدد' }}</div>
                         </div>
-
                         <div class="info-row">
                             <div class="info-label">نوع المياه:</div>
                             <div class="info-value">{{ $order->waterType->name ?? 'غير محدد' }}</div>
                         </div>
-
                         @if($order->expires_at)
                             <div class="info-row">
                                 <div class="info-label">ينتهي في:</div>
@@ -507,13 +378,14 @@
                         @endif
                     </div>
 
+                    {{-- تنبيهات --}}
                     <div class="alert-guide">
                         <h6><i class="fas fa-lightbulb me-2"></i>نصائح للتعديل:</h6>
                         <ul>
-                            <li>يمكنك تعديل معلومات العميل والعنوان</li>
+                            <li>يمكنك تعديل العميل والعنوان</li>
                             <li>يمكنك تحديث حالة الطلب وحالة الدفع</li>
-                            <li>تغيير السعر سيؤثر على الإجمالي النهائي</li>
-                            <li>احفظ التغييرات بعد الانتهاء</li>
+                            <li>تغيير السعر أو السائق لا يتم من هنا، استخدم شاشة "إدارة العروض" إذا لزم الأمر</li>
+                            <li>تأكد من صحة البيانات قبل الحفظ</li>
                         </ul>
                     </div>
 
@@ -543,31 +415,29 @@
 
                         <div class="row">
                             <div class="col-lg-8">
-                                <!-- معلومات العميل -->
+                                {{-- معلومات العميل --}}
                                 <div class="form-section">
                                     <h6><i class="fas fa-user me-2"></i>معلومات العميل</h6>
-
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
-                                            <label for="user_id" class="form-label required">اختر العميل</label>
+                                            <label for="user_id" class="form-label required">العميل</label>
                                             <select class="form-select" id="user_id" name="user_id" required>
                                                 <option value="">-- اختر عميل --</option>
                                                 @foreach($users as $user)
-                                                    <option value="{{ $user->id }}" 
+                                                    <option value="{{ $user->id }}"
                                                         {{ old('user_id', $order->user_id) == $user->id ? 'selected' : '' }}>
-                                                        {{ $user->name }} - {{ $user->phone }}
+                                                        {{ $user->name }} - {{ $user->phone ?? 'بدون هاتف' }}
                                                     </option>
                                                 @endforeach
                                             </select>
                                         </div>
-
                                         <div class="col-md-6 mb-3">
                                             <label for="saved_location_id" class="form-label">العنوان المحفوظ</label>
                                             <select class="form-select" id="saved_location_id" name="saved_location_id">
                                                 <option value="">-- اختر عنوان --</option>
                                                 @if($order->user)
                                                     @foreach($order->user->savedLocations as $location)
-                                                        <option value="{{ $location->id }}" 
+                                                        <option value="{{ $location->id }}"
                                                             {{ old('saved_location_id', $order->saved_location_id) == $location->id ? 'selected' : '' }}>
                                                             {{ $location->label }} - {{ $location->address_details }}
                                                         </option>
@@ -578,127 +448,65 @@
                                     </div>
                                 </div>
 
-                                <!-- معلومات السائق (للعرض فقط) -->
-                                @if($order->driver)
+                                {{-- معلومات الخدمة --}}
                                 <div class="form-section">
-                                    <h6><i class="fas fa-truck me-2"></i>معلومات السائق</h6>
-
-                                    <div class="driver-info">
-                                        <div class="driver-detail">
-                                            <div class="driver-icon">
-                                                <i class="fas fa-user"></i>
-                                            </div>
-                                            <div>
-                                                <strong>{{ $order->driver->user->name ?? 'غير معروف' }}</strong>
-                                                @if($order->driver->is_verified)
-                                                    <span class="badge bg-success ms-2">موثق</span>
-                                                @endif
-                                            </div>
-                                        </div>
-                                        
-                                        @if($order->driver->vehicle_plate_number)
-                                        <div class="driver-detail">
-                                            <div class="driver-icon">
-                                                <i class="fas fa-car"></i>
-                                            </div>
-                                            <div>{{ $order->driver->vehicle_plate_number }}</div>
-                                        </div>
-                                        @endif
-
-                                        @if($order->acceptedOffer)
-                                        <div class="driver-detail">
-                                            <div class="driver-icon">
-                                                <i class="fas fa-money-bill"></i>
-                                            </div>
-                                            <div>السعر: {{ number_format($order->acceptedOffer->price, 2) }} ر.س</div>
-                                        </div>
-                                        <div class="driver-detail">
-                                            <div class="driver-icon">
-                                                <i class="fas fa-clock"></i>
-                                            </div>
-                                            <div>مدة التوصيل: {{ $order->acceptedOffer->delivery_duration_minutes }} دقيقة</div>
-                                        </div>
-                                        @endif
-                                    </div>
-
-                                    <div class="help-text">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        لتغيير السائق، قم بإلغاء الطلب وإنشاء طلب جديد أو انتظر انتهاء الطلب الحالي.
-                                    </div>
-                                </div>
-                                @endif
-
-                                <!-- معلومات إضافية -->
-                                <div class="form-section">
-                                    <h6><i class="fas fa-info-circle me-2"></i>معلومات إضافية</h6>
-
+                                    <h6><i class="fas fa-cogs me-2"></i>تفاصيل الخدمة</h6>
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="service_id" class="form-label required">الخدمة</label>
                                             <select class="form-select" id="service_id" name="service_id" required>
                                                 <option value="">-- اختر خدمة --</option>
                                                 @foreach($services as $service)
-                                                    <option value="{{ $service->id }}" 
+                                                    <option value="{{ $service->id }}"
                                                         {{ old('service_id', $order->service_id) == $service->id ? 'selected' : '' }}>
                                                         {{ $service->name }}
                                                     </option>
                                                 @endforeach
                                             </select>
                                         </div>
-
                                         <div class="col-md-6 mb-3">
                                             <label for="water_type_id" class="form-label required">نوع المياه</label>
                                             <select class="form-select" id="water_type_id" name="water_type_id" required>
                                                 <option value="">-- اختر نوع المياه --</option>
                                                 @foreach($waterTypes as $type)
-                                                    <option value="{{ $type->id }}" 
+                                                    <option value="{{ $type->id }}"
                                                         {{ old('water_type_id', $order->water_type_id) == $type->id ? 'selected' : '' }}>
                                                         {{ $type->name }}
                                                     </option>
                                                 @endforeach
                                             </select>
                                         </div>
-
                                         <div class="col-md-6 mb-3">
                                             <label for="order_status_id" class="form-label required">حالة الطلب</label>
                                             <select class="form-select" id="order_status_id" name="order_status_id" required>
                                                 @foreach($orderStatuses as $status)
-                                                    <option value="{{ $status->id }}" 
+                                                    <option value="{{ $status->id }}"
                                                         {{ old('order_status_id', $order->order_status_id) == $status->id ? 'selected' : '' }}>
                                                         {{ $status->label }}
                                                     </option>
                                                 @endforeach
                                             </select>
                                         </div>
-
                                         <div class="col-md-6 mb-3">
                                             <label for="order_date" class="form-label required">تاريخ الطلب</label>
                                             <input type="datetime-local" class="form-control" id="order_date"
                                                 name="order_date"
                                                 value="{{ old('order_date', $order->order_date ? $order->order_date->format('Y-m-d\TH:i') : $order->created_at->format('Y-m-d\TH:i')) }}" required>
                                         </div>
-
                                         <div class="col-md-6 mb-3">
                                             <label for="expires_at" class="form-label">تاريخ الانتهاء</label>
                                             <input type="datetime-local" class="form-control" id="expires_at"
                                                 name="expires_at"
                                                 value="{{ old('expires_at', $order->expires_at ? $order->expires_at->format('Y-m-d\TH:i') : '') }}">
                                         </div>
-
-                                        <div class="col-12 mb-3">
-                                            <label for="notes" class="form-label">ملاحظات</label>
-                                            <textarea class="form-control" id="notes" name="notes" rows="3">{{ old('notes', $order->notes) }}</textarea>
-                                            <div class="help-text">ملاحظات إضافية حول الطلب (اختياري)</div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="col-lg-4">
-                                <!-- معلومات الدفع -->
+                                {{-- معلومات الدفع --}}
                                 <div class="summary-card">
                                     <h6 class="mb-3">معلومات الدفع</h6>
-
                                     <div class="summary-row">
                                         <span class="summary-label">حالة الدفع:</span>
                                         <select class="form-select form-select-sm" name="payment_status" required>
@@ -709,7 +517,6 @@
                                             <option value="refunded" {{ old('payment_status', $order->payment_status) == 'refunded' ? 'selected' : '' }}>مسترد</option>
                                         </select>
                                     </div>
-
                                     <div class="summary-row">
                                         <span class="summary-label">طريقة الدفع:</span>
                                         <select class="form-select form-select-sm" name="payment_method" required>
@@ -719,7 +526,6 @@
                                             <option value="apple_pay" {{ old('payment_method', $order->payment_method) == 'apple_pay' ? 'selected' : '' }}>Apple Pay</option>
                                         </select>
                                     </div>
-
                                     <div class="summary-row">
                                         <span class="summary-label">بوابة الدفع:</span>
                                         <select class="form-select form-select-sm" name="payment_gateway">
@@ -730,14 +536,12 @@
                                             <option value="tabby" {{ old('payment_gateway', $order->payment_gateway) == 'tabby' ? 'selected' : '' }}>Tabby</option>
                                         </select>
                                     </div>
-
                                     <div class="summary-row">
                                         <span class="summary-label">رقم المعاملة:</span>
-                                        <input type="text" class="form-control form-control-sm" 
-                                            name="payment_transaction_id" 
+                                        <input type="text" class="form-control form-control-sm"
+                                            name="payment_transaction_id"
                                             value="{{ old('payment_transaction_id', $order->payment_transaction_id) }}">
                                     </div>
-
                                     @if($order->paid_at)
                                     <div class="summary-row">
                                         <span class="summary-label">تاريخ الدفع:</span>
@@ -748,63 +552,31 @@
                                     @endif
                                 </div>
 
-                                <!-- السعر -->
+                                {{-- ملخص السعر والعرض الحالي --}}
+                                @if($order->acceptedOffer)
                                 <div class="summary-card mt-4">
-                                    <h6 class="mb-3">تفاصيل السعر</h6>
-
-                                    @if($order->acceptedOffer)
+                                    <h6 class="mb-3">العرض المقبول</h6>
                                     <div class="summary-row">
-                                        <span class="summary-label">السعر الحالي:</span>
-                                        <span class="summary-value">
-                                            {{ number_format($order->acceptedOffer->price, 2) }} ر.س
-                                        </span>
+                                        <span class="summary-label">السعر:</span>
+                                        <span class="summary-value">{{ number_format($order->acceptedOffer->price, 2) }} ر.س</span>
                                     </div>
                                     <div class="summary-row">
-                                        <span class="summary-label">مدة التوصيل:</span>
-                                        <span class="summary-value">
-                                            {{ $order->acceptedOffer->delivery_duration_minutes }} دقيقة
-                                        </span>
+                                        <span class="summary-label">المدة:</span>
+                                        <span class="summary-value">{{ $order->acceptedOffer->delivery_duration_minutes }} دقيقة</span>
                                     </div>
                                     <div class="help-text">
                                         <i class="fas fa-info-circle me-1"></i>
-                                        لتغيير السعر، يجب تحديث العرض المقبول أو تعيين سائق جديد.
+                                        لتغيير السعر أو السائق، استخدم شاشة "العروض" أو ألغِ الطلب وأنشئ واحداً جديداً.
                                     </div>
-                                    @else
-                                    <div class="summary-row">
-                                        <span class="summary-label">السعر المقترح:</span>
-                                        <div class="input-group input-group-sm" style="width: 150px;">
-                                            <input type="number" class="form-control" id="price" name="price"
-                                                value="{{ old('price', 0) }}" step="0.01" min="0">
-                                            <span class="input-group-text">ر.س</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="summary-row">
-                                        <span class="summary-label">مدة التوصيل:</span>
-                                        <div class="input-group input-group-sm" style="width: 150px;">
-                                            <input type="number" class="form-control" id="delivery_duration" 
-                                                name="delivery_duration" value="{{ old('delivery_duration', 30) }}" 
-                                                min="1">
-                                            <span class="input-group-text">دقيقة</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="summary-row">
-                                        <span class="summary-label">تعيين سائق:</span>
-                                        <select class="form-select form-select-sm" name="driver_id">
-                                            <option value="">-- اختر سائق --</option>
-                                            @foreach($drivers ?? [] as $driver)
-                                                <option value="{{ $driver->id }}">
-                                                    {{ $driver->user->name ?? 'سائق #' . $driver->id }}
-                                                    @if($driver->vehicle_plate_number) - {{ $driver->vehicle_plate_number }} @endif
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    @endif
                                 </div>
+                                @else
+                                <div class="summary-card mt-4">
+                                    <h6 class="mb-3">العرض</h6>
+                                    <p class="text-muted">لا يوجد عرض مقبول بعد.</p>
+                                </div>
+                                @endif
 
-                                <!-- الأزرار -->
+                                {{-- أزرار --}}
                                 <div class="mt-4">
                                     <div class="d-grid gap-2">
                                         <button type="submit" class="btn btn-success btn-lg">
@@ -815,19 +587,6 @@
                                         </button>
                                     </div>
                                 </div>
-
-                                <!-- معلومات سريعة -->
-                                <div class="mt-4">
-                                    <div class="alert alert-warning">
-                                        <h6><i class="fas fa-exclamation-triangle me-2"></i>تنبيهات مهمة</h6>
-                                        <ul class="mt-2 mb-0 pe-3">
-                                            <li>تغيير حالة الطلب قد يؤثر على إشعارات العميل والسائق</li>
-                                            <li>تغيير حالة الدفع إلى "مدفوع" سيؤدي إلى تسجيل وقت الدفع</li>
-                                            <li>لا يمكن تغيير السائق بعد قبول العرض</li>
-                                            <li>تأكد من صحة المعلومات قبل الحفظ</li>
-                                        </ul>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </form>
@@ -836,7 +595,7 @@
         </div>
     </div>
 
-    <!-- Delete Form -->
+    {{-- Delete Form --}}
     <form id="deleteForm" action="{{ route('admin.orders.destroy', $order) }}" method="POST" style="display: none;">
         @csrf
         @method('DELETE')
@@ -847,31 +606,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        $(document).ready(function() {
-            // تحميل عناوين المستخدم عند تغيير المستخدم
-            $('#user_id').on('change', function() {
-                const userId = $(this).val();
-                if (userId) {
-                    $.ajax({
-                        url: "{{ route('admin.users.locations', '') }}/" + userId,
-                        type: 'GET',
-                        success: function(response) {
-                            const $locationSelect = $('#saved_location_id');
-                            $locationSelect.empty().append('<option value="">-- اختر عنوان --</option>');
-                            
-                            if (response.locations && response.locations.length > 0) {
-                                response.locations.forEach(function(location) {
-                                    $locationSelect.append(
-                                        `<option value="${location.id}">${location.label} - ${location.address_details}</option>`
-                                    );
-                                });
-                            }
-                        }
-                    });
-                }
-            });
-        });
-
         function confirmDelete() {
             Swal.fire({
                 title: 'هل أنت متأكد؟',
@@ -890,7 +624,6 @@
             });
         }
 
-        // رسائل التنبيه من الجلسة
         @if (session('success'))
             Swal.fire({
                 icon: 'success',

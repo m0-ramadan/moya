@@ -3,16 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Driver;
+use App\Models\DriverLocation;
 use App\Models\Order;
-use App\Models\OrderOffer;
-use App\Models\OrderRating;
 use App\Models\OrderCancellation;
 use App\Models\OrderCompletionLog;
-use App\Models\Driver;
-use App\Models\User;
-use App\Models\DriverLocation;
+use App\Models\OrderOffer;
 use App\Models\OrderStatus;
 use App\Models\Service;
+use App\Models\User;
 use App\Models\WaterType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +31,7 @@ class OrderController extends Controller
             'waterType',
             'location',
             'status',
-            'acceptedOffer.driver.user'
+            'acceptedOffer.driver.user',
         ])->latest('order_date');
 
         // Search by order number, user name, phone, etc.
@@ -111,7 +110,7 @@ class OrderController extends Controller
         // Sorting
         $sortBy = $request->get('sort_by', 'order_date');
         $sortDirection = $request->get('sort_direction', 'desc');
-        
+
         if (in_array($sortBy, ['order_date', 'created_at', 'id', 'payment_status'])) {
             $query->orderBy($sortBy, $sortDirection);
         }
@@ -128,86 +127,121 @@ class OrderController extends Controller
         $drivers = Driver::with('user')->where('is_verified', true)->get();
 
         return view('Admin.orders.index', compact(
-            'orders', 
-            'stats', 
-            'orderStatuses', 
-            'services', 
-            'waterTypes', 
+            'orders',
+            'stats',
+            'orderStatuses',
+            'services',
+            'waterTypes',
             'drivers'
         ));
     }
 
     /**
-     * Show the form for creating a new order
+     * Update order status
      */
-    public function create()
+    public function updateStatus(Request $request, Order $order)
     {
-        $users = User::where('status', 'active')->latest()->get();
-        $services = Service::where('is_active', true)->get();
-        $waterTypes = WaterType::get();
-        $orderStatuses = OrderStatus::all();
-
-        return view('Admin.orders.create', compact('users', 'services', 'waterTypes', 'orderStatuses'));
-    }
-
-    /**
-     * Store a newly created order
-     */
-    public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'user_id' => 'required|exists:users,id',
-            'service_id' => 'required|exists:services,id',
-            'water_type_id' => 'required|exists:water_types,id',
-            'saved_location_id' => 'nullable|exists:saved_locations,id',
+        
+        $request->validate([
             'order_status_id' => 'required|exists:order_statuses,id',
-            'payment_method' => 'required|string|max:255',
-            'payment_gateway' => 'nullable|string|in:wallet,paymob,tamara,tabby',
-            'order_date' => 'required|date',
             'notes' => 'nullable|string',
         ]);
 
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
+        $order->update([
+            'order_status_id' => $request->order_status_id,
+            'notes' => $request->notes ?: $order->notes,
+        ]);
 
-        DB::beginTransaction();
-
-        try {
-            // Generate order number (you might want to create a more sophisticated system)
-            $orderNumber = 'ORD-' . date('Ymd') . '-' . str_pad(Order::max('id') + 1, 6, '0', STR_PAD_LEFT);
-
-            $order = Order::create([
-                'user_id' => $request->user_id,
-                'service_id' => $request->service_id,
-                'water_type_id' => $request->water_type_id,
-                'saved_location_id' => $request->saved_location_id,
-                'order_status_id' => $request->order_status_id,
-                'payment_status' => Order::PAYMENT_STATUS_PENDING,
-                'payment_method' => $request->payment_method,
-                'payment_gateway' => $request->payment_gateway,
-                'order_date' => $request->order_date,
-                'expires_at' => now()->addHours(24), // Default expiration after 24 hours
-            ]);
-
-            DB::commit();
-
-            return redirect()->route('admin.orders.show', $order)
-                ->with('success', 'تم إنشاء الطلب بنجاح');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()
-                ->with('error', 'حدث خطأ أثناء إنشاء الطلب: ' . $e->getMessage())
-                ->withInput();
-        }
+        return response()->json(['success' => true, 'message' => 'تم تحديث حالة الطلب بنجاح']);
     }
+
+/**
+ * Show the form for creating a new order.
+ */
+public function create()
+{
+    $users = User::where('status', 'active')->latest()->get();
+    $services = Service::where('is_active', true)->get();
+    $waterTypes = WaterType::get(); 
+    $orderStatuses = OrderStatus::all();
+
+    return view('Admin.orders.create', compact('users', 'services', 'waterTypes', 'orderStatuses'));
+}
+/**
+ * Store a newly created order in storage.
+ */
+public function store(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'user_id'           => 'required|exists:users,id',
+        'service_id'        => 'required|exists:services,id',
+        'water_type_id'     => 'required|exists:water_types,id',
+        'saved_location_id' => 'nullable|exists:saved_locations,id',
+        'order_status_id'   => 'required|exists:order_statuses,id',
+        'payment_method'    => 'required|string|in:wallet,credit_card,mada,apple_pay',
+        'payment_gateway'   => 'nullable|string|in:wallet,paymob,tamara,tabby',
+        'order_date'        => 'required|date',
+        'notes'             => 'nullable|string|max:2000',
+    ], [
+        'user_id.required'           => 'يجب اختيار العميل',
+        'user_id.exists'             => 'العميل غير موجود في النظام',
+        'service_id.required'        => 'يجب اختيار الخدمة',
+        'service_id.exists'          => 'الخدمة غير موجودة',
+        'water_type_id.required'     => 'يجب اختيار نوع المياه',
+        'water_type_id.exists'       => 'نوع المياه غير موجود',
+        'order_status_id.required'   => 'يجب اختيار حالة الطلب',
+        'order_status_id.exists'     => 'حالة الطلب غير موجودة',
+        'payment_method.required'    => 'يجب اختيار طريقة الدفع',
+        'payment_method.in'          => 'طريقة الدفع غير صالحة',
+        'payment_gateway.in'         => 'بوابة الدفع غير صالحة',
+        'order_date.required'        => 'تاريخ الطلب مطلوب',
+        'order_date.date'            => 'صيغة التاريخ غير صحيحة',
+        'notes.max'                  => 'الملاحظات يجب ألا تتجاوز 2000 حرف',
+    ]);
+
+    if ($validator->fails()) {
+        return redirect()->back()
+            ->withErrors($validator)
+            ->withInput();
+    }
+
+    DB::beginTransaction();
+
+    try {
+        $order = Order::create([
+            'user_id'           => $request->user_id,
+            'service_id'        => $request->service_id,
+            'water_type_id'     => $request->water_type_id,
+            'saved_location_id' => $request->saved_location_id,
+            'order_status_id'   => $request->order_status_id,
+            'payment_status'    => Order::PAYMENT_STATUS_PENDING,
+            'payment_method'    => $request->payment_method,
+            'payment_gateway'   => $request->payment_gateway,
+            'order_date'        => $request->order_date,
+            'expires_at'        => now()->addHours(24),
+            'notes'             => $request->notes,
+        ]);
+
+        // إنشاء كود التأكيد تلقائياً (للاستخدام مستقبلاً)
+        $order->code_confirmation = strtoupper(substr(md5(uniqid($order->id, true)), 0, 6));
+        $order->save();
+
+        DB::commit();
+
+        return redirect()->route('admin.orders.show', $order)
+            ->with('success', 'تم إنشاء الطلب بنجاح');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return redirect()->back()
+            ->with('error', 'حدث خطأ أثناء إنشاء الطلب: ' . $e->getMessage())
+            ->withInput();
+    }
+}
 
     /**
      * Display the specified order
      */
-    public function show( $order)
+    public function show($order)
     {
         $order = Order::findOrFail($order);
 
@@ -227,7 +261,7 @@ class OrderController extends Controller
             'ratings.user',
             'ratings.driver.user',
             'cancellation',
-            'completionLog'
+            'completionLog',
         ]);
 
         // Get order timeline
@@ -240,10 +274,11 @@ class OrderController extends Controller
             ->whereDoesntHave('orders', function ($query) {
                 $query->whereIn('order_status_id', [
                     OrderStatus::where('name', OrderStatus::PENDING)->first()->id ?? 0,
-                    OrderStatus::where('name', OrderStatus::IN_ROAD)->first()->id ?? 0
+                    OrderStatus::where('name', OrderStatus::IN_ROAD)->first()->id ?? 0,
                 ]);
             })
             ->get();
+
         return view('Admin.orders.show', compact('order', 'timeline', 'availableDrivers'));
     }
 
@@ -253,10 +288,10 @@ class OrderController extends Controller
     public function edit(Order $order)
     {
         $order->load(['user', 'service', 'waterType', 'location']);
-        
+
         $users = User::where('status', 'active')->latest()->get();
-        $services = Service::where('is_active', true)->get();
-        $waterTypes = WaterType::where('is_active', true)->get();
+        $services = Service::get();
+        $waterTypes = WaterType::get();
         $orderStatuses = OrderStatus::all();
 
         return view('Admin.orders.edit', compact('order', 'users', 'services', 'waterTypes', 'orderStatuses'));
@@ -273,20 +308,19 @@ class OrderController extends Controller
             'water_type_id' => 'required|exists:water_types,id',
             'saved_location_id' => 'nullable|exists:saved_locations,id',
             'order_status_id' => 'required|exists:order_statuses,id',
-            'payment_status' => 'required|in:' . implode(',', [
+            'payment_status' => 'required|in:'.implode(',', [
                 Order::PAYMENT_STATUS_PENDING,
                 Order::PAYMENT_STATUS_PROCESSING,
                 Order::PAYMENT_STATUS_PAID,
                 Order::PAYMENT_STATUS_FAILED,
                 Order::PAYMENT_STATUS_REFUNDED,
-                Order::PAYMENT_STATUS_PARTIALLY_REFUNDED
+                Order::PAYMENT_STATUS_PARTIALLY_REFUNDED,
             ]),
             'payment_method' => 'required|string|max:255',
             'payment_gateway' => 'nullable|string|in:wallet,paymob,tamara,tabby',
             'payment_transaction_id' => 'nullable|string|max:255',
-            'paid_at' => 'nullable|date',
             'order_date' => 'required|date',
-            'notes' => 'nullable|string',
+            'notes' => 'nullable|string|max:2000',
         ]);
 
         if ($validator->fails()) {
@@ -298,28 +332,45 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
-            $oldStatus = $order->order_status_id;
-            $newStatus = $request->order_status_id;
+            $oldStatusId = $order->order_status_id;
+            $newStatusId = $request->order_status_id;
 
-            // Update order
-            $order->update($request->except(['_token', '_method']));
+            // تحديث بيانات الطلب الأساسية
+            $order->update([
+                'user_id' => $request->user_id,
+                'service_id' => $request->service_id,
+                'water_type_id' => $request->water_type_id,
+                'saved_location_id' => $request->saved_location_id,
+                'order_status_id' => $newStatusId,
+                'payment_status' => $request->payment_status,
+                'payment_method' => $request->payment_method,
+                'payment_gateway' => $request->payment_gateway,
+                'payment_transaction_id' => $request->payment_transaction_id,
+                'order_date' => $request->order_date,
+                'notes' => $request->notes,
+            ]);
 
-            // Handle payment status change
-            if ($request->payment_status == Order::PAYMENT_STATUS_PAID && !$order->paid_at) {
+            // التعامل مع تغيير حالة الدفع إلى مدفوع
+            if ($request->payment_status === Order::PAYMENT_STATUS_PAID && ! $order->paid_at) {
                 $order->paid_at = now();
                 $order->save();
             }
 
-            // Handle order completion
-            if ($this->isOrderCompleted($newStatus) && !$this->isOrderCompleted($oldStatus)) {
+            // التعامل مع اكتمال الطلب
+            if ($this->isOrderCompleted($newStatusId) && ! $this->isOrderCompleted($oldStatusId)) {
                 $this->completeOrder($order);
             }
 
-            // Handle order cancellation
-            if ($this->isOrderCancelled($newStatus) && !$this->isOrderCancelled($oldStatus)) {
-                if (!$order->cancellation) {
-                    // You might want to redirect to cancellation form instead
-                    $this->cancelOrder($order, null, auth()->id(), null, 'تم الإلغاء بواسطة المسؤول');
+            // التعامل مع إلغاء الطلب
+            if ($this->isOrderCancelled($newStatusId) && ! $this->isOrderCancelled($oldStatusId)) {
+                // إنشاء سجل الإلغاء إذا لم يكن موجوداً
+                if (! $order->cancellation()->exists()) {
+                    OrderCancellation::create([
+                        'order_id' => $order->id,
+                        'cancelled_by_user_id' => auth()->id(),
+                        'reason' => 'تم الإلغاء بواسطة المسؤول',
+                        'notes' => 'إلغاء من لوحة التحكم',
+                    ]);
                 }
             }
 
@@ -329,8 +380,9 @@ class OrderController extends Controller
                 ->with('success', 'تم تحديث الطلب بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
-                ->with('error', 'حدث خطأ أثناء تحديث الطلب: ' . $e->getMessage())
+                ->with('error', 'حدث خطأ أثناء تحديث الطلب: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -341,7 +393,7 @@ class OrderController extends Controller
     public function destroy(Order $order)
     {
         // Check if order can be deleted
-        if (!in_array($order->payment_status, [Order::PAYMENT_STATUS_PENDING, Order::PAYMENT_STATUS_FAILED])) {
+        if (! in_array($order->payment_status, [Order::PAYMENT_STATUS_PENDING, Order::PAYMENT_STATUS_FAILED])) {
             return redirect()->back()
                 ->with('error', 'لا يمكن حذف الطلب في هذه الحالة');
         }
@@ -353,11 +405,11 @@ class OrderController extends Controller
             $order->offers()->delete();
             $order->driverLocations()->delete();
             $order->ratings()->delete();
-            
+
             if ($order->cancellation) {
                 $order->cancellation()->delete();
             }
-            
+
             if ($order->completionLog) {
                 $order->completionLog()->delete();
             }
@@ -370,8 +422,9 @@ class OrderController extends Controller
                 ->with('success', 'تم حذف الطلب بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
-                ->with('error', 'حدث خطأ أثناء حذف الطلب: ' . $e->getMessage());
+                ->with('error', 'حدث خطأ أثناء حذف الطلب: '.$e->getMessage());
         }
     }
 
@@ -395,10 +448,10 @@ class OrderController extends Controller
         try {
             // Check if driver is available
             $driver = Driver::find($request->driver_id);
-            if (!$driver->is_active || !$driver->is_verified) {
+            if (! $driver->is_active || ! $driver->is_verified) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'السائق غير متاح'
+                    'message' => 'السائق غير متاح',
                 ], 400);
             }
 
@@ -421,13 +474,14 @@ class OrderController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'تم تعيين السائق بنجاح',
-                'data' => $offer->load('driver.user')
+                'data' => $offer->load('driver.user'),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'حدث خطأ: ' . $e->getMessage()
+                'message' => 'حدث خطأ: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -438,13 +492,13 @@ class OrderController extends Controller
     public function updatePaymentStatus(Request $request, Order $order)
     {
         $validator = Validator::make($request->all(), [
-            'payment_status' => 'required|in:' . implode(',', [
+            'payment_status' => 'required|in:'.implode(',', [
                 Order::PAYMENT_STATUS_PENDING,
                 Order::PAYMENT_STATUS_PROCESSING,
                 Order::PAYMENT_STATUS_PAID,
                 Order::PAYMENT_STATUS_FAILED,
                 Order::PAYMENT_STATUS_REFUNDED,
-                Order::PAYMENT_STATUS_PARTIALLY_REFUNDED
+                Order::PAYMENT_STATUS_PARTIALLY_REFUNDED,
             ]),
             'payment_transaction_id' => 'nullable|string|max:255',
             'payment_details' => 'nullable|array',
@@ -458,11 +512,11 @@ class OrderController extends Controller
         $newStatus = $request->payment_status;
 
         $order->payment_status = $newStatus;
-        
+
         if ($request->filled('payment_transaction_id')) {
             $order->payment_transaction_id = $request->payment_transaction_id;
         }
-        
+
         if ($request->filled('payment_details')) {
             $order->payment_details = $request->payment_details;
         }
@@ -480,7 +534,7 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'تم تحديث حالة الدفع بنجاح',
-            'payment_status' => $order->payment_status
+            'payment_status' => $order->payment_status,
         ]);
     }
 
@@ -505,7 +559,7 @@ class OrderController extends Controller
             if (in_array($order->payment_status, [Order::PAYMENT_STATUS_PAID, Order::PAYMENT_STATUS_REFUNDED])) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'لا يمكن إلغاء الطلب في هذه الحالة'
+                    'message' => 'لا يمكن إلغاء الطلب في هذه الحالة',
                 ], 400);
             }
 
@@ -531,13 +585,14 @@ class OrderController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'تم إلغاء الطلب بنجاح',
-                'data' => $cancellation
+                'data' => $cancellation,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'حدث خطأ: ' . $e->getMessage()
+                'message' => 'حدث خطأ: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -551,13 +606,13 @@ class OrderController extends Controller
             'driver.user',
             'latestDriverLocation',
             'location',
-            'status'
+            'status',
         ]);
 
-        if (!$order->driver) {
+        if (! $order->driver) {
             return response()->json([
                 'success' => false,
-                'message' => 'لا يوجد سائق للطلب'
+                'message' => 'لا يوجد سائق للطلب',
             ], 404);
         }
 
@@ -575,7 +630,7 @@ class OrderController extends Controller
                 'location_history' => $locations,
                 'destination' => $order->location,
                 'estimated_arrival' => $order->latestDriverLocation?->estimated_arrival_time,
-            ]
+            ],
         ]);
     }
 
@@ -588,7 +643,7 @@ class OrderController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $offers
+            'data' => $offers,
         ]);
     }
 
@@ -601,7 +656,7 @@ class OrderController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $ratings
+            'data' => $ratings,
         ]);
     }
 
@@ -617,7 +672,7 @@ class OrderController extends Controller
             'waterType',
             'location',
             'acceptedOffer',
-           // 'completionLog'
+            // 'completionLog'
         ]);
 
         return view('Admin.orders.invoice', compact('order'));
@@ -650,7 +705,7 @@ class OrderController extends Controller
         $orders = $query->get();
 
         // Generate CSV
-        $filename = 'orders_' . date('Y-m-d_His') . '.csv';
+        $filename = 'orders_'.date('Y-m-d_His').'.csv';
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$filename\"",
@@ -706,10 +761,10 @@ class OrderController extends Controller
 
         // Get charts data
         $ordersByDay = Order::select(
-                DB::raw('DATE(order_date) as date'),
-                DB::raw('COUNT(*) as count'),
-                DB::raw('SUM(CASE WHEN payment_status = "paid" THEN 1 ELSE 0 END) as paid_count')
-            )
+            DB::raw('DATE(order_date) as date'),
+            DB::raw('COUNT(*) as count'),
+            DB::raw('SUM(CASE WHEN payment_status = "paid" THEN 1 ELSE 0 END) as paid_count')
+        )
             ->where('order_date', '>=', now()->subDays(30))
             ->groupBy('date')
             ->orderBy('date')
@@ -762,13 +817,13 @@ class OrderController extends Controller
             'order_ids.*' => 'exists:orders,id',
             'action' => 'required|in:update_status,update_payment_status,assign_driver,delete',
             'order_status_id' => 'required_if:action,update_status|exists:order_statuses,id',
-            'payment_status' => 'required_if:action,update_payment_status|in:' . implode(',', [
+            'payment_status' => 'required_if:action,update_payment_status|in:'.implode(',', [
                 Order::PAYMENT_STATUS_PENDING,
                 Order::PAYMENT_STATUS_PROCESSING,
                 Order::PAYMENT_STATUS_PAID,
                 Order::PAYMENT_STATUS_FAILED,
                 Order::PAYMENT_STATUS_REFUNDED,
-                Order::PAYMENT_STATUS_PARTIALLY_REFUNDED
+                Order::PAYMENT_STATUS_PARTIALLY_REFUNDED,
             ]),
             'driver_id' => 'required_if:action,assign_driver|exists:drivers,id',
         ]);
@@ -793,7 +848,7 @@ class OrderController extends Controller
 
                     case 'update_payment_status':
                         $order->payment_status = $request->payment_status;
-                        if ($request->payment_status == Order::PAYMENT_STATUS_PAID && !$order->paid_at) {
+                        if ($request->payment_status == Order::PAYMENT_STATUS_PAID && ! $order->paid_at) {
                             $order->paid_at = now();
                         }
                         $order->save();
@@ -801,10 +856,10 @@ class OrderController extends Controller
                         break;
 
                     case 'assign_driver':
-                        if (!$order->driver_id && !$order->acceptedOffer) {
+                        if (! $order->driver_id && ! $order->acceptedOffer) {
                             $order->driver_id = $request->driver_id;
                             $order->save();
-                            
+
                             // Create offer
                             OrderOffer::create([
                                 'order_id' => $order->id,
@@ -812,7 +867,7 @@ class OrderController extends Controller
                                 'status' => 'accepted',
                                 'price' => 0, // You might want to calculate this
                             ]);
-                            
+
                             $updatedCount++;
                         }
                         break;
@@ -831,13 +886,14 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "تم تحديث {$updatedCount} طلب بنجاح"
+                'message' => "تم تحديث {$updatedCount} طلب بنجاح",
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'حدث خطأ: ' . $e->getMessage()
+                'message' => 'حدث خطأ: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -847,13 +903,13 @@ class OrderController extends Controller
      */
     private function completeOrder(Order $order)
     {
-        if (!$order->driver_id) {
+        if (! $order->driver_id) {
             return false;
         }
 
         // Get accepted offer
         $offer = $order->acceptedOffer;
-        if (!$offer) {
+        if (! $offer) {
             return false;
         }
 
@@ -916,6 +972,7 @@ class OrderController extends Controller
     private function isOrderCompleted($statusId): bool
     {
         $status = OrderStatus::find($statusId);
+
         return $status && $status->name === OrderStatus::DELIVERED;
     }
 
@@ -925,6 +982,7 @@ class OrderController extends Controller
     private function isOrderCancelled($statusId): bool
     {
         $status = OrderStatus::find($statusId);
+
         return $status && $status->name === OrderStatus::CANCELLED;
     }
 
@@ -1067,5 +1125,4 @@ class OrderController extends Controller
             'payment_status_counts' => $paymentStatusCounts,
         ];
     }
-
 }

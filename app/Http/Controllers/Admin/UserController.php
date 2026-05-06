@@ -151,7 +151,16 @@ class UserController extends Controller
     {
         return view('Admin.users.create');
     }
+  public function locations(User $user)
+    {
+        $locations = $user->savedLocations()
+            ->select('id', 'label', 'address_details', 'latitude', 'longitude')
+            ->get();
 
+        return response()->json([
+            'locations' => $locations
+        ]);
+    }
     /**
      * Store a newly created user in storage.
      *
