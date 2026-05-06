@@ -243,6 +243,9 @@ class ChatController extends Controller
             'chat_uuid' => $chat->chat_uuid,
         ]);
 
+        // Send Firebase notification to recipient(s)
+        $this->sendFirebaseNotification($message, $chat);
+
         return response()->json([
             'status' => 'success',
             'message' => $message->load('sender'),
@@ -553,5 +556,94 @@ class ChatController extends Controller
         $message->delete();
 
         return response()->json(['status' => 'success']);
+    }
+
+    /**
+     * إرسال إشعار Firebase للطرف الآخر
+     */
+    private function sendFirebaseNotification(Message $message, Chat $chat)
+    {
+        try {
+            $sender = $message->sender;
+            $senderId = Auth::id();
+
+            // الحصول على معرفات المستقبلين
+            $participants = collect($chat->participants ?? [])
+                ->map(fn($id) => (int) $id)
+                ->filter(fn($id) => $id !== $senderId)
+                ->values()
+                ->all();
+
+            if (empty($participants)) {
+                return;
+            }
+
+            // جلب أجهزة المستقبلين النشطة
+            $tokens = \App\Models\User::whereIn('id', $participants)
+                ->with('activeDeviceTokens')
+                ->get()
+                ->flatMap(fn($user) => $user->activeDeviceTokens->pluck('token'))
+                ->toArray();
+
+            if (empty($tokens)) {
+                Log::info('No active device tokens found for chat recipients', [
+                    'chat_id' => $chat->id,
+                    'recipients' => $participants,
+                ]);
+                return;
+            }
+
+            // إعداد بيانات الإشعار
+            $notificationTitle = $sender->name ?? 'New Message';
+            $notificationBody = $this->getNotificationBody($message);
+
+            $notificationData = [
+                'title' => $notificationTitle,
+                'body' => $notificationBody,
+                'image' => $sender->avatar ? asset('storage/' . ltrim($sender->avatar, '/')) : null,
+            ];
+
+            $customData = [
+                'chat_id' => $chat->id,
+                'chat_uuid' => $chat->chat_uuid,
+                'message_id' => $message->id,
+                'sender_id' => $senderId,
+                'message_type' => $message->message_type,
+                'type' => 'new_message',
+                'click_action' => 'CHAT_MESSAGE_ACTION',
+            ];
+
+            // إرسال الإشعار
+            app(\App\Services\FirebaseNotificationService::class)
+                ->sendToMultipleDevices($tokens, $notificationData, $customData);
+
+            Log::info('Firebase notification sent for message', [
+                'message_id' => $message->id,
+                'chat_id' => $chat->id,
+                'recipients_count' => count($tokens),
+                'sender_id' => $senderId,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error sending Firebase notification: ' . $e->getMessage(), [
+                'message_id' => $message->id ?? null,
+                'chat_id' => $chat->id ?? null,
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
+
+    /**
+     * الحصول على نص الإشعار بناءً على نوع الرسالة
+     */
+    private function getNotificationBody(Message $message): string
+    {
+        return match ($message->message_type) {
+            'text' => $message->message ? Str::limit($message->message, 80) : 'New message',
+            'voice' => '🎤 Voice message (' . ($message->duration ?? '0') . 's)',
+            'image' => '📷 Photo',
+            'file' => '📄 ' . ($message->file_name ?? 'File'),
+            'location' => '📍 Location shared',
+            default => 'New message'
+        };
     }
 }
