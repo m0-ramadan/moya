@@ -154,7 +154,11 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
 
         // User Status
         Route::post('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
+
         Route::get('/locations/{user}', [UserController::class, 'locations'])->name('locations');
+
+        Route::get('/{user}/locations', [UserController::class, 'locations'])->name('locations');
+
         // User Wallet
         Route::get('/{user}/wallet', [UserController::class, 'wallet'])->name('wallet');
 
