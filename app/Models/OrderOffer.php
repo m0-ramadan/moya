@@ -6,9 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletes;
+
 class OrderOffer extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'order_id',
@@ -16,7 +17,8 @@ class OrderOffer extends Model
         'price',
         'status',
         'delivery_duration_minutes',
-        'expired_at','expires_at','deleted_at'
+        'expired_at',
+        'expires_at'
     ];
 
     protected $casts = [
@@ -27,7 +29,7 @@ class OrderOffer extends Model
     ];
 
     // ================== العلاقات ==================
-    
+
     public function order()
     {
         return $this->belongsTo(Order::class);
@@ -57,17 +59,17 @@ class OrderOffer extends Model
 
         return false;
     }
-public function deleteIfExpired(): bool
-{
-    if ($this->expired_at && now()->greaterThan($this->expired_at)) {
+    public function deleteIfExpired(): bool
+    {
+        if ($this->expired_at && now()->greaterThan($this->expired_at)) {
 
-        $this->update(['status' => 'expired']);
+            $this->update(['status' => 'expired']);
 
-        return $this->forceDelete();
+            return $this->forceDelete();
+        }
+
+        return false;
     }
-
-    return false;
-}
     /**
      * التحقق مما إذا كان العرض نشطاً
      */
@@ -100,7 +102,7 @@ public function deleteIfExpired(): bool
         return $query->whereIn('status', ['pending', 'accepted'])
             ->where(function ($q) {
                 $q->whereNull('expired_at')
-                  ->orWhere('expired_at', '>', Carbon::now());
+                    ->orWhere('expired_at', '>', Carbon::now());
             });
     }
 
@@ -111,7 +113,7 @@ public function deleteIfExpired(): bool
     {
         return $query->where(function ($q) {
             $q->where('status', 'expired')
-              ->orWhere('expired_at', '<=', Carbon::now());
+                ->orWhere('expired_at', '<=', Carbon::now());
         });
     }
 }

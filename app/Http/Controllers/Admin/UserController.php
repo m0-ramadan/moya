@@ -40,9 +40,9 @@ class UserController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('full_phone', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('full_phone', 'like', "%{$search}%");
             });
         }
 
@@ -111,19 +111,20 @@ class UserController extends Controller
         $activeUsers = User::where('status', 'active')->count();
         $inactiveUsers = User::where('status', '!=', 'active')->count();
         $verifiedUsers = User::whereNotNull('phone_verified_at')->count();
-        
+
+
         $newThisMonth = User::whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->count();
-        
+
         $activeToday = User::where('status', 'active')
             ->whereDate('updated_at', today())
             ->count();
-        
+
         $suspendedToday = User::where('status', 'inactive')
             ->whereDate('updated_at', today())
             ->count();
-        
+
         $verifiedThisMonth = User::whereNotNull('phone_verified_at')
             ->whereMonth('phone_verified_at', now()->month)
             ->whereYear('phone_verified_at', now()->year)
@@ -138,7 +139,8 @@ class UserController extends Controller
             'newThisMonth',
             'activeToday',
             'suspendedToday',
-            'verifiedThisMonth'
+            'verifiedThisMonth',
+
         ));
     }
 
@@ -151,10 +153,11 @@ class UserController extends Controller
     {
         return view('Admin.users.create');
     }
-  public function locations(User $user)
+    public function locations($user)
     {
+        $user = User::findOrFail($user);
         $locations = $user->savedLocations()
-            ->select('id', 'label', 'address_details', 'latitude', 'longitude')
+            ->select('id', 'address', 'latitude', 'longitude')
             ->get();
 
         return response()->json([
@@ -191,7 +194,7 @@ class UserController extends Controller
 
             $data = $request->except(['password', 'password_confirmation', 'avatar']);
             $data['password'] = Hash::make($request->password);
-            
+
             // Generate full phone
             if ($request->filled('phone') && $request->filled('country_code')) {
                 $data['full_phone'] = $request->country_code . $request->phone;
@@ -216,7 +219,6 @@ class UserController extends Controller
 
             return redirect()->route('admin.users.index')
                 ->with('success', 'تم إنشاء المستخدم بنجاح');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -285,7 +287,7 @@ class UserController extends Controller
             DB::beginTransaction();
 
             $data = $request->except(['password', 'password_confirmation', 'avatar']);
-            
+
             // Update password if provided
             if ($request->filled('password')) {
                 $data['password'] = Hash::make($request->password);
@@ -324,7 +326,6 @@ class UserController extends Controller
 
             return redirect()->route('admin.users.index')
                 ->with('success', 'تم تحديث المستخدم بنجاح');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -383,10 +384,9 @@ class UserController extends Controller
 
             return redirect()->route('admin.users.index')
                 ->with('success', 'تم حذف المستخدم بنجاح');
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             if (request()->wantsJson()) {
                 return response()->json([
                     'success' => false,
@@ -440,7 +440,6 @@ class UserController extends Controller
                     'status' => $user->status
                 ]
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -459,7 +458,7 @@ class UserController extends Controller
     {
         try {
             $wallet = $user->wallet;
-            
+
             if (!$wallet) {
                 $wallet = $user->createUserWallet();
             }
@@ -478,7 +477,6 @@ class UserController extends Controller
                 'status' => $wallet->status,
                 'ledger_entries' => $ledgerEntries
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -525,12 +523,12 @@ class UserController extends Controller
                 $request->body,
                 $request->data ?? []
             );
-            
+
             $user->notify($notification);
 
             // Send push notification if device tokens exist
             $deviceTokens = $user->activeDeviceTokens()->pluck('token')->toArray();
-            
+
             if (!empty($deviceTokens)) {
                 // You can implement push notification here
                 // using Firebase, OneSignal, etc.
@@ -540,7 +538,6 @@ class UserController extends Controller
                 'success' => true,
                 'message' => 'تم إرسال الإشعار بنجاح'
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -611,7 +608,6 @@ class UserController extends Controller
                 'success' => true,
                 'devices' => $devices
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -658,7 +654,7 @@ class UserController extends Controller
         $users = $query->orderBy('created_at', 'desc')->get();
 
         $pdf = PDF::loadView('Admin.users.pdf', compact('users'));
-        
+
         return $pdf->download('users.pdf');
     }
 
@@ -696,7 +692,6 @@ class UserController extends Controller
                 'success' => true,
                 'message' => "تم تحديث حالة {$count} مستخدم بنجاح"
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -735,10 +730,12 @@ class UserController extends Controller
 
             foreach ($users as $user) {
                 // Check if user has related data
-                if (!$user->orders()->exists() && 
-                    !$user->contracts()->exists() && 
-                    !$user->payments()->exists()) {
-                    
+                if (
+                    !$user->orders()->exists() &&
+                    !$user->contracts()->exists() &&
+                    !$user->payments()->exists()
+                ) {
+
                     // Delete avatar
                     if ($user->avatar) {
                         Storage::disk('public')->delete($user->avatar);
@@ -765,7 +762,6 @@ class UserController extends Controller
                 'success' => true,
                 'message' => "تم حذف {$deletedCount} مستخدم بنجاح"
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([

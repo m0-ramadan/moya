@@ -1,14 +1,15 @@
 @extends('Admin.layout.master')
 
-@section('title', 'تفاصيل الطلب #' . $order->id)
+@section('title', 'تفاصيل الطلب')
 
 @section('css')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         :root {
             --primary-color: #696cff;
             --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --success-color: #28a745;
+            --success-color: #20c997;
             --danger-color: #dc3545;
             --warning-color: #ffc107;
             --info-color: #17a2b8;
@@ -22,121 +23,22 @@
             color: #fff;
         }
 
-        .order-detail-card {
+        .order-show-card {
             background: var(--dark-card);
             border-radius: 15px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
             padding: 30px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
         }
 
-        .order-detail-header {
-            background: var(--primary-gradient);
-            color: white;
-            padding: 25px 30px;
-            border-radius: 15px 15px 0 0;
-            margin: -30px -30px 30px -30px;
-            position: relative;
+        .order-show-header {
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
         }
 
-        .action-buttons {
-            position: absolute;
-            left: 30px;
-            top: 30px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-action {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            transition: all 0.3s ease;
-        }
-
-        .btn-action:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(105, 108, 255, 0.4);
-        }
-
-        .badge-status {
-            padding: 8px 20px;
-            border-radius: 25px;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .status-pending {
-            background: rgba(133, 100, 4, 0.2);
-            color: #ffc107;
-            border: 1px solid rgba(255, 193, 7, 0.3);
-        }
-
-        .status-in-road {
-            background: rgba(12, 84, 96, 0.2);
-            color: #0dcaf0;
-            border: 1px solid rgba(13, 202, 240, 0.3);
-        }
-
-        .status-scheduled {
-            background: rgba(103, 58, 183, 0.2);
-            color: #ab8ce4;
-            border: 1px solid rgba(171, 140, 228, 0.3);
-        }
-
-        .status-delivered {
-            background: linear-gradient(135deg, rgba(21, 87, 36, 0.2) 0%, rgba(32, 201, 151, 0.2) 100%);
-            color: #20c997;
-            border: 1px solid rgba(32, 201, 151, 0.3);
-        }
-
-        .status-cancelled {
-            background: linear-gradient(135deg, rgba(220, 53, 69, 0.2) 0%, rgba(253, 126, 20, 0.2) 100%);
-            color: #fd7e14;
-            border: 1px solid rgba(253, 126, 20, 0.3);
-        }
-
-        .payment-status {
-            padding: 6px 15px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        .payment-pending {
-            background: rgba(133, 100, 4, 0.2);
-            color: #ffc107;
-        }
-
-        .payment-processing {
-            background: rgba(0, 64, 133, 0.2);
-            color: #0dcaf0;
-        }
-
-        .payment-paid {
-            background: rgba(21, 87, 36, 0.2);
-            color: #20c997;
-        }
-
-        .payment-failed {
-            background: rgba(220, 53, 69, 0.2);
-            color: #dc3545;
-        }
-
-        .payment-refunded {
-            background: rgba(56, 61, 65, 0.2);
-            color: #adb5bd;
-        }
-
-        .info-section {
+        .info-section,
+        .summary-card {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
             padding: 20px;
@@ -144,272 +46,106 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .info-section h6 {
+        .info-section h6,
+        .summary-card h6 {
             color: var(--primary-color);
             margin-bottom: 20px;
             padding-bottom: 10px;
             border-bottom: 2px solid rgba(255, 255, 255, 0.1);
         }
 
-        .info-row {
-            display: flex;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-        }
-
-        .info-row:last-child {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-
-        .info-label {
-            min-width: 150px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .info-value {
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 500;
-            flex-grow: 1;
-        }
-
-        .driver-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .driver-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: var(--primary-gradient);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-        }
-
-        .driver-details {
-            flex-grow: 1;
-        }
-
-        .driver-name {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .driver-meta {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .driver-meta span i {
-            margin-left: 5px;
-            color: var(--primary-color);
-        }
-
-        .offer-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .offer-item.accepted {
-            border: 2px solid #20c997;
-            background: rgba(32, 201, 151, 0.1);
-        }
-
-        .offer-header {
+        .info-line {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .offer-driver {
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .offer-price {
-            font-size: 16px;
-            font-weight: 700;
-            color: #20c997;
-        }
-
-        .offer-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-bottom: 10px;
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .offer-status {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .offer-status.pending {
-            background: rgba(133, 100, 4, 0.2);
-            color: #ffc107;
-        }
-
-        .offer-status.accepted {
-            background: rgba(21, 87, 36, 0.2);
-            color: #20c997;
-        }
-
-        .offer-status.rejected {
-            background: rgba(220, 53, 69, 0.2);
-            color: #dc3545;
-        }
-
-        .summary-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-        }
-
-        .summary-row:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        .summary-label {
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .summary-value {
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .total-row {
-            font-size: 18px;
-            color: #20c997;
-            font-weight: 700;
-        }
-
-        .timeline {
-            position: relative;
-            padding-right: 30px;
-        }
-
-        .timeline:before {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: var(--primary-color);
-        }
-
-        .timeline-item {
-            position: relative;
-            margin-bottom: 25px;
-        }
-
-        .timeline-item:before {
-            content: '';
-            position: absolute;
-            right: -33px;
-            top: 5px;
-            width: 13px;
-            height: 13px;
-            border-radius: 50%;
-            background: var(--dark-card);
-            border: 3px solid var(--primary-color);
-        }
-
-        .timeline-content {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .timeline-date {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 5px;
-        }
-
-        .timeline-text {
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 500;
-        }
-
-        .timeline-status {
-            font-size: 11px;
-            color: var(--primary-color);
-            margin-top: 5px;
-        }
-
-        .status-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 15px;
-        }
-
-        .status-btn {
-            padding: 8px 20px;
-            border-radius: 25px;
-            border: 2px solid transparent;
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.8);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            gap: 15px;
+            padding: 11px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             font-size: 14px;
         }
 
-        .status-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            background: rgba(255, 255, 255, 0.1);
+        .info-line:last-child {
+            border-bottom: 0;
+        }
+
+        .info-label {
+            color: rgba(255, 255, 255, 0.65);
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #fff;
+            font-weight: 600;
+            text-align: left;
+            word-break: break-word;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .badge-pending {
+            background: rgba(255, 193, 7, 0.16);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.28);
+        }
+
+        .badge-scheduled {
+            background: rgba(23, 162, 184, 0.16);
+            color: #17a2b8;
+            border: 1px solid rgba(23, 162, 184, 0.28);
+        }
+
+        .badge-in-road {
+            background: rgba(105, 108, 255, 0.16);
+            color: #9da0ff;
+            border: 1px solid rgba(105, 108, 255, 0.32);
+        }
+
+        .badge-delivered,
+        .badge-paid,
+        .badge-active {
+            background: rgba(32, 201, 151, 0.16);
+            color: #20c997;
+            border: 1px solid rgba(32, 201, 151, 0.28);
+        }
+
+        .badge-cancelled,
+        .badge-canceled,
+        .badge-failed {
+            background: rgba(220, 53, 69, 0.16);
+            color: #ff6b7a;
+            border: 1px solid rgba(220, 53, 69, 0.28);
+        }
+
+        .badge-default {
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .alert-lock {
+            background: rgba(220, 53, 69, 0.1);
+            border-right: 4px solid var(--danger-color);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(220, 53, 69, 0.25);
             color: #fff;
         }
 
-        .status-btn.active {
-            background: var(--primary-gradient);
-            color: white;
-            border-color: var(--primary-color);
+        .alert-guide {
+            background: rgba(12, 99, 228, 0.1);
+            border-right: 4px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(12, 99, 228, 0.2);
         }
 
         .btn-primary {
@@ -423,159 +159,190 @@
             box-shadow: 0 5px 15px rgba(105, 108, 255, 0.4);
         }
 
-        .btn-success {
-            background: #20c997;
-            border: none;
-        }
-
-        .btn-success:hover {
-            background: #1ba87e;
-            transform: translateY(-2px);
-        }
-
         .btn-danger {
             background: #dc3545;
             border: none;
         }
 
         .btn-danger:hover {
-            background: #c82333;
-            transform: translateY(-2px);
+            background: #bb2d3b;
         }
 
-        .btn-warning {
-            background: #ffc107;
-            border: none;
-            color: #000;
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
         }
 
-        .btn-warning:hover {
-            background: #e0a800;
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
         }
 
-        .btn-info {
-            background: #0dcaf0;
-            border: none;
-            color: #000;
+        .timeline {
+            position: relative;
+            padding: 0;
+            margin: 0;
+            list-style: none;
         }
 
-        .btn-info:hover {
-            background: #0bb5d6;
+        .timeline-item {
+            position: relative;
+            padding-right: 35px;
+            padding-bottom: 22px;
         }
 
-        .btn-outline-primary {
-            color: var(--primary-color);
-            border-color: var(--primary-color);
+        .timeline-item:last-child {
+            padding-bottom: 0;
         }
 
-        .btn-outline-primary:hover {
-            background: var(--primary-color);
-            color: white;
+        .timeline-item::before {
+            content: "";
+            position: absolute;
+            right: 12px;
+            top: 28px;
+            bottom: 0;
+            width: 2px;
+            background: rgba(255, 255, 255, 0.12);
         }
 
-        .rating-stars {
-            color: #ffc107;
-            font-size: 14px;
+        .timeline-item:last-child::before {
+            display: none;
         }
 
-        .rating-stars .fas.fa-star {
-            color: #ffc107;
-        }
-
-        .rating-stars .far.fa-star {
-            color: rgba(255, 255, 255, 0.3);
-        }
-
-        .badge-gateway {
+        .timeline-icon {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             background: rgba(105, 108, 255, 0.2);
-            color: var(--primary-color);
-            padding: 4px 12px;
-            border-radius: 15px;
+            color: #fff;
             font-size: 12px;
-            border: 1px solid rgba(105, 108, 255, 0.3);
+            border: 1px solid rgba(105, 108, 255, 0.35);
         }
 
-        .location-info {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
+        .timeline-title {
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .timeline-time {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+        }
+
+        .table-dark-custom {
+            width: 100%;
+            color: #fff;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table-dark-custom th,
+        .table-dark-custom td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            vertical-align: middle;
+        }
+
+        .table-dark-custom th {
+            color: rgba(255, 255, 255, 0.65);
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .empty-box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px dashed rgba(255, 255, 255, 0.16);
             border-radius: 10px;
+            padding: 18px;
+            color: rgba(255, 255, 255, 0.65);
+            text-align: center;
+        }
+
+        .reason-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.8;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .location-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary-gradient);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-
-        .location-details {
-            flex-grow: 1;
-        }
-
-        .location-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 5px;
-        }
-
-        .location-address {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 5px;
-        }
-
-        .location-coords {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.5);
-        }
-
         @media (max-width: 768px) {
-            .action-buttons {
-                position: relative;
-                left: 0;
-                top: 0;
-                margin-bottom: 20px;
-                justify-content: center;
+            .order-show-card {
+                padding: 20px;
             }
 
-            .info-row {
+            .info-line {
                 flex-direction: column;
-                align-items: flex-start;
+                gap: 5px;
             }
 
-            .info-label {
-                min-width: auto;
-                margin-bottom: 5px;
-            }
-
-            .driver-info {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .driver-meta {
-                justify-content: center;
-            }
-
-            .offer-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
+            .info-value {
+                text-align: right;
             }
         }
     </style>
 @endsection
 
 @section('content')
+    @php
+        $statusName = optional($order->status)->name ?? (optional($order->orderStatus)->name ?? '');
+
+        $statusLabel =
+            optional($order->status)->label ?? (optional($order->orderStatus)->label ?? ($statusName ?? '-'));
+
+        $isInRoad = $statusName === 'in-road';
+        $isCancelled = in_array($statusName, ['cancelled', 'canceled', 'cancel']);
+        $isDelivered = in_array($statusName, ['delivered', 'completed']);
+
+        $cancelledStatus = \App\Models\OrderStatus::whereIn('name', ['cancelled', 'canceled', 'cancel'])->first();
+        $cancelledStatusId = $cancelledStatus?->id;
+
+        try {
+            $orderDateValue = $order->order_date ? \Carbon\Carbon::parse($order->order_date)->format('Y-m-d H:i') : '-';
+
+            $orderDateInputValue = $order->order_date
+                ? \Carbon\Carbon::parse($order->order_date)->format('Y-m-d\TH:i')
+                : now()->format('Y-m-d\TH:i');
+        } catch (\Throwable $e) {
+            $orderDateValue = $order->order_date ?? '-';
+            $orderDateInputValue = now()->format('Y-m-d\TH:i');
+        }
+
+        $createdAtValue = $order->created_at ? $order->created_at->format('Y-m-d H:i') : '-';
+
+        $updatedAtValue = $order->updated_at ? $order->updated_at->format('Y-m-d H:i') : '-';
+
+        $paymentStatusClass = match ($order->payment_status) {
+            'paid' => 'badge-paid',
+            'failed' => 'badge-failed',
+            'refunded' => 'badge-cancelled',
+            default => 'badge-default',
+        };
+
+        $statusClass = match ($statusName) {
+            'pending' => 'badge-pending',
+            'scheduled' => 'badge-scheduled',
+            'in-road' => 'badge-in-road',
+            'delivered', 'completed' => 'badge-delivered',
+            'cancelled', 'canceled', 'cancel' => 'badge-cancelled',
+            default => 'badge-default',
+        };
+
+        $contract = $order->contract ?? null;
+        $location = $order->location ?? null;
+        $acceptedOffer = $order->acceptedOffer ?? null;
+        $latestDriverLocation = $order->latestDriverLocation ?? null;
+    @endphp
+
     <div class="container-xxl flex-grow-1 container-p-y">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -585,606 +352,518 @@
                 <li class="breadcrumb-item">
                     <a href="{{ route('admin.orders.index') }}">الطلبات</a>
                 </li>
-                <li class="breadcrumb-item active">تفاصيل الطلب #{{ $order->id }}</li>
+                <li class="breadcrumb-item active">تفاصيل الطلب</li>
             </ol>
         </nav>
 
         <div class="row">
             <div class="col-12">
-                <div class="order-detail-card">
-                    <div class="order-detail-header">
-                        <div class="action-buttons">
-                            <a href="{{ route('admin.orders.edit', $order->id) }}" class="btn-action" title="تعديل">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="{{ route('admin.orders.print', $order->id) }}" class="btn-action" title="طباعة" target="_blank">
-                                <i class="fas fa-print"></i>
-                            </a>
-                            <a href="{{ route('admin.orders.index') }}" class="btn-action" title="رجوع">
-                                <i class="fas fa-arrow-right"></i>
-                            </a>
-                        </div>
-
-                        <div class="text-center">
-                            <h4 class="mb-2">الطلب #{{ $order->id }}</h4>
-                            <div class="d-flex justify-content-center align-items-center gap-3 mb-3 flex-wrap">
-                                @if($order->status)
-                                    <span class="badge-status status-{{ $order->status->name }}">
-                                        {{ $order->status->label }}
-                                    </span>
-                                @endif
-                                <span class="payment-status payment-{{ $order->payment_status }}">
-                                    @switch($order->payment_status)
-                                        @case('pending')
-                                            <i class="fas fa-clock me-1"></i>قيد الانتظار
-                                            @break
-                                        @case('processing')
-                                            <i class="fas fa-spinner me-1"></i>قيد المعالجة
-                                            @break
-                                        @case('paid')
-                                            <i class="fas fa-check-circle me-1"></i>مدفوع
-                                            @break
-                                        @case('failed')
-                                            <i class="fas fa-times-circle me-1"></i>فشل الدفع
-                                            @break
-                                        @case('refunded')
-                                            <i class="fas fa-undo-alt me-1"></i>مسترد
-                                            @break
-                                        @default
-                                            {{ $order->payment_status }}
-                                    @endswitch
-                                </span>
-                                <span class="text-white opacity-75">
-                                    <i class="far fa-clock me-2"></i>
-                                    {{ $order->order_date ? $order->order_date->translatedFormat('d M Y - h:i A') : $order->created_at->translatedFormat('d M Y - h:i A') }}
-                                </span>
+                <div class="order-show-card">
+                    <div class="order-show-header">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div>
+                                <h5 class="mb-1">تفاصيل الطلب #{{ $order->id }}</h5>
+                                <small class="text-muted">
+                                    تاريخ الطلب: {{ $orderDateValue }}
+                                </small>
                             </div>
-                            <div class="text-white opacity-75">
-                                <i class="fas fa-money-bill-wave me-2"></i>
-                                {{ $order->acceptedOffer ? number_format($order->acceptedOffer->price, 2) . ' ر.س' : 'غير محدد' }}
+
+                            <div class="d-flex gap-2 flex-wrap">
+                                @if (!$isInRoad && !$isCancelled && !$isDelivered)
+                                    <a href="{{ route('admin.orders.edit', $order->id) }}" class="btn btn-primary">
+                                        <i class="fas fa-edit me-2"></i>تعديل الطلب
+                                    </a>
+                                @endif
+
+                                <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-right me-2"></i>رجوع للقائمة
+                                </a>
                             </div>
                         </div>
                     </div>
 
-                    <div class="order-detail-body">
-                        <div class="row">
-                            <div class="col-lg-8">
-                                <!-- معلومات العميل -->
-                                <div class="info-section">
-                                    <h6><i class="fas fa-user me-2"></i>معلومات العميل</h6>
-                                    <div class="info-row">
-                                        <div class="info-label">اسم العميل:</div>
-                                        <div class="info-value">
-                                            <i class="fas fa-user me-2 text-primary"></i>
-                                            {{ $order->user->name ?? 'غير محدد' }}
-                                        </div>
-                                    </div>
-                                    @if($order->user)
-                                        <div class="info-row">
-                                            <div class="info-label">البريد الإلكتروني:</div>
-                                            <div class="info-value">
-                                                <i class="fas fa-envelope me-2 text-primary"></i>
-                                                <a href="mailto:{{ $order->user->email }}" class="text-decoration-none text-white">
-                                                    {{ $order->user->email }}
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <div class="info-row">
-                                            <div class="info-label">رقم الجوال:</div>
-                                            <div class="info-value">
-                                                <i class="fas fa-phone me-2 text-primary"></i>
-                                                <a href="tel:{{ $order->user->full_phone ?? $order->user->phone }}" class="text-decoration-none text-white">
-                                                    {{ $order->user->full_phone ?? $order->user->phone }}
-                                                </a>
-                                            </div>
-                                        </div>
-                                        @if($order->user->phone_verified_at)
-                                            <div class="info-row">
-                                                <div class="info-label">حالة الجوال:</div>
-                                                <div class="info-value">
-                                                    <span class="badge bg-success">
-                                                        <i class="fas fa-check-circle me-1"></i>موثق
-                                                    </span>
-                                                </div>
-                                            </div>
+                    @if ($isInRoad)
+                        <div class="alert-lock">
+                            <h6 class="mb-2">
+                                <i class="fas fa-route me-2"></i>
+                                الطلب في الطريق
+                            </h6>
+                            <div>
+                                لا يمكن تعديل بيانات هذا الطلب لأنه في الطريق. الإجراء الوحيد المتاح من هذه الصفحة هو إلغاء
+                                الطلب.
+                            </div>
+                        </div>
+                    @elseif ($isCancelled)
+                        <div class="alert-lock">
+                            <h6 class="mb-2">
+                                <i class="fas fa-ban me-2"></i>
+                                الطلب ملغي
+                            </h6>
+                            <div>
+                                هذا الطلب تم إلغاؤه ولا يمكن تعديله.
+                            </div>
+                        </div>
+                    @elseif ($isDelivered)
+                        <div class="alert-guide">
+                            <h6 class="mb-2">
+                                <i class="fas fa-check-circle me-2"></i>
+                                الطلب مكتمل
+                            </h6>
+                            <div>
+                                هذا الطلب تم توصيله أو اكتماله.
+                            </div>
+                        </div>
+                    @endif
+
+                    @if (session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+
+                    @if (session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+
+                    @if ($errors->any())
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+
+                    <div class="row">
+                        <div class="col-lg-8">
+                            {{-- بيانات الطلب الأساسية --}}
+                            <div class="info-section">
+                                <h6><i class="fas fa-info-circle me-2"></i>بيانات الطلب الأساسية</h6>
+
+                                <div class="info-line">
+                                    <span class="info-label">رقم الطلب</span>
+                                    <span class="info-value">#{{ $order->id }}</span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">حالة الطلب</span>
+                                    <span class="info-value">
+                                        <span class="status-badge {{ $statusClass }}">
+                                            <i class="fas fa-circle"></i>
+                                            {{ $statusLabel }}
+                                        </span>
+                                    </span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">نوع الطلب</span>
+                                    <span class="info-value">
+                                        {{ $order->contract_id ? 'طلب تعاقد' : 'طلب عادي' }}
+                                    </span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">توقيت الطلب</span>
+                                    <span class="info-value">
+                                        {{ $statusName === 'scheduled' ? 'طلب مجدول' : 'طلب حالي' }}
+                                    </span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">تاريخ ووقت الطلب</span>
+                                    <span class="info-value">{{ $orderDateValue }}</span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">تاريخ الإنشاء</span>
+                                    <span class="info-value">{{ $createdAtValue }}</span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">آخر تحديث</span>
+                                    <span class="info-value">{{ $updatedAtValue }}</span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">كود التأكيد</span>
+                                    <span class="info-value">{{ $order->code_confirmation ?? '-' }}</span>
+                                </div>
+                            </div>
+
+                            {{-- بيانات العميل والعنوان --}}
+                            <div class="info-section">
+                                <h6><i class="fas fa-user me-2"></i>بيانات العميل والعنوان</h6>
+
+                                <div class="info-line">
+                                    <span class="info-label">اسم العميل</span>
+                                    <span class="info-value">{{ $order->user->name ?? '-' }}</span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">هاتف العميل</span>
+                                    <span class="info-value">
+                                        {{ $order->user->phone ?? ($order->user->phone_number ?? '-') }}
+                                    </span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">البريد الإلكتروني</span>
+                                    <span class="info-value">{{ $order->user->email ?? '-' }}</span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">العنوان المحفوظ</span>
+                                    <span class="info-value">
+                                        @if ($location)
+                                            {{ $location->label ?? ($location->name ?? 'عنوان') }}
+                                            -
+                                            {{ $location->address_details ?? ($location->address ?? ($location->city ?? '-')) }}
+                                        @else
+                                            -
                                         @endif
-                                    @endif
+                                    </span>
+                                </div>
+                            </div>
+
+                            {{-- بيانات الخدمة --}}
+                            <div class="info-section">
+                                <h6><i class="fas fa-cogs me-2"></i>بيانات الخدمة</h6>
+
+                                <div class="info-line">
+                                    <span class="info-label">الخدمة</span>
+                                    <span class="info-value">{{ $order->service->name ?? '-' }}</span>
                                 </div>
 
-                                <!-- معلومات السائق (باستخدام driverOrder) -->
-                                <div class="info-section">
-                                    <h6><i class="fas fa-truck me-2"></i>معلومات السائق</h6>
-                                    @if($order->driverOrder && $order->driverOrder->user)
-                                        @php $driver = $order->driverOrder; @endphp
-                                        <div class="driver-info">
-                                            <div class="driver-avatar">
-                                                {{ substr($driver->user->name ?? 'س', 0, 1) }}
-                                            </div>
-                                            <div class="driver-details">
-                                                <div class="driver-name">
-                                                    {{ $driver->user->name }}
-                                                </div>
-                                                <div class="driver-meta">
-                                                    <span><i class="fas fa-id-card"></i>{{ $driver->national_id ?? 'غير متوفر' }}</span>
-                                                    @if($driver->is_verified)
-                                                        <span class="text-success"><i class="fas fa-check-circle"></i>موثق</span>
-                                                    @endif
-                                                </div>
-                                                <div class="driver-meta">
-                                                    @if($driver->vehicle_plate_number)
-                                                        <span><i class="fas fa-car"></i>{{ $driver->vehicle_plate_number }}</span>
-                                                    @endif
-                                                    @if($driver->vehicle_size)
-                                                        <span><i class="fas fa-tachometer-alt"></i>{{ $driver->vehicle_size }}</span>
-                                                    @endif
-                                                </div>
-                                                @if($driver->is_vehicle_owner !== null)
-                                                    <div class="driver-meta">
-                                                        <span><i class="fas fa-{{ $driver->is_vehicle_owner ? 'user' : 'handshake' }}"></i>
-                                                            {{ $driver->is_vehicle_owner ? 'مالك المركبة' : 'مستأجر' }}</span>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                        @if($driver->user->phone)
-                                            <div class="mt-3">
-                                                <a href="tel:{{ $driver->user->phone }}" class="btn btn-success btn-sm">
-                                                    <i class="fas fa-phone me-2"></i>اتصال بالسائق
-                                                </a>
-                                            </div>
+                                <div class="info-line">
+                                    <span class="info-label">نوع المياه</span>
+                                    <span class="info-value">{{ $order->waterType->name ?? '-' }}</span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">السائق</span>
+                                    <span class="info-value">
+                                        @if ($order->driver)
+                                            {{ $order->driver->user->name ?? 'سائق بدون اسم' }}
+                                            -
+                                            {{ $order->driver->user->phone ?? ($order->driver->user->phone_number ?? 'بدون هاتف') }}
+                                        @else
+                                            لم يتم تعيين سائق
                                         @endif
-                                    @else
-                                        <div class="text-center py-4">
-                                            <i class="fas fa-user-slash fa-3x mb-3 opacity-50"></i>
-                                            <p class="text-muted">لم يتم تعيين سائق لهذا الطلب</p>
-                                            @if($order->status && $order->status->name == 'pending')
-                                                <button class="btn btn-primary btn-sm" onclick="assignDriver({{ $order->id }})">
-                                                    <i class="fas fa-user-plus me-2"></i>تعيين سائق
-                                                </button>
-                                            @endif
-                                        </div>
-                                    @endif
+                                    </span>
                                 </div>
 
-                                <!-- تفاصيل الخدمة والموقع -->
-                                <div class="info-section">
-                                    <h6><i class="fas fa-info-circle me-2"></i>تفاصيل الخدمة</h6>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="info-row">
-                                                <div class="info-label">الخدمة:</div>
-                                                <div class="info-value">
-                                                    <i class="fas fa-cog me-2 text-primary"></i>
-                                                    {{ $order->service->name ?? 'غير محدد' }}
-                                                </div>
-                                            </div>
-                                            <div class="info-row">
-                                                <div class="info-label">نوع المياه:</div>
-                                                <div class="info-value">
-                                                    <i class="fas fa-water me-2 text-primary"></i>
-                                                    {{ $order->waterType->name ?? 'غير محدد' }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            @if($order->expires_at)
-                                                <div class="info-row">
-                                                    <div class="info-label">ينتهي في:</div>
-                                                    <div class="info-value">
-                                                        <i class="far fa-clock me-2 text-warning"></i>
-                                                        {{ $order->expires_at->translatedFormat('d M Y - h:i A') }}
-                                                        @if($order->expires_at->isPast())
-                                                            <span class="badge bg-danger ms-2">منتهي</span>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            @endif
-                                        </div>
+                                @if ($acceptedOffer)
+                                    <div class="info-line">
+                                        <span class="info-label">سعر العرض المقبول</span>
+                                        <span class="info-value">{{ number_format($acceptedOffer->price ?? 0, 2) }}</span>
                                     </div>
 
-                                    @if($order->location)
-                                        <div class="location-info mt-3">
-                                            <div class="location-icon">
-                                                <i class="fas fa-map-marker-alt"></i>
-                                            </div>
-                                            <div class="location-details">
-                                                <div class="location-label">{{ $order->location->label ?? 'عنوان التوصيل' }}</div>
-                                                <div class="location-address">{{ $order->location->address_details }}</div>
-                                                @if($order->location->building || $order->location->floor || $order->location->apartment_number)
-                                                    <div class="location-address">
-                                                        <small>
-                                                            @if($order->location->building)مبنى {{ $order->location->building }} @endif
-                                                            @if($order->location->floor) - دور {{ $order->location->floor }} @endif
-                                                            @if($order->location->apartment_number) - شقة {{ $order->location->apartment_number }} @endif
-                                                        </small>
-                                                    </div>
-                                                @endif
-                                                @if($order->location->latitude && $order->location->longitude)
-                                                    <div class="location-coords">
-                                                        <a href="https://maps.google.com/?q={{ $order->location->latitude }},{{ $order->location->longitude }}" target="_blank">
-                                                            <i class="fas fa-external-link-alt me-1"></i>عرض على الخريطة
-                                                        </a>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    @endif
-
-                                    @if($order->notes)
-                                        <div class="info-row mt-3">
-                                            <div class="info-label">ملاحظات:</div>
-                                            <div class="info-value">
-                                                <i class="fas fa-sticky-note me-2 text-info"></i>
-                                                {{ $order->notes }}
-                                            </div>
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <!-- العروض المقدمة -->
-                                @if($order->offers->isNotEmpty())
-                                    <div class="info-section">
-                                        <h6><i class="fas fa-tags me-2"></i>العروض المقدمة ({{ $order->offers->count() }})</h6>
-                                        @foreach($order->offers as $offer)
-                                            <div class="offer-item {{ $offer->status == 'accepted' ? 'accepted' : '' }}">
-                                                <div class="offer-header">
-                                                    <div class="offer-driver">
-                                                        <i class="fas fa-user me-2"></i>
-                                                        {{ $offer->driver->user->name ?? 'سائق #' . $offer->driver_id }}
-                                                        @if($offer->driver && $offer->driver->vehicle_plate_number)
-                                                            <small class="text-muted me-2">({{ $offer->driver->vehicle_plate_number }})</small>
-                                                        @endif
-                                                    </div>
-                                                    <div class="offer-price">{{ number_format($offer->price, 2) }} ر.س</div>
-                                                </div>
-                                                <div class="offer-details">
-                                                    <span><i class="fas fa-clock me-1"></i>مدة التوصيل: {{ $offer->delivery_duration_minutes }} دقيقة</span>
-                                                    <span><i class="fas fa-calendar me-1"></i>{{ $offer->created_at->translatedFormat('d M Y - h:i A') }}</span>
-                                                    <span>
-                                                        <span class="offer-status {{ $offer->status }}">
-                                                            @if($offer->status == 'pending')
-                                                                <i class="fas fa-clock me-1"></i>قيد الانتظار
-                                                            @elseif($offer->status == 'accepted')
-                                                                <i class="fas fa-check-circle me-1"></i>مقبول
-                                                            @elseif($offer->status == 'rejected')
-                                                                <i class="fas fa-times-circle me-1"></i>مرفوض
-                                                            @endif
-                                                        </span>
-                                                    </span>
-                                                </div>
-                                                @if($offer->status == 'pending' && !$order->driverOrder)
-                                                    <div class="mt-2">
-                                                        <button class="btn btn-sm btn-success" onclick="acceptOffer({{ $offer->id }})">
-                                                            <i class="fas fa-check me-2"></i>قبول العرض
-                                                        </button>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-
-                                <!-- تقييمات الطلب -->
-                                @if($order->ratings->isNotEmpty())
-                                    <div class="info-section">
-                                        <h6><i class="fas fa-star me-2"></i>التقييمات</h6>
-                                        @foreach($order->ratings as $rating)
-                                            <div class="product-item mb-3">
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <div>
-                                                        <strong>{{ $rating->user->name ?? 'مستخدم' }}</strong>
-                                                        <small class="text-muted me-2">({{ $rating->rated_by == 'user' ? 'مستخدم' : 'سائق' }})</small>
-                                                    </div>
-                                                    <div class="rating-stars">
-                                                        @for($i = 1; $i <= 5; $i++)
-                                                            @if($i <= $rating->rating)
-                                                                <i class="fas fa-star"></i>
-                                                            @else
-                                                                <i class="far fa-star"></i>
-                                                            @endif
-                                                        @endfor
-                                                    </div>
-                                                </div>
-                                                @if($rating->comment)
-                                                    <p class="mb-2"><i class="fas fa-quote-right me-2 text-muted"></i>{{ $rating->comment }}</p>
-                                                @endif
-                                                @if($rating->aspects && is_array($rating->aspects))
-                                                    <div class="mt-2">
-                                                        @foreach($rating->aspects as $aspect => $value)
-                                                            <span class="badge bg-info me-1">{{ $aspect }}: {{ $value }}/5</span>
-                                                        @endforeach
-                                                    </div>
-                                                @endif
-                                                <small class="text-muted">{{ $rating->created_at->diffForHumans() }}</small>
-                                            </div>
-                                        @endforeach
+                                    <div class="info-line">
+                                        <span class="info-label">مدة التوصيل المتوقعة</span>
+                                        <span class="info-value">
+                                            {{ $acceptedOffer->delivery_duration_minutes ?? '-' }} دقيقة
+                                        </span>
                                     </div>
                                 @endif
                             </div>
 
-                            <div class="col-lg-4">
-                                <!-- ملخص الطلب -->
-                                <div class="summary-card">
-                                    <h6 class="mb-3">ملخص الطلب</h6>
-                                    <div class="summary-row">
-                                        <span class="summary-label">المجموع الجزئي:</span>
-                                        <span class="summary-value">
-                                            {{ $order->acceptedOffer ? number_format($order->acceptedOffer->price, 2) . ' ر.س' : 'غير محدد' }}
+                            {{-- بيانات التعاقد --}}
+                            @if ($order->contract_id)
+                                <div class="info-section">
+                                    <h6><i class="fas fa-file-contract me-2"></i>بيانات التعاقد</h6>
+
+                                    <div class="info-line">
+                                        <span class="info-label">رقم العقد</span>
+                                        <span
+                                            class="info-value">{{ $contract->contract_number ?? $order->contract_id }}</span>
+                                    </div>
+
+                                    <div class="info-line">
+                                        <span class="info-label">نوع العقد</span>
+                                        <span class="info-value">
+                                            @if (($contract->contract_type ?? '') === 'individual')
+                                                فردي
+                                            @elseif (($contract->contract_type ?? '') === 'company')
+                                                شركة
+                                            @else
+                                                {{ $contract->contract_type ?? '-' }}
+                                            @endif
                                         </span>
                                     </div>
-                                    <div class="summary-row">
-                                        <span class="summary-label">طريقة الدفع:</span>
-                                        <span class="summary-value">
-                                            @switch($order->payment_method)
-                                                @case('wallet')<i class="fas fa-wallet me-1"></i>محفظة@break
-                                                @case('credit_card')<i class="fas fa-credit-card me-1"></i>بطاقة ائتمان@break
-                                                @case('mada')<i class="fas fa-credit-card me-1"></i>مدى@break
-                                                @case('apple_pay')<i class="fab fa-apple-pay me-1"></i>Apple Pay@break
-                                                @default{{ $order->payment_method }}
-                                            @endswitch
+
+                                    <div class="info-line">
+                                        <span class="info-label">اسم مقدم الطلب</span>
+                                        <span class="info-value">{{ $contract->applicant_name ?? '-' }}</span>
+                                    </div>
+
+                                    <div class="info-line">
+                                        <span class="info-label">الشركة</span>
+                                        <span class="info-value">{{ $contract->company_name ?? '-' }}</span>
+                                    </div>
+
+                                    <div class="info-line">
+                                        <span class="info-label">الطلبات المتبقية</span>
+                                        <span class="info-value">
+                                            {{ $contract->remaining_orders ?? '-' }}
+                                            /
+                                            {{ $contract->total_orders_limit ?? '-' }}
                                         </span>
                                     </div>
-                                    @if($order->payment_gateway)
-                                        <div class="summary-row">
-                                            <span class="summary-label">بوابة الدفع:</span>
-                                            <span class="summary-value">
-                                                <span class="badge-gateway">
-                                                    @switch($order->payment_gateway)
-                                                        @case('wallet')محفظة@break
-                                                        @case('paymob')Paymob@break
-                                                        @case('tamara')Tamara@break
-                                                        @case('tabby')Tabby@break
-                                                        @default{{ $order->payment_gateway }}
-                                                    @endswitch
-                                                </span>
-                                            </span>
-                                        </div>
-                                    @endif
-                                    @if($order->payment_transaction_id)
-                                        <div class="summary-row">
-                                            <span class="summary-label">رقم المعاملة:</span>
-                                            <span class="summary-value"><small>{{ $order->payment_transaction_id }}</small></span>
-                                        </div>
-                                    @endif
-                                    @if($order->paid_at)
-                                        <div class="summary-row">
-                                            <span class="summary-label">تاريخ الدفع:</span>
-                                            <span class="summary-value">{{ $order->paid_at->translatedFormat('d M Y - h:i A') }}</span>
-                                        </div>
-                                    @endif
-                                    @if($order->acceptedOffer)
-                                        <div class="summary-row total-row">
-                                            <span class="summary-label">إجمالي السعر:</span>
-                                            <span class="summary-value">{{ number_format($order->acceptedOffer->price, 2) }} ر.س</span>
-                                        </div>
-                                        <div class="summary-row">
-                                            <span class="summary-label">مدة التوصيل:</span>
-                                            <span class="summary-value">
-                                                <i class="fas fa-clock me-1"></i>{{ $order->acceptedOffer->delivery_duration_minutes }} دقيقة
-                                            </span>
-                                        </div>
-                                    @endif
                                 </div>
+                            @endif
 
-                                <!-- تغيير حالة الطلب -->
-                                <div class="info-section mt-4">
-                                    <h6><i class="fas fa-exchange-alt me-2"></i>تغيير الحالة</h6>
-                                    <div class="status-buttons" id="statusButtons">
-                                        @foreach($orderStatuses ?? [] as $status)
-                                            <button type="button"
-                                                class="status-btn {{ $order->status && $order->status->id == $status->id ? 'active' : '' }}"
-                                                onclick="updateStatus({{ $status->id }}, '{{ $status->name }}')">
-                                                @if($status->name == 'pending')<i class="fas fa-clock me-1"></i>
-                                                @elseif($status->name == 'in-road')<i class="fas fa-truck me-1"></i>
-                                                @elseif($status->name == 'scheduled')<i class="fas fa-calendar-check me-1"></i>
-                                                @elseif($status->name == 'delivered')<i class="fas fa-check-circle me-1"></i>
-                                                @elseif($status->name == 'cancelled')<i class="fas fa-times-circle me-1"></i>@endif
-                                                {{ $status->label }}
-                                            </button>
-                                        @endforeach
-                                    </div>
-                                    <div class="mt-3">
-                                        <textarea class="form-control" id="statusNotes" placeholder="ملاحظات إضافية (اختياري)" rows="3"></textarea>
-                                    </div>
-                                    <button type="button" class="btn btn-primary w-100 mt-3" onclick="confirmStatusUpdate()">
-                                        <i class="fas fa-save me-2"></i>تحديث الحالة
-                                    </button>
-                                </div>
+                            {{-- العروض --}}
+                            <div class="info-section">
+                                <h6><i class="fas fa-tags me-2"></i>عروض السائقين</h6>
 
-                                <!-- سجل الطلب -->
-                                <div class="info-section mt-4">
-                                    <h6><i class="fas fa-history me-2"></i>سجل الطلب</h6>
-                                    <div class="timeline">
-                                        @if($order->completionLog)
-                                            <div class="timeline-item">
-                                                <div class="timeline-content">
-                                                    <div class="timeline-date">{{ $order->completionLog->completed_at->translatedFormat('d M Y - h:i A') }}</div>
-                                                    <div class="timeline-text"><i class="fas fa-check-circle text-success me-2"></i>تم اكتمال الطلب</div>
-                                                    <div class="timeline-status">
-                                                        <small>المدة: {{ $order->completionLog->delivery_duration_minutes }} دقيقة | المسافة: {{ number_format($order->completionLog->total_distance_km, 2) }} كم</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endif
-                                        @if($order->paid_at)
-                                            <div class="timeline-item">
-                                                <div class="timeline-content">
-                                                    <div class="timeline-date">{{ $order->paid_at->translatedFormat('d M Y - h:i A') }}</div>
-                                                    <div class="timeline-text"><i class="fas fa-credit-card text-success me-2"></i>تم الدفع</div>
-                                                </div>
-                                            </div>
-                                        @endif
-                                        @if($order->acceptedOffer)
-                                            <div class="timeline-item">
-                                                <div class="timeline-content">
-                                                    <div class="timeline-date">{{ $order->acceptedOffer->created_at->translatedFormat('d M Y - h:i A') }}</div>
-                                                    <div class="timeline-text">
-                                                        <i class="fas fa-check-circle text-success me-2"></i>تم قبول العرض من {{ $order->acceptedOffer->driver->user->name ?? 'سائق' }}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endif
-                                        @if($order->offers->isNotEmpty())
-                                            <div class="timeline-item">
-                                                <div class="timeline-content">
-                                                    <div class="timeline-date">{{ $order->offers->first()->created_at->translatedFormat('d M Y - h:i A') }}</div>
-                                                    <div class="timeline-text"><i class="fas fa-tag text-info me-2"></i>تم استلام أول عرض</div>
-                                                </div>
-                                            </div>
-                                        @endif
-                                        <div class="timeline-item">
-                                            <div class="timeline-content">
-                                                <div class="timeline-date">
-                                                    {{ $order->order_date ? $order->order_date->translatedFormat('d M Y - h:i A') : $order->created_at->translatedFormat('d M Y - h:i A') }}
-                                                </div>
-                                                <div class="timeline-text"><i class="fas fa-plus-circle text-primary me-2"></i>إنشاء الطلب</div>
-                                            </div>
-                                        </div>
+                                @if ($order->offers && $order->offers->count() > 0)
+                                    <div class="table-responsive">
+                                        <table class="table-dark-custom">
+                                            <thead>
+                                                <tr>
+                                                    <th>السائق</th>
+                                                    <th>السعر</th>
+                                                    <th>المدة</th>
+                                                    <th>الحالة</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($order->offers as $offer)
+                                                    <tr>
+                                                        <td>
+                                                            {{ $offer->driver->user->name ?? 'سائق بدون اسم' }}
+                                                        </td>
+                                                        <td>{{ number_format($offer->price ?? 0, 2) }}</td>
+                                                        <td>{{ $offer->delivery_duration_minutes ?? '-' }} دقيقة</td>
+                                                        <td>
+                                                            <span
+                                                                class="status-badge {{ $offer->status === 'accepted' ? 'badge-active' : 'badge-default' }}">
+                                                                {{ $offer->status ?? '-' }}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
                                     </div>
-                                </div>
-
-                                <!-- آخر مواقع السائق -->
-                                @if($order->driverLocations && $order->driverLocations->isNotEmpty())
-                                    <div class="info-section mt-4">
-                                        <h6><i class="fas fa-map-marked-alt me-2"></i>آخر مواقع السائق</h6>
-                                        @foreach($order->driverLocations->take(5) as $location)
-                                            <div class="product-item mb-2">
-                                                <div class="d-flex justify-content-between">
-                                                    <div><i class="fas fa-map-pin text-danger me-2"></i>{{ $location->created_at->translatedFormat('h:i A') }}</div>
-                                                    @if($location->address)<small class="text-muted">{{ Str::limit($location->address, 30) }}</small>@endif
-                                                </div>
-                                                <div class="mt-2 small text-muted">
-                                                    <i class="fas fa-crosshairs me-1"></i>{{ number_format($location->latitude, 6) }}, {{ number_format($location->longitude, 6) }}
-                                                    @if($location->speed)| <i class="fas fa-tachometer-alt me-1"></i>{{ $location->speed }} كم/س @endif
-                                                    @if($location->battery_level)| <i class="fas fa-battery-full me-1"></i>{{ $location->battery_level }}% @endif
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                        @if($order->latestDriverLocation)
-                                            <div class="mt-2">
-                                                <a href="https://maps.google.com/?q={{ $order->latestDriverLocation->latitude }},{{ $order->latestDriverLocation->longitude }}"
-                                                   class="btn btn-sm btn-outline-info w-100" target="_blank">
-                                                    <i class="fas fa-map-marked-alt me-2"></i>عرض الموقع الحالي
-                                                </a>
-                                            </div>
-                                        @endif
+                                @else
+                                    <div class="empty-box">
+                                        لا توجد عروض على هذا الطلب.
                                     </div>
                                 @endif
+                            </div>
 
-                                <!-- إجراءات سريعة -->
-                                <div class="info-section mt-4">
-                                    <h6><i class="fas fa-bolt me-2"></i>إجراءات سريعة</h6>
-                                    <div class="d-grid gap-2">
-                                        <a href="{{ route('admin.orders.edit', $order) }}" class="btn btn-warning">
+                            {{-- الإلغاء --}}
+                            @if ($order->cancellation)
+                                <div class="info-section">
+                                    <h6><i class="fas fa-ban me-2"></i>بيانات الإلغاء</h6>
+
+                                    <div class="info-line">
+                                        <span class="info-label">سبب الإلغاء</span>
+                                        <span class="info-value">{{ $order->cancellation->reason ?? '-' }}</span>
+                                    </div>
+
+                                    <div class="info-line">
+                                        <span class="info-label">ملاحظات الإلغاء</span>
+                                        <span class="info-value">{{ $order->cancellation->notes ?? '-' }}</span>
+                                    </div>
+
+                                    <div class="info-line">
+                                        <span class="info-label">تاريخ الإلغاء</span>
+                                        <span class="info-value">
+                                            {{ $order->cancellation->created_at ? $order->cancellation->created_at->format('Y-m-d H:i') : '-' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="col-lg-4">
+                            {{-- الدفع --}}
+                            <div class="summary-card">
+                                <h6><i class="fas fa-credit-card me-2"></i>معلومات الدفع</h6>
+                                <div class="info-line">
+                                    <span class="info-label"> قيمة الدفع</span>
+                                    <span class="info-value">{{ $order->acceptedOffer?->price ?? '-' }}</span>
+                                </div>
+                                <div class="info-line">
+                                    <span class="info-label">حالة الدفع</span>
+                                    <span class="info-value">
+                                        <span class="status-badge {{ $paymentStatusClass }}">
+                                            {{ $order->payment_status ?? '-' }}
+                                        </span>
+                                    </span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">طريقة الدفع</span>
+                                    <span class="info-value">{{ $order->payment_method ?? '-' }}</span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">بوابة الدفع</span>
+                                    <span class="info-value">{{ $order->payment_gateway ?? '-' }}</span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">رقم العملية</span>
+                                    <span class="info-value">{{ $order->payment_transaction_id ?? '-' }}</span>
+                                </div>
+
+                                <div class="info-line">
+                                    <span class="info-label">تاريخ الدفع</span>
+                                    <span class="info-value">
+                                        {{ $order->paid_at ? \Carbon\Carbon::parse($order->paid_at)->format('Y-m-d H:i') : '-' }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {{-- آخر موقع للسائق --}}
+                            <div class="summary-card">
+                                <h6><i class="fas fa-map-marker-alt me-2"></i>تتبع السائق</h6>
+
+                                @if ($latestDriverLocation)
+                                    <div class="info-line">
+                                        <span class="info-label">خط العرض</span>
+                                        <span class="info-value">{{ $latestDriverLocation->latitude ?? '-' }}</span>
+                                    </div>
+
+                                    <div class="info-line">
+                                        <span class="info-label">خط الطول</span>
+                                        <span class="info-value">{{ $latestDriverLocation->longitude ?? '-' }}</span>
+                                    </div>
+
+                                    <div class="info-line">
+                                        <span class="info-label">المسافة المتبقية</span>
+                                        <span
+                                            class="info-value">{{ $latestDriverLocation->distance_to_destination ?? '-' }}</span>
+                                    </div>
+
+                                    <div class="info-line">
+                                        <span class="info-label">آخر تحديث</span>
+                                        <span class="info-value">
+                                            {{ $latestDriverLocation->created_at ? $latestDriverLocation->created_at->format('Y-m-d H:i') : '-' }}
+                                        </span>
+                                    </div>
+                                @else
+                                    <div class="empty-box">
+                                        لا يوجد تتبع حالي للسائق.
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- التايم لاين --}}
+                            <div class="summary-card">
+                                <h6><i class="fas fa-stream me-2"></i>خط سير الطلب</h6>
+
+                                @if (!empty($timeline))
+                                    <ul class="timeline">
+                                        @foreach ($timeline as $item)
+                                            <li class="timeline-item">
+                                                <div class="timeline-icon">
+                                                    <i class="fas {{ $item['icon'] ?? 'fa-circle' }}"></i>
+                                                </div>
+                                                <div class="timeline-title">
+                                                    {{ $item['label'] ?? '-' }}
+                                                </div>
+                                                <div class="timeline-time">
+                                                    {{ isset($item['time']) && $item['time'] ? \Carbon\Carbon::parse($item['time'])->format('Y-m-d H:i') : '-' }}
+                                                </div>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <div class="empty-box">
+                                        لا توجد أحداث مسجلة.
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- ملاحظات --}}
+                            <div class="summary-card">
+                                <h6><i class="fas fa-sticky-note me-2"></i>الملاحظات</h6>
+
+                                @if ($order->notes)
+                                    <div class="reason-box">
+                                        {{ $order->notes }}
+                                    </div>
+                                @else
+                                    <div class="empty-box">
+                                        لا توجد ملاحظات.
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- الإجراءات --}}
+                            <div class="summary-card">
+                                <h6><i class="fas fa-tools me-2"></i>الإجراءات</h6>
+
+                                <div class="d-grid gap-2">
+                                    @if (!$isInRoad && !$isCancelled && !$isDelivered)
+                                        <a href="{{ route('admin.orders.edit', $order->id) }}"
+                                            class="btn btn-primary btn-lg">
                                             <i class="fas fa-edit me-2"></i>تعديل الطلب
                                         </a>
-                                        <a href="{{ route('admin.orders.print', $order) }}" class="btn btn-secondary" target="_blank">
-                                            <i class="fas fa-print me-2"></i>طباعة الفاتورة
-                                        </a>
-                                        @if($order->driverOrder)
-                                            <a href="{{ route('admin.orders.tracking', $order) }}" class="btn btn-info">
-                                                <i class="fas fa-map-marked-alt me-2"></i>تتبع الطلب
-                                            </a>
-                                        @endif
-                                        @if($order->payment_status != 'paid' && $order->payment_status != 'refunded')
-                                            <button class="btn btn-success" onclick="markAsPaid({{ $order->id }})">
-                                                <i class="fas fa-check-circle me-2"></i>تأكيد الدفع
-                                            </button>
-                                        @endif
-                                        @if($order->payment_status == 'paid' && $order->status && $order->status->name != 'delivered' && $order->status->name != 'cancelled')
-                                            <button class="btn btn-danger" onclick="cancelOrder({{ $order->id }})">
-                                                <i class="fas fa-times-circle me-2"></i>إلغاء الطلب
-                                            </button>
-                                        @endif
-                                        <button type="button" class="btn btn-danger w-100" onclick="confirmDelete()">
-                                            <i class="fas fa-trash me-2"></i>حذف الطلب
-                                        </button>
-                                        <form id="deleteForm" action="{{ route('admin.orders.destroy', $order) }}" method="POST" style="display: none;">
+                                    @endif
+
+                                    @if ($isInRoad && !$isCancelled)
+                                        <form action="{{ route('admin.orders.update', $order->id) }}" method="POST"
+                                            id="cancelInRoadForm">
                                             @csrf
-                                            @method('DELETE')
+                                            @method('PUT')
+
+                                            <input type="hidden" name="cancel_only" value="1">
+                                            <input type="hidden" name="user_id" value="{{ $order->user_id }}">
+                                            <input type="hidden" name="service_id" value="{{ $order->service_id }}">
+                                            <input type="hidden" name="water_type_id"
+                                                value="{{ $order->water_type_id }}">
+                                            <input type="hidden" name="saved_location_id"
+                                                value="{{ $order->saved_location_id }}">
+                                            <input type="hidden" name="driver_id" value="{{ $order->driver_id }}">
+                                            <input type="hidden" name="contract_id" value="{{ $order->contract_id }}">
+                                            <input type="hidden" name="order_date" value="{{ $orderDateInputValue }}">
+                                            <input type="hidden" name="payment_status"
+                                                value="{{ $order->payment_status }}">
+                                            <input type="hidden" name="payment_method"
+                                                value="{{ $order->payment_method }}">
+                                            <input type="hidden" name="payment_gateway"
+                                                value="{{ $order->payment_gateway }}">
+                                            <input type="hidden" name="payment_transaction_id"
+                                                value="{{ $order->payment_transaction_id }}">
+                                            <input type="hidden" name="order_status_id"
+                                                value="{{ $cancelledStatusId }}">
+                                            <textarea name="notes" style="display:none;">{{ $order->notes }}</textarea>
+
+                                            <button type="submit" class="btn btn-danger btn-lg w-100"
+                                                {{ !$cancelledStatusId ? 'disabled' : '' }}>
+                                                <i class="fas fa-ban me-2"></i>إلغاء الطلب
+                                            </button>
                                         </form>
-                                    </div>
+
+                                        @if (!$cancelledStatusId)
+                                            <div class="alert alert-warning mt-3 mb-0">
+                                                لا توجد حالة إلغاء داخل حالات الطلبات. أضف حالة باسم cancelled أو canceled.
+                                            </div>
+                                        @endif
+                                    @endif
+
+                                    <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary btn-lg">
+                                        <i class="fas fa-arrow-right me-2"></i>رجوع للقائمة
+                                    </a>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Modal تعيين سائق -->
-    <div class="modal fade" id="assignDriverModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content bg-dark text-white">
-                <div class="modal-header border-secondary">
-                    <h5 class="modal-title">تعيين سائق للطلب #{{ $order->id }}</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="assignDriverForm">
-                        @csrf
-                        <div class="mb-3">
-                            <label class="form-label">اختر السائق</label>
-                            <select class="form-select" id="driverSelect" required>
-                                <option value="">-- اختر سائق --</option>
-                                @foreach($availableDrivers ?? [] as $driver)
-                                    <option value="{{ $driver->id }}">
-                                        {{ $driver->user->name ?? 'سائق #' . $driver->id }}
-                                        @if($driver->vehicle_plate_number) - {{ $driver->vehicle_plate_number }} @endif
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">السعر (ر.س)</label>
-                            <input type="number" class="form-control" id="offerPrice" step="0.01" min="0" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">مدة التوصيل (بالدقائق)</label>
-                            <input type="number" class="form-control" id="deliveryDuration" min="1" required>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                    <button type="button" class="btn btn-primary" onclick="submitAssignDriver()">تعيين</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal إلغاء الطلب -->
-    <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content bg-dark text-white">
-                <div class="modal-header border-secondary">
-                    <h5 class="modal-title">إلغاء الطلب #{{ $order->id }}</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="cancelOrderForm">
-                        @csrf
-                        <div class="mb-3">
-                            <label class="form-label">سبب الإلغاء</label>
-                            <select class="form-select" id="cancelReason" required>
-                                <option value="">-- اختر السبب --</option>
-                                <option value="customer_request">طلب العميل</option>
-                                <option value="driver_unavailable">السائق غير متاح</option>
-                                <option value="payment_issue">مشكلة في الدفع</option>
-                                <option value="technical_issue">مشكلة تقنية</option>
-                                <option value="other">سبب آخر</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">ملاحظات إضافية</label>
-                            <textarea class="form-control" id="cancelNotes" rows="3"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                    <button type="button" class="btn btn-danger" onclick="submitCancelOrder()">تأكيد الإلغاء</button>
                 </div>
             </div>
         </div>
@@ -1192,194 +871,51 @@
 @endsection
 
 @section('js')
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        let selectedStatus = {{ $order->order_status_id }};
-        let selectedStatusName = '{{ $order->status->name ?? '' }}';
+        document.addEventListener('DOMContentLoaded', function() {
+            const cancelForm = document.getElementById('cancelInRoadForm');
 
-        function updateStatus(statusId, statusName) {
-            selectedStatus = statusId;
-            selectedStatusName = statusName;
-            $('#statusButtons .status-btn').removeClass('active');
-            $(`#statusButtons .status-btn[onclick="updateStatus(${statusId}, '${statusName}')"]`).addClass('active');
-        }
+            if (cancelForm) {
+                cancelForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
 
-        function confirmStatusUpdate() {
-            if (selectedStatus === {{ $order->order_status_id }}) {
-                Swal.fire({ icon: 'info', title: 'لم يتغير شيء', text: 'الحالة الحالية هي نفس الحالة المحددة', timer: 1500, showConfirmButton: false });
-                return;
-            }
-            const notes = $('#statusNotes').val();
-            Swal.fire({
-                title: 'تأكيد تحديث الحالة',
-                text: 'هل أنت متأكد من تغيير حالة الطلب؟',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'نعم، تحديث',
-                cancelButtonText: 'إلغاء',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: "{{ route('admin.orders.update-status', $order) }}",
-                        type: 'POST',
-                        data: {
-                            _token: "{{ csrf_token() }}",
-                            order_status_id: selectedStatus,
-                            notes: notes
-                        },
-                        success: function(response) {
-                            Swal.fire({ icon: 'success', title: 'تم التحديث', text: response.message, timer: 1500, showConfirmButton: false }).then(() => location.reload());
-                        },
-                        error: function(xhr) {
-                            Swal.fire({ icon: 'error', title: 'خطأ', text: xhr.responseJSON?.message || 'حدث خطأ أثناء تحديث الحالة' });
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'تأكيد إلغاء الطلب',
+                        text: 'الطلب في الطريق. هل أنت متأكد أنك تريد إلغاءه؟',
+                        showCancelButton: true,
+                        confirmButtonText: 'نعم، إلغاء الطلب',
+                        cancelButtonText: 'رجوع',
+                        confirmButtonColor: '#dc3545'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            cancelForm.submit();
                         }
                     });
-                }
-            });
-        }
-
-        function assignDriver(orderId) {
-            new bootstrap.Modal(document.getElementById('assignDriverModal')).show();
-        }
-
-        function submitAssignDriver() {
-            const driverId = $('#driverSelect').val();
-            const price = $('#offerPrice').val();
-            const duration = $('#deliveryDuration').val();
-            if (!driverId || !price || price <= 0 || !duration || duration <= 0) {
-                Swal.fire({ icon: 'error', title: 'خطأ', text: 'يرجى ملء جميع الحقول بشكل صحيح' });
-                return;
+                });
             }
-            $.ajax({
-                url: "{{ route('admin.orders.assign-driver', $order) }}",
-                type: 'POST',
-                data: {
-                    _token: "{{ csrf_token() }}",
-                    driver_id: driverId,
-                    price: price,
-                    delivery_duration_minutes: duration
-                },
-                success: function(response) {
-                    if (response.success) {
-                        bootstrap.Modal.getInstance(document.getElementById('assignDriverModal')).hide();
-                        Swal.fire({ icon: 'success', title: 'تم التعيين', text: response.message, timer: 1500, showConfirmButton: false }).then(() => location.reload());
-                    }
-                },
-                error: function(xhr) {
-                    Swal.fire({ icon: 'error', title: 'خطأ', text: xhr.responseJSON?.message || 'حدث خطأ أثناء تعيين السائق' });
-                }
-            });
-        }
 
-        function acceptOffer(offerId) {
-            Swal.fire({
-                title: 'تأكيد قبول العرض',
-                text: 'هل أنت متأكد من قبول هذا العرض؟',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'نعم، قبول',
-                cancelButtonText: 'إلغاء',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: "{{ route('admin.orders.accept-offer', '') }}/" + offerId,
-                        type: 'POST',
-                        data: { _token: "{{ csrf_token() }}" },
-                        success: function(response) {
-                            Swal.fire({ icon: 'success', title: 'تم القبول', text: response.message, timer: 1500, showConfirmButton: false }).then(() => location.reload());
-                        },
-                        error: function(xhr) {
-                            Swal.fire({ icon: 'error', title: 'خطأ', text: xhr.responseJSON?.message || 'حدث خطأ' });
-                        }
-                    });
-                }
-            });
-        }
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'نجاح',
+                    text: "{{ session('success') }}",
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            @endif
 
-        function markAsPaid(orderId) {
-            Swal.fire({
-                title: 'تأكيد الدفع',
-                text: 'هل أنت متأكد من تأكيد دفع الطلب؟',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'نعم، تأكيد',
-                cancelButtonText: 'إلغاء',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: "{{ route('admin.orders.update-payment-status', $order) }}",
-                        type: 'POST',
-                        data: { _token: "{{ csrf_token() }}", payment_status: 'paid' },
-                        success: function(response) {
-                            Swal.fire({ icon: 'success', title: 'تم التأكيد', text: response.message, timer: 1500, showConfirmButton: false }).then(() => location.reload());
-                        },
-                        error: function(xhr) {
-                            Swal.fire({ icon: 'error', title: 'خطأ', text: xhr.responseJSON?.message || 'حدث خطأ' });
-                        }
-                    });
-                }
-            });
-        }
-
-        function cancelOrder(orderId) {
-            new bootstrap.Modal(document.getElementById('cancelOrderModal')).show();
-        }
-
-        function submitCancelOrder() {
-            const reason = $('#cancelReason').val();
-            const notes = $('#cancelNotes').val();
-            if (!reason) {
-                Swal.fire({ icon: 'error', title: 'خطأ', text: 'يرجى اختيار سبب الإلغاء' });
-                return;
-            }
-            $.ajax({
-                url: "{{ route('admin.orders.cancel', $order) }}",
-                type: 'POST',
-                data: { _token: "{{ csrf_token() }}", reason: reason, notes: notes },
-                success: function(response) {
-                    bootstrap.Modal.getInstance(document.getElementById('cancelOrderModal')).hide();
-                    Swal.fire({ icon: 'success', title: 'تم الإلغاء', text: response.message, timer: 1500, showConfirmButton: false }).then(() => location.reload());
-                },
-                error: function(xhr) {
-                    Swal.fire({ icon: 'error', title: 'خطأ', text: xhr.responseJSON?.message || 'حدث خطأ أثناء إلغاء الطلب' });
-                }
-            });
-        }
-
-        function confirmDelete() {
-            Swal.fire({
-                title: 'هل أنت متأكد؟',
-                text: 'سيتم حذف الطلب #{{ $order->id }} نهائياً',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'نعم، احذف',
-                cancelButtonText: 'إلغاء',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('deleteForm').submit();
-                }
-            });
-        }
-
-        @if (session('success'))
-            Swal.fire({ icon: 'success', title: 'نجاح', text: "{{ session('success') }}", timer: 2000, showConfirmButton: false });
-        @endif
-        @if (session('error'))
-            Swal.fire({ icon: 'error', title: 'خطأ', text: "{{ session('error') }}", timer: 2000, showConfirmButton: false });
-        @endif
+            @if (session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطأ',
+                    text: "{{ session('error') }}",
+                    timer: 2500,
+                    showConfirmButton: false
+                });
+            @endif
+        });
     </script>
 @endsection

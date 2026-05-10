@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Contract;
 use App\Models\Driver;
 use App\Models\DriverLocation;
 use App\Models\Order;
@@ -141,7 +142,7 @@ class OrderController extends Controller
      */
     public function updateStatus(Request $request, Order $order)
     {
-        
+
         $request->validate([
             'order_status_id' => 'required|exists:order_statuses,id',
             'notes' => 'nullable|string',
@@ -155,88 +156,168 @@ class OrderController extends Controller
         return response()->json(['success' => true, 'message' => 'تم تحديث حالة الطلب بنجاح']);
     }
 
-/**
- * Show the form for creating a new order.
- */
-public function create()
-{
-    $users = User::where('status', 'active')->latest()->get();
-    $services = Service::where('is_active', true)->get();
-    $waterTypes = WaterType::get(); 
-    $orderStatuses = OrderStatus::all();
+    /**
+     * Show the form for creating a new order.
+     */
+    public function create()
+    {
+        $users = User::where('status', 'active')->latest()->get();
+        $services = Service::where('is_active', true)->get();
+        $waterTypes = WaterType::get();
+        $orderStatuses = OrderStatus::all();
 
-    return view('Admin.orders.create', compact('users', 'services', 'waterTypes', 'orderStatuses'));
-}
-/**
- * Store a newly created order in storage.
- */
-public function store(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'user_id'           => 'required|exists:users,id',
-        'service_id'        => 'required|exists:services,id',
-        'water_type_id'     => 'required|exists:water_types,id',
-        'saved_location_id' => 'nullable|exists:saved_locations,id',
-        'order_status_id'   => 'required|exists:order_statuses,id',
-        'payment_method'    => 'required|string|in:wallet,credit_card,mada,apple_pay',
-        'payment_gateway'   => 'nullable|string|in:wallet,paymob,tamara,tabby',
-        'order_date'        => 'required|date',
-        'notes'             => 'nullable|string|max:2000',
-    ], [
-        'user_id.required'           => 'يجب اختيار العميل',
-        'user_id.exists'             => 'العميل غير موجود في النظام',
-        'service_id.required'        => 'يجب اختيار الخدمة',
-        'service_id.exists'          => 'الخدمة غير موجودة',
-        'water_type_id.required'     => 'يجب اختيار نوع المياه',
-        'water_type_id.exists'       => 'نوع المياه غير موجود',
-        'order_status_id.required'   => 'يجب اختيار حالة الطلب',
-        'order_status_id.exists'     => 'حالة الطلب غير موجودة',
-        'payment_method.required'    => 'يجب اختيار طريقة الدفع',
-        'payment_method.in'          => 'طريقة الدفع غير صالحة',
-        'payment_gateway.in'         => 'بوابة الدفع غير صالحة',
-        'order_date.required'        => 'تاريخ الطلب مطلوب',
-        'order_date.date'            => 'صيغة التاريخ غير صحيحة',
-        'notes.max'                  => 'الملاحظات يجب ألا تتجاوز 2000 حرف',
-    ]);
+        $drivers = Driver::with('user')
+            ->where('status', 'active')
+            ->where('is_active', true)
+            ->get();
 
-    if ($validator->fails()) {
-        return redirect()->back()
-            ->withErrors($validator)
-            ->withInput();
+        $contracts = Contract::whereIn('user_id', $users->pluck('id')->filter()->values())
+            ->orderByRaw("CASE WHEN status = 'active' THEN 0 ELSE 1 END")
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('Admin.orders.create', compact(
+            'users',
+            'services',
+            'waterTypes',
+            'orderStatuses',
+            'drivers',
+            'contracts'
+        ));
     }
-
-    DB::beginTransaction();
-
-    try {
-        $order = Order::create([
-            'user_id'           => $request->user_id,
-            'service_id'        => $request->service_id,
-            'water_type_id'     => $request->water_type_id,
-            'saved_location_id' => $request->saved_location_id,
-            'order_status_id'   => $request->order_status_id,
-            'payment_status'    => Order::PAYMENT_STATUS_PENDING,
-            'payment_method'    => $request->payment_method,
-            'payment_gateway'   => $request->payment_gateway,
-            'order_date'        => $request->order_date,
-            'expires_at'        => now()->addHours(24),
-            'notes'             => $request->notes,
+    /**
+     * Store a newly created order in storage.
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'is_contract'       => 'required|in:0,1',
+            'order_type'        => 'required|in:current,scheduled',
+            'user_id'           => 'required|exists:users,id',
+            'service_id'        => 'required|exists:services,id',
+            'water_type_id'     => 'required|exists:water_types,id',
+            'saved_location_id' => 'nullable|exists:saved_locations,id',
+            'order_status_id'   => 'required|exists:order_statuses,id',
+            'contract_id'       => 'nullable|exists:contracts,id',
+            'driver_id'         => 'nullable|exists:drivers,id',
+            'payment_method'    => 'required|string|in:wallet,paymob,tamara,tabby,cash_on_delivery',
+            'payment_gateway'   => 'nullable|string|in:wallet,paymob,tamara,tabby,cash_on_delivery',
+            'order_date'        => 'required|date',
+            'notes'             => 'nullable|string|max:2000',
+        ], [
+            'is_contract.required'       => 'يجب تحديد نوع الطلب هل هو تعاقد أم طلب عادي',
+            'is_contract.in'             => 'نوع الطلب غير صحيح',
+            'order_type.required'        => 'يجب تحديد هل الطلب حالي أم مجدول',
+            'order_type.in'              => 'نوع توقيت الطلب غير صحيح',
+            'user_id.required'           => 'يجب اختيار العميل',
+            'user_id.exists'             => 'العميل غير موجود في النظام',
+            'service_id.required'        => 'يجب اختيار الخدمة',
+            'service_id.exists'          => 'الخدمة غير موجودة',
+            'water_type_id.required'     => 'يجب اختيار نوع المياه',
+            'water_type_id.exists'       => 'نوع المياه غير موجود',
+            'saved_location_id.exists'   => 'العنوان المحفوظ غير موجود',
+            'order_status_id.required'   => 'يجب اختيار حالة الطلب',
+            'order_status_id.exists'     => 'حالة الطلب غير موجودة',
+            'contract_id.exists'         => 'العقد المختار غير موجود',
+            'driver_id.exists'           => 'السائق المختار غير موجود',
+            'payment_method.required'    => 'يجب اختيار طريقة الدفع',
+            'payment_method.in'          => 'طريقة الدفع غير صالحة',
+            'payment_gateway.in'         => 'بوابة الدفع غير صالحة',
+            'order_date.required'        => 'تاريخ الطلب مطلوب',
+            'order_date.date'            => 'صيغة التاريخ غير صحيحة',
+            'notes.max'                  => 'الملاحظات يجب ألا تتجاوز 2000 حرف',
         ]);
 
-        // إنشاء كود التأكيد تلقائياً (للاستخدام مستقبلاً)
-        $order->code_confirmation = strtoupper(substr(md5(uniqid($order->id, true)), 0, 6));
-        $order->save();
+        $validator->after(function ($validator) use ($request) {
+            $selectedStatus = OrderStatus::find($request->order_status_id);
+            $isInRoad = $selectedStatus && $selectedStatus->name === OrderStatus::IN_ROAD;
+            $isContractOrder = (string) $request->is_contract === '1';
 
-        DB::commit();
+            if ($isContractOrder && ! $request->filled('contract_id')) {
+                $validator->errors()->add('contract_id', 'يجب اختيار العقد لأن الطلب تابع لتعاقد');
+            }
 
-        return redirect()->route('admin.orders.show', $order)
-            ->with('success', 'تم إنشاء الطلب بنجاح');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return redirect()->back()
-            ->with('error', 'حدث خطأ أثناء إنشاء الطلب: ' . $e->getMessage())
-            ->withInput();
+            if ($isContractOrder && $request->filled('contract_id')) {
+                $contractExistsForUser = Contract::where('id', $request->contract_id)
+                    ->where('user_id', $request->user_id)
+                    ->exists();
+
+                if (! $contractExistsForUser) {
+                    $validator->errors()->add('contract_id', 'العقد المختار لا يخص هذا العميل');
+                }
+            }
+
+            if ($isInRoad && ! $request->filled('driver_id')) {
+                $validator->errors()->add('driver_id', 'يجب اختيار السائق لأن حالة الطلب في الطريق');
+            }
+
+            if ($isInRoad && $request->filled('driver_id')) {
+                $driverIsAvailable = Driver::where('id', $request->driver_id)
+                    ->where('status', 'active')
+                    ->where('is_active', true)
+                    ->exists();
+
+                if (! $driverIsAvailable) {
+                    $validator->errors()->add('driver_id', 'السائق المختار غير متاح حالياً');
+                }
+            }
+        });
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $selectedStatus = OrderStatus::findOrFail($request->order_status_id);
+            $isInRoad = $selectedStatus->name === OrderStatus::IN_ROAD;
+            $isContractOrder = (string) $request->is_contract === '1';
+
+            $order = Order::create([
+                'user_id'           => $request->user_id,
+                'driver_id'         => $isInRoad ? $request->driver_id : null,
+                'service_id'        => $request->service_id,
+                'water_type_id'     => $request->water_type_id,
+                'saved_location_id' => $request->saved_location_id,
+                'order_status_id'   => $request->order_status_id,
+                'contract_id'       => $isContractOrder ? $request->contract_id : null,
+                'payment_status'    => Order::PAYMENT_STATUS_PENDING,
+                'payment_method'    => $request->payment_method,
+                'payment_gateway'   => $request->payment_gateway,
+                'order_date'        => $request->order_type === 'current' ? now() : $request->order_date,
+                'expires_at'        => now()->addHours(24),
+                'notes'             => $request->notes,
+            ]);
+
+            // إنشاء كود التأكيد تلقائياً
+            $order->code_confirmation = strtoupper(substr(md5(uniqid($order->id, true)), 0, 6));
+            $order->save();
+            if ($isInRoad && $request->filled('driver_id')) {
+                OrderOffer::create([
+                    'order_id'                  => $order->id,
+                    'driver_id'                 => $request->driver_id,
+                    'price'                     => $request->input('order_value', 0), // Use order value from request or default to 0
+                    'delivery_duration_minutes' => 1,
+                    'status'                    => 'accepted',
+                    'expires_at'                => now()->addHours(24),
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->route('admin.orders.show', $order)
+                ->with('success', 'تم إنشاء الطلب بنجاح');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()
+                ->with('error', 'حدث خطأ أثناء إنشاء الطلب: ' . $e->getMessage())
+                ->withInput();
+        }
     }
-}
 
     /**
      * Display the specified order
@@ -308,7 +389,7 @@ public function store(Request $request)
             'water_type_id' => 'required|exists:water_types,id',
             'saved_location_id' => 'nullable|exists:saved_locations,id',
             'order_status_id' => 'required|exists:order_statuses,id',
-            'payment_status' => 'required|in:'.implode(',', [
+            'payment_status' => 'required|in:' . implode(',', [
                 Order::PAYMENT_STATUS_PENDING,
                 Order::PAYMENT_STATUS_PROCESSING,
                 Order::PAYMENT_STATUS_PAID,
@@ -317,7 +398,7 @@ public function store(Request $request)
                 Order::PAYMENT_STATUS_PARTIALLY_REFUNDED,
             ]),
             'payment_method' => 'required|string|max:255',
-            'payment_gateway' => 'nullable|string|in:wallet,paymob,tamara,tabby',
+            'payment_gateway' => 'nullable|string|in:wallet,paymob,tamara,tabby,cash_on_delivery',
             'payment_transaction_id' => 'nullable|string|max:255',
             'order_date' => 'required|date',
             'notes' => 'nullable|string|max:2000',
@@ -371,6 +452,9 @@ public function store(Request $request)
                         'reason' => 'تم الإلغاء بواسطة المسؤول',
                         'notes' => 'إلغاء من لوحة التحكم',
                     ]);
+                    if ($order->acceptedOffer) {
+                        $order->acceptedOffer->update(['status' => 'rejected']);
+                    }
                 }
             }
 
@@ -382,7 +466,7 @@ public function store(Request $request)
             DB::rollBack();
 
             return redirect()->back()
-                ->with('error', 'حدث خطأ أثناء تحديث الطلب: '.$e->getMessage())
+                ->with('error', 'حدث خطأ أثناء تحديث الطلب: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -424,7 +508,7 @@ public function store(Request $request)
             DB::rollBack();
 
             return redirect()->back()
-                ->with('error', 'حدث خطأ أثناء حذف الطلب: '.$e->getMessage());
+                ->with('error', 'حدث خطأ أثناء حذف الطلب: ' . $e->getMessage());
         }
     }
 
@@ -481,7 +565,7 @@ public function store(Request $request)
 
             return response()->json([
                 'success' => false,
-                'message' => 'حدث خطأ: '.$e->getMessage(),
+                'message' => 'حدث خطأ: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -492,7 +576,7 @@ public function store(Request $request)
     public function updatePaymentStatus(Request $request, Order $order)
     {
         $validator = Validator::make($request->all(), [
-            'payment_status' => 'required|in:'.implode(',', [
+            'payment_status' => 'required|in:' . implode(',', [
                 Order::PAYMENT_STATUS_PENDING,
                 Order::PAYMENT_STATUS_PROCESSING,
                 Order::PAYMENT_STATUS_PAID,
@@ -592,7 +676,7 @@ public function store(Request $request)
 
             return response()->json([
                 'success' => false,
-                'message' => 'حدث خطأ: '.$e->getMessage(),
+                'message' => 'حدث خطأ: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -705,7 +789,7 @@ public function store(Request $request)
         $orders = $query->get();
 
         // Generate CSV
-        $filename = 'orders_'.date('Y-m-d_His').'.csv';
+        $filename = 'orders_' . date('Y-m-d_His') . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$filename\"",
@@ -817,7 +901,7 @@ public function store(Request $request)
             'order_ids.*' => 'exists:orders,id',
             'action' => 'required|in:update_status,update_payment_status,assign_driver,delete',
             'order_status_id' => 'required_if:action,update_status|exists:order_statuses,id',
-            'payment_status' => 'required_if:action,update_payment_status|in:'.implode(',', [
+            'payment_status' => 'required_if:action,update_payment_status|in:' . implode(',', [
                 Order::PAYMENT_STATUS_PENDING,
                 Order::PAYMENT_STATUS_PROCESSING,
                 Order::PAYMENT_STATUS_PAID,
@@ -893,7 +977,7 @@ public function store(Request $request)
 
             return response()->json([
                 'success' => false,
-                'message' => 'حدث خطأ: '.$e->getMessage(),
+                'message' => 'حدث خطأ: ' . $e->getMessage(),
             ], 500);
         }
     }

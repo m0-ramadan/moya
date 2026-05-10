@@ -154,7 +154,7 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
 
         // User Status
         Route::post('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
-   Route::get('/{user}/locations', [UserController::class, 'locations'])->name('locations');
+        Route::get('/locations/{user}', [UserController::class, 'locations'])->name('locations');
         // User Wallet
         Route::get('/{user}/wallet', [UserController::class, 'wallet'])->name('wallet');
 
@@ -262,7 +262,6 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         Route::post('bulk-actions', [ArticleController::class, 'bulkActions'])->name('bulk-actions');
         Route::patch('{article}/toggle-status', [ArticleController::class, 'toggleStatus'])->name('toggle-status');
         Route::patch('{article}/toggle-featured', [ArticleController::class, 'toggleFeatured'])->name('toggle-featured');
-
     });
 
     // Contracts Management - Complete Routes

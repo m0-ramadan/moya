@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Slider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class BannerController extends Controller
@@ -59,33 +60,33 @@ class BannerController extends Controller
     public function store(Request $request)
     {
         try {
-        $validatedData = $request->validate([
-            'title' => 'required|string|max:255',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'link' => 'nullable|string|max:255',
-            'type' => 'required|in:driver,user',
-            'order' => 'nullable|integer|min:1',
-            'is_active' => 'required|boolean',
-        ], [
-            'title.required' => 'حقل العنوان مطلوب.',
-            'image.required' => 'يجب رفع صورة للسلايدر.',
-            'image.image' => 'الملف المرفوع يجب أن يكون صورة.',
-            'image.mimes' => 'الصورة يجب أن تكون من نوع: jpeg, png, jpg, gif, webp.',
-            'image.max' => 'حجم الصورة يجب ألا يتجاوز 2 ميجابايت.',
-            'type.required' => 'يجب تحديد نوع السلايدر.',
-            'type.in' => 'نوع السلايدر يجب أن يكون سائق أو مستخدم.',
-        ]);
+            $validatedData = $request->validate([
+                'title' => 'required|string|max:255',
+                'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+                'link' => 'nullable|string|max:255',
+                'type' => 'required|in:driver,user',
+                'order' => 'nullable|integer|min:1',
+                'is_active' => 'required|boolean',
+            ], [
+                'title.required' => 'حقل العنوان مطلوب.',
+                'image.required' => 'يجب رفع صورة للسلايدر.',
+                'image.image' => 'الملف المرفوع يجب أن يكون صورة.',
+                'image.mimes' => 'الصورة يجب أن تكون من نوع: jpeg, png, jpg, gif, webp.',
+                'image.max' => 'حجم الصورة يجب ألا يتجاوز 2 ميجابايت.',
+                'type.required' => 'يجب تحديد نوع السلايدر.',
+                'type.in' => 'نوع السلايدر يجب أن يكون سائق أو مستخدم.',
+            ]);
 
-        DB::beginTransaction();
+            DB::beginTransaction();
 
-        
+
             // رفع الصورة وتخزينها
             if ($request->hasFile('image')) {
                 $imagePath = $request->file('image')->store('sliders', 'public');
                 $validatedData['image'] = $imagePath;
             }
 
-        // تعيين قيمة افتراضية للترتيب إذا لم يتم إرساله
+            // تعيين قيمة افتراضية للترتيب إذا لم يتم إرساله
             if (!isset($validatedData['order']) || empty($validatedData['order'])) {
                 $validatedData['order'] = Slider::where('type', $validatedData['type'])->max('order') + 1;
             }
@@ -97,7 +98,6 @@ class BannerController extends Controller
             return redirect()
                 ->route('admin.sliders.index')
                 ->with('success', 'تم إنشاء السلايدر بنجاح.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             // حذف الصورة المرفوعة في حال فشل العملية
@@ -127,54 +127,52 @@ class BannerController extends Controller
      * @param Slider $slider
      * @return \Illuminate\Http\RedirectResponse
      */
-public function update(Request $request, $id)
-{
-    try {
-    
-    $slider = Slider::findOrFail($id);
+    public function update(Request $request, $id)
+    {
+        $slider = Slider::findOrFail($id);
 
-    $validatedData = $request->validate([
-        'title' => 'required|string|max:255',
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-        'link' => 'nullable|string|max:255',
-        'type' => 'required|in:driver,user',
-        'order' => 'nullable|integer|min:1',
-        'is_active' => 'required|boolean',
-    ]);
+        $validatedData = $request->validate([
+            'title' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'link' => 'nullable|string|max:255',
+            'type' => 'required|in:driver,user',
+            'order' => 'nullable|integer|min:1',
+            'is_active' => 'nullable|boolean',
+        ]);
 
-    $oldImage = $slider->image;
+        $newImagePath = null;
+        $oldImagePath = $slider->image;
+
+        try {
+            $validatedData['is_active'] = $request->has('is_active') ? 1 : 0;
+
+            if ($request->hasFile('image')) {
+                $newImagePath = $request->file('image')->store('sliders', 'public');
+                $validatedData['image'] = $newImagePath;
+            } else {
+                unset($validatedData['image']);
+            }
+
+            $slider->update($validatedData);
+
+            if ($newImagePath && $oldImagePath && Storage::disk('public')->exists($oldImagePath)) {
+                Storage::disk('public')->delete($oldImagePath);
+            }
+
+            return redirect()
+                ->route('admin.banners.index')
+                ->with('success', 'تم تحديث السلايدر بنجاح.');
+        } catch (\Exception $e) {
+            if ($newImagePath && Storage::disk('public')->exists($newImagePath)) {
+                Storage::disk('public')->delete($newImagePath);
+            }
 
 
-        // رفع الصورة الجديدة
-        if ($request->hasFile('image')) {
-            $validatedData['image'] = $request->file('image')->store('sliders', 'public');
+            return back()
+                ->with('error', 'حدث خطأ أثناء تحديث السلايدر.')
+                ->withInput();
         }
-
-        $slider->update($validatedData);
-
-        // حذف القديمة بعد النجاح
-        if ($request->hasFile('image') && $oldImage && Storage::disk('public')->exists($oldImage)) {
-            Storage::disk('public')->delete($oldImage);
-        }
-
-        return redirect()
-            ->route('admin.sliders.index')
-            ->with('success', 'تم تحديث السلايدر بنجاح.');
-
-    } catch (\Exception $e) {
-
-        // حذف الجديدة لو فشل
-        if (isset($validatedData['image']) && Storage::disk('public')->exists($validatedData['image'])) {
-            Storage::disk('public')->delete($validatedData['image']);
-        }
-
-        \Log::error($e);
-
-        return back()
-            ->with('error', 'حدث خطأ أثناء تحديث السلايدر.')
-            ->withInput();
     }
-}
     /**
      * Remove the specified slider from storage.
      *
@@ -196,9 +194,8 @@ public function update(Request $request, $id)
             DB::commit();
 
             return redirect()
-                ->route('admin.sliders.index')
+                ->route('admin.banners.index')
                 ->with('success', 'تم حذف السلايدر بنجاح.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'حدث خطأ أثناء حذف السلايدر: ' . $e->getMessage());
@@ -221,7 +218,6 @@ public function update(Request $request, $id)
                 'is_active' => $slider->is_active,
                 'message' => $slider->is_active ? 'تم تفعيل السلايدر بنجاح.' : 'تم إلغاء تفعيل السلايدر بنجاح.',
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -253,7 +249,6 @@ public function update(Request $request, $id)
                 'success' => true,
                 'message' => 'تم تحديث ترتيب السلايدرات بنجاح.'
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -295,7 +290,6 @@ public function update(Request $request, $id)
                 'message' => 'تم حذف السلايدرات المحددة بنجاح.',
                 'count' => $sliders->count()
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -329,7 +323,6 @@ public function update(Request $request, $id)
                 'message' => "تم {$actionText} السلايدرات المحددة بنجاح.",
                 'count' => count($request->ids)
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
