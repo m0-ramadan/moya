@@ -46,7 +46,8 @@ class Order extends Model
         'order_date',
         'contract_id',
         'payment_gateway',
-        'expires_at','code_confirmation',
+        'expires_at',
+        'code_confirmation',
     ];
 
     protected $casts = [
@@ -69,10 +70,10 @@ class Order extends Model
     {
         return $this->payment_status === self::PAYMENT_STATUS_PENDING;
     }
-public function isExpired(): bool
-{
-    return $this->expires_at && now()->greaterThan($this->expires_at);
-}
+    public function isExpired(): bool
+    {
+        return $this->expires_at && now()->greaterThan($this->expires_at);
+    }
     /**
      * التحقق من حالة الاسترداد
      */
@@ -89,6 +90,11 @@ public function isExpired(): bool
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function contract()
+    {
+        return $this->belongsTo(Contract::class, 'contract_id');
     }
 
     // السائق المسؤول عن الطلب
@@ -195,9 +201,9 @@ public function isExpired(): bool
         return $this->price ?? 0;
     }
     public function cancellation()
-{
-    return $this->hasOne(OrderCancellation::class);
-}
+    {
+        return $this->hasOne(OrderCancellation::class);
+    }
 
     /**
      * سجل اكتمال الطلب - أضف هذه العلاقة
