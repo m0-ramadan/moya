@@ -186,7 +186,7 @@ class AdminController extends Controller
             ]);
 
             // Success notification
-            toastr()->success('تم إضافة المسؤول بنجاح', 'نجاح');
+    
 
             return redirect()
                 ->route('admin.admins.index')
@@ -204,8 +204,7 @@ class AdminController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
 
-            // Error notification
-            toastr()->error('حدث خطأ أثناء إضافة المسؤول', 'خطأ');
+
 
             return back()
                 ->withInput()
@@ -291,9 +290,6 @@ class AdminController extends Controller
                 'role' => $validated['role']
             ]);
 
-            // Success notification
-            toastr()->success('تم تحديث المسؤول بنجاح', 'نجاح');
-
             return redirect()
                 ->route('admin.admins.index')
                 ->with('success', 'تم تحديث المسؤول بنجاح');
@@ -307,8 +303,6 @@ class AdminController extends Controller
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
-
-            toastr()->error('حدث خطأ أثناء تحديث المسؤول', 'خطأ');
 
             return back()
                 ->withInput()
@@ -324,13 +318,11 @@ class AdminController extends Controller
         try {
             // Prevent deleting yourself
             if (auth()->guard('admin')->id() === $admin->id) {
-                toastr()->warning('لا يمكنك حذف حسابك الخاص', 'تحذير');
                 return redirect()->back();
             }
 
             // Prevent deleting super admin if you're not super admin
             if ($admin->hasRole('super_admin') && !auth()->guard('admin')->user()->hasRole('super_admin')) {
-                toastr()->error('لا يمكنك حذف السوبر أدمن', 'خطأ');
                 return redirect()->back();
             }
 
@@ -349,7 +341,6 @@ class AdminController extends Controller
                 'deleted_by' => auth()->guard('admin')->id()
             ]);
 
-            toastr()->success('تم حذف المسؤول بنجاح', 'نجاح');
 
             return redirect()
                 ->route('admin.admins.index')
@@ -358,7 +349,6 @@ class AdminController extends Controller
         } catch (\Exception $e) {
             Log::error('فشل حذف المسؤول: ' . $e->getMessage());
 
-            toastr()->error('حدث خطأ أثناء حذف المسؤول', 'خطأ');
 
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -449,7 +439,6 @@ class AdminController extends Controller
                     return back()->with('error', 'إجراء غير معروف');
             }
 
-            toastr()->success($message, 'نجاح');
 
             return redirect()
                 ->route('admin.admins.index')
@@ -457,7 +446,6 @@ class AdminController extends Controller
 
         } catch (\Exception $e) {
             Log::error('فشل الإجراء الجماعي: ' . $e->getMessage());
-            toastr()->error('حدث خطأ أثناء تنفيذ الإجراء', 'خطأ');
             return back()->with('error', $e->getMessage());
         }
     }
