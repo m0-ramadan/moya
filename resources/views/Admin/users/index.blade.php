@@ -1219,10 +1219,7 @@
                                     <span class="info-label">الاسم:</span>
                                     <span class="info-value">${response.name}</span>
                                 </div>
-                                <div class="info-row">
-                                    <span class="info-label">البريد الإلكتروني:</span>
-                                    <span class="info-value">${response.email || '<span class="text-muted">لا يوجد</span>'}</span>
-                                </div>
+      
                                 <div class="info-row">
                                     <span class="info-label">رقم الجوال:</span>
                                     <span class="info-value">${response.full_phone || response.phone || '<span class="text-muted">غير محدد</span>'}</span>
@@ -1262,28 +1259,8 @@
                                             : '<span class="badge bg-warning text-dark">غير موثق</span>'}
                                     </span>
                                 </div>
-                                <div class="info-row">
-                                    <span class="info-label">توثيق البريد:</span>
-                                    <span class="info-value">
-                                        ${response.is_email_verified
-                                            ? `<span class="badge bg-success"><i class="fas fa-check me-1"></i>موثق</span> <small class="text-muted">${response.email_verified_at}</small>`
-                                            : '<span class="badge bg-warning text-dark">غير موثق</span>'}
-                                    </span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">جوجل:</span>
-                                    <span class="info-value">
-                                        <i class="fab fa-google ${response.has_google ? 'text-danger' : 'text-muted'}"></i>
-                                        ${response.has_google ? 'مرتبط' : 'غير مرتبط'}
-                                    </span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">فيسبوك:</span>
-                                    <span class="info-value">
-                                        <i class="fab fa-facebook ${response.has_facebook ? 'text-primary' : 'text-muted'}"></i>
-                                        ${response.has_facebook ? 'مرتبط' : 'غير مرتبط'}
-                                    </span>
-                                </div>
+
+
                                 <div class="info-row">
                                     <span class="info-label">تاريخ التسجيل:</span>
                                     <span class="info-value">${response.created_at} <small class="text-muted">(${response.created_at_human})</small></span>

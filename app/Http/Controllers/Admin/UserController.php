@@ -239,15 +239,14 @@ class UserController extends Controller
 
         if (request()->wantsJson()) {
             // حساب إحصائيات الطلبات
-            $ordersCompleted = $user->orders()->where('order_status_id', 4)->count();
-            $ordersCancelled = $user->orders()->where('order_status_id', 5)->count();
-            $ordersPending   = $user->orders()->whereIn('order_status_id', [1, 2, 3])->count();
+            $ordersCompleted = $user->orders()->where('order_status_id', 5)->count();
+            $ordersCancelled = $user->orders()->where('order_status_id', 7)->count();
+            $ordersPending   = $user->orders()->whereIn('order_status_id', [1, 2, 4])->count();
 
             return response()->json([
                 // بيانات أساسية
                 'id'                   => $user->id,
                 'name'                 => $user->name,
-                'email'                => $user->email,
                 'phone'                => $user->phone_number,
                 'phone_number'         => $user->phone_number,
                 'country_code'         => $user->country_code,
@@ -258,8 +257,8 @@ class UserController extends Controller
                 'allow_notifications'  => (bool) $user->allow_notifications,
 
                 // التحقق
-                'phone_verified_at'    => $user->phone_verified_at?->format('Y-m-d H:i'),
-                'email_verified_at'    => $user->email_verified_at?->format('Y-m-d H:i'),
+                'phone_verified_at'    => $user->phone_verified_at,
+                'email_verified_at'    => $user->email_verified_at,
                 'is_phone_verified'    => !is_null($user->phone_verified_at),
                 'is_email_verified'    => !is_null($user->email_verified_at),
 
@@ -268,12 +267,12 @@ class UserController extends Controller
                 'has_facebook'         => !empty($user->facebook_id),
 
                 // التواريخ
-                'created_at'           => $user->created_at?->format('Y-m-d H:i'),
-                'updated_at'           => $user->updated_at?->format('Y-m-d H:i'),
+                'created_at'           => $user->created_at,
+                'updated_at'           => $user->updated_at,
                 'created_at_human'     => $user->created_at?->diffForHumans(),
 
                 // إحصائيات الطلبات
-                'orders_count'         => $user->orders_count,
+                'orders_count'         => $user->orders->count(),
                 'orders_completed'     => $ordersCompleted,
                 'orders_cancelled'     => $ordersCancelled,
                 'orders_pending'       => $ordersPending,
