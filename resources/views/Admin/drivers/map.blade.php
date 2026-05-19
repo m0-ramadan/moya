@@ -734,15 +734,18 @@
                         <div class="search-results" id="searchResults"></div>
                     </div>
                 </div>
-
+                @php
+                    // get all vehicle sizes from the database
+                    $vehicle_sizes = DB::table('services')->get();
+                @endphp
                 <!-- Filters -->
                 <div class="filters-container">
                     <div class="filter-title">حجم المركبة</div>
                     <div class="filter-buttons">
                         <button class="filter-btn active" data-size="all">الكل</button>
-                        <button class="filter-btn" data-size="small">صغيرة</button>
-                        <button class="filter-btn" data-size="medium">متوسطة</button>
-                        <button class="filter-btn" data-size="large">كبيرة</button>
+                        @foreach ($vehicle_sizes as $size)
+                            <button class="filter-btn" data-size="{{ $size->name }}">{{ $size->name }}</button>
+                        @endforeach
                     </div>
 
                     <div class="filter-title">الحالة</div>
