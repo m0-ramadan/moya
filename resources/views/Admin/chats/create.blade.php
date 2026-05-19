@@ -278,8 +278,11 @@
                             <h6 class="mb-3">المشارك المختار:</h6>
                             <div class="chat-preview" bis_skin_checked="1">
                                 <div class="d-flex align-items-center gap-3" bis_skin_checked="1">
-                                    <div class="position-relative" bis_skin_checked="1">
-                                        <img id="selectedAvatar" src="" class="preview-avatar" alt="">
+                                    <div class="position-relative" id="selectedAvatarContainer" bis_skin_checked="1">
+                                        <img id="selectedAvatar" src="" class="preview-avatar" alt="" style="display:none;">
+                                        <div id="selectedAvatarIcon" class="preview-avatar d-flex align-items-center justify-content-center bg-secondary text-white" style="display:none;">
+                                            <i class="fas fa-user"></i>
+                                        </div>
                                         <span id="selectedOnline" class="online-dot" style="display: none;"></span>
                                     </div>
                                     <div class="flex-grow-1" bis_skin_checked="1">
@@ -445,15 +448,19 @@
                 let html = '<div class="row">';
 
                 results.forEach(participant => {
-                    const avatar = participant.avatar || 'https://via.placeholder.com/60';
                     const isOnline = participant.is_online || false;
+                    const avatarHtml = participant.avatar ? 
+                        `<img src="/storage/${participant.avatar}" class="participant-avatar" alt="${participant.name}">` : 
+                        `<div class="participant-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
+                            <i class="fas fa-${participant.type === 'user' ? 'user' : 'truck'} fa-lg"></i>
+                        </div>`;
 
                     html += `
                         <div class="col-md-6 mb-3">
                             <div class="participant-card" data-id="${participant.id}" data-type="${participant.type}">
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="position-relative">
-                                        <img src="${avatar}" class="participant-avatar" alt="${participant.name}">
+                                        ${avatarHtml}
                                         ${isOnline ? '<span class="online-dot"></span>' : ''}
                                     </div>
                                     <div class="flex-grow-1">
@@ -507,7 +514,13 @@
                 const container = $('#selectedParticipant');
                 const participant = selectedParticipant;
 
-                $('#selectedAvatar').attr('src', participant.avatar || 'https://via.placeholder.com/40');
+                if (participant.avatar) {
+                    $('#selectedAvatar').attr('src', '/storage/' + participant.avatar).show();
+                    $('#selectedAvatarIcon').hide();
+                } else {
+                    $('#selectedAvatar').hide();
+                    $('#selectedAvatarIcon').html(`<i class="fas fa-${participant.type === 'user' ? 'user' : 'truck'}"></i>`).show();
+                }
                 $('#selectedName').text(participant.name);
                 $('#selectedEmail').text(participant.email);
 

@@ -580,8 +580,14 @@
                         <div class="participant-card" bis_skin_checked="1">
                             <div class="d-flex align-items-center gap-3" bis_skin_checked="1">
                                 <div class="position-relative" bis_skin_checked="1">
-                                    <img src="{{ isset($participant['avatar']) && $participant['avatar'] ? asset('storage/' . $participant['avatar']) : 'https://via.placeholder.com/60' }}"
-                                        class="participant-avatar" alt="{{ $participant['name'] }}">
+                                    @if (isset($participant['avatar']) && $participant['avatar'])
+                                        <img src="{{ asset('storage/' . $participant['avatar']) }}"
+                                            class="participant-avatar" alt="{{ $participant['name'] }}">
+                                    @else
+                                        <div class="participant-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
+                                            <i class="fas fa-{{ ($participant['type'] ?? 'user') == 'user' ? 'user' : 'truck' }}"></i>
+                                        </div>
+                                    @endif
                                     @if ($participant['is_online'])
                                         <span class="online-status"></span>
                                     @endif
@@ -645,9 +651,15 @@
                                     data-message-id="{{ $message->id }}" bis_skin_checked="1">
 
                                     @if ($message->sender_type != 'admin' && $message->sender_id != auth()->id())
-                                        <img src="{{ isset($message->sender->avatar) && $message->sender->avatar ? asset('storage/' . $message->sender->avatar) : 'https://via.placeholder.com/40' }}"
-                                            class="message-avatar" alt="{{ $message->sender?->name }}"
-                                            title="{{ $message->sender?->name }}">
+                                        @if (isset($message->sender->avatar) && $message->sender->avatar)
+                                            <img src="{{ asset('storage/' . $message->sender->avatar) }}"
+                                                class="message-avatar" alt="{{ $message->sender?->name }}"
+                                                title="{{ $message->sender?->name }}">
+                                        @else
+                                            <div class="message-avatar d-flex align-items-center justify-content-center bg-secondary text-white" title="{{ $message->sender?->name }}">
+                                                <i class="fas fa-{{ $message->sender_type === 'App\Models\Driver' ? 'truck' : 'user' }}"></i>
+                                            </div>
+                                        @endif
                                     @endif
 
                                     <div class="message-content" bis_skin_checked="1">
@@ -734,8 +746,14 @@
                                     </div>
 
                                     @if (($message->sender_type == 'admin' || $message->sender_id == auth()->id()) && $message->sender_type != 'admin')
-                                        <img src="{{ isset(auth()->user()->avatar) && auth()->user()->avatar ? asset('storage/' . auth()->user()->avatar) : 'https://via.placeholder.com/40' }}"
-                                            class="message-avatar" alt="أنت">
+                                        @if (isset(auth()->user()->avatar) && auth()->user()->avatar)
+                                            <img src="{{ asset('storage/' . auth()->user()->avatar) }}"
+                                                class="message-avatar" alt="أنت">
+                                        @else
+                                            <div class="message-avatar d-flex align-items-center justify-content-center bg-primary text-white" title="أنت">
+                                                <i class="fas fa-user-tie"></i>
+                                            </div>
+                                        @endif
                                     @endif
                                 </div>
                             @endforeach
@@ -1010,10 +1028,15 @@
             const messageHtml = `
                 <div class="message-wrapper ${message.sender_type === 'admin' ? 'admin' : 'received'}">
                     ${message.sender_type !== 'admin' ? `
-                                        <img src="${message.sender.avatar ? '/storage/' + message.sender.avatar : 'https://via.placeholder.com/40'}" 
+                                    ${message.sender.avatar ? 
+                                        `<img src="/storage/${message.sender.avatar}" 
                                              class="message-avatar" 
                                              alt="${message.sender.name || 'User'}"
-                                             title="${message.sender.name}">
+                                             title="${message.sender.name}">` : 
+                                        `<div class="message-avatar d-flex align-items-center justify-content-center bg-secondary text-white" title="${message.sender.name || 'User'}">
+                                            <i class="fas fa-${message.sender_type === 'App\\Models\\Driver' ? 'truck' : 'user'}"></i>
+                                         </div>`
+                                    }
                                     ` : ''}
                     
                     <div class="message-content">

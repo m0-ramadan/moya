@@ -327,9 +327,15 @@
                                     <div class="d-flex align-items-center gap-3" bis_skin_checked="1">
                                         <!-- صورة المشارك -->
                                         <div class="position-relative" bis_skin_checked="1">
-                                            <img src="{{ isset($chat->other_participant['avatar']) && $chat->other_participant['avatar'] ? asset('storage/' . $chat->other_participant['avatar']) : 'https://via.placeholder.com/50' }}"
-                                                class="chat-avatar"
-                                                alt="{{ $chat->other_participant['name'] ?? 'مستخدم' }}">
+                                            @if (isset($chat->other_participant['avatar']) && $chat->other_participant['avatar'])
+                                                <img src="{{ asset('storage/' . $chat->other_participant['avatar']) }}"
+                                                    class="chat-avatar"
+                                                    alt="{{ $chat->other_participant['name'] ?? 'مستخدم' }}">
+                                            @else
+                                                <div class="chat-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
+                                                    <i class="fas fa-{{ ($chat->other_participant['type'] ?? 'user') == 'user' ? 'user' : 'truck' }} fa-lg"></i>
+                                                </div>
+                                            @endif
                                             @if ($chat->other_participant['is_online'] ?? false)
                                                 <span class="online-dot"></span>
                                             @endif
