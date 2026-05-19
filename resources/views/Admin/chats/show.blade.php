@@ -580,7 +580,7 @@
                         <div class="participant-card" bis_skin_checked="1">
                             <div class="d-flex align-items-center gap-3" bis_skin_checked="1">
                                 <div class="position-relative" bis_skin_checked="1">
-                                    <img src="{{ $participant['avatar'] ?? 'https://via.placeholder.com/60' }}"
+                                    <img src="{{ isset($participant['avatar']) && $participant['avatar'] ? asset('storage/' . $participant['avatar']) : 'https://via.placeholder.com/60' }}"
                                         class="participant-avatar" alt="{{ $participant['name'] }}">
                                     @if ($participant['is_online'])
                                         <span class="online-status"></span>
@@ -645,7 +645,7 @@
                                     data-message-id="{{ $message->id }}" bis_skin_checked="1">
 
                                     @if ($message->sender_type != 'admin' && $message->sender_id != auth()->id())
-                                        <img src="{{ $message->sender->avatar ?? 'https://via.placeholder.com/40' }}"
+                                        <img src="{{ isset($message->sender->avatar) && $message->sender->avatar ? asset('storage/' . $message->sender->avatar) : 'https://via.placeholder.com/40' }}"
                                             class="message-avatar" alt="{{ $message->sender?->name }}"
                                             title="{{ $message->sender?->name }}">
                                     @endif
@@ -734,7 +734,7 @@
                                     </div>
 
                                     @if (($message->sender_type == 'admin' || $message->sender_id == auth()->id()) && $message->sender_type != 'admin')
-                                        <img src="{{ auth()->user()->avatar ?? 'https://via.placeholder.com/40' }}"
+                                        <img src="{{ isset(auth()->user()->avatar) && auth()->user()->avatar ? asset('storage/' . auth()->user()->avatar) : 'https://via.placeholder.com/40' }}"
                                             class="message-avatar" alt="أنت">
                                     @endif
                                 </div>
@@ -1010,9 +1010,9 @@
             const messageHtml = `
                 <div class="message-wrapper ${message.sender_type === 'admin' ? 'admin' : 'received'}">
                     ${message.sender_type !== 'admin' ? `
-                                        <img src="${message.sender.avatar || 'https://via.placeholder.com/40'}" 
+                                        <img src="${message.sender.avatar ? '/storage/' + message.sender.avatar : 'https://via.placeholder.com/40'}" 
                                              class="message-avatar" 
-                                             alt="${message.sender.name}"
+                                             alt="${message.sender.name || 'User'}"
                                              title="${message.sender.name}">
                                     ` : ''}
                     

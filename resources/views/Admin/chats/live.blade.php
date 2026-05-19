@@ -172,7 +172,7 @@
                                 @foreach ($recentMessages as $message)
                                     <div class="message-item mb-3 live-message" bis_skin_checked="1">
                                         <div class="d-flex gap-3" bis_skin_checked="1">
-                                            <img src="{{ $message->sender->avatar ?? 'https://via.placeholder.com/40' }}"
+                                            <img src="{{ isset($message->sender->avatar) && $message->sender->avatar ? asset('storage/' . $message->sender->avatar) : 'https://via.placeholder.com/40' }}"
                                                 class="message-avatar" alt="{{ $message->sender->name }}">
                                             <div class="message-content" bis_skin_checked="1">
                                                 <div class="d-flex justify-content-between align-items-start mb-2"
@@ -245,7 +245,7 @@
             const messageHtml = `
                 <div class="message-item mb-3 live-message">
                     <div class="d-flex gap-3">
-                        <img src="${message.sender.avatar || 'https://via.placeholder.com/40'}" 
+                        <img src="${message.sender.avatar ? '/storage/' + message.sender.avatar : 'https://via.placeholder.com/40'}" 
                              class="message-avatar" 
                              alt="${message.sender.name}">
                         <div class="message-content">

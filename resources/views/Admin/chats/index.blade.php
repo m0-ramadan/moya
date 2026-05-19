@@ -197,6 +197,14 @@
             border-left: 3px solid #2196F3;
         }
 
+        .participant-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
         .online-dot {
             width: 8px;
             height: 8px;
@@ -552,8 +560,11 @@
                                         @foreach ($chat->participants_info as $participant)
                                             <div class="participant-badge {{ $participant['type'] }}"
                                                 bis_skin_checked="1">
-                                                <i
-                                                    class="fas fa-{{ $participant['type'] == 'user' ? 'user' : 'truck' }}"></i>
+                                                @if (isset($participant['avatar']) && $participant['avatar'])
+                                                    <img src="{{ asset('storage/' . $participant['avatar']) }}" alt="avatar" class="participant-avatar">
+                                                @else
+                                                    <i class="fas fa-{{ $participant['type'] == 'user' ? 'user' : 'truck' }}"></i>
+                                                @endif
                                                 {{ $participant['name'] }}
                                                 @if ($participant['is_online'])
                                                     <span class="online-dot"></span>

@@ -327,7 +327,7 @@
                                     <div class="d-flex align-items-center gap-3" bis_skin_checked="1">
                                         <!-- صورة المشارك -->
                                         <div class="position-relative" bis_skin_checked="1">
-                                            <img src="{{ $chat->other_participant['avatar'] ?? 'https://via.placeholder.com/50' }}"
+                                            <img src="{{ isset($chat->other_participant['avatar']) && $chat->other_participant['avatar'] ? asset('storage/' . $chat->other_participant['avatar']) : 'https://via.placeholder.com/50' }}"
                                                 class="chat-avatar"
                                                 alt="{{ $chat->other_participant['name'] ?? 'مستخدم' }}">
                                             @if ($chat->other_participant['is_online'] ?? false)
