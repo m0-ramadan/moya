@@ -29,12 +29,12 @@
 
         /* Side Panel */
         .map-side-panel {
-            background: aliceblue;
+            background: aliceblue !important;
             position: absolute;
             top: 20px;
             right: 20px;
             width: 350px;
-            background: var(--bs-card-bg);
+            /* background: var(--bs-card-bg); */
             border-radius: 15px;
             box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
             z-index: 1000;
