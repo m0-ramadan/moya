@@ -1051,11 +1051,15 @@
                             حجم المركبة
                             <span class="required">*</span>
                         </label>
+                        @php
+                            // get all vehicle sizes from the database
+                            $vehicle_sizes = DB::table('vehicle_sizes')->get();
+                        @endphp
                         <select name="vehicle_size" class="form-select @error('vehicle_size') is-invalid @enderror" required>
                             <option value="">اختر حجم المركبة</option>
-                            <option value="small" {{ old('vehicle_size', $driver->vehicle_size) == 'small' ? 'selected' : '' }}>صغيرة</option>
-                            <option value="medium" {{ old('vehicle_size', $driver->vehicle_size) == 'medium' ? 'selected' : '' }}>متوسطة</option>
-                            <option value="large" {{ old('vehicle_size', $driver->vehicle_size) == 'large' ? 'selected' : '' }}>كبيرة</option>
+                            @foreach ($vehicle_sizes as $vehicle_size)
+                                <option value="{{ $vehicle_size->name }}" {{ old('vehicle_size', $driver->vehicle_size) == $vehicle_size->name ? 'selected' : '' }}>{{ $vehicle_size->name }}</option>
+                            @endforeach 
                         </select>
                         @error('vehicle_size')
                             <div class="invalid-feedback">{{ $message }}</div>
