@@ -1180,7 +1180,7 @@
                                         <div class="vehicle-info">
                                             <span class="vehicle-size">
                                                 <i class="fas fa-truck"></i>
-                                                {{ $driver->vehicle_size == 'small' ? 'صغيرة' : ($driver->vehicle_size == 'medium' ? 'متوسطة' : 'كبيرة') }}
+                                                {{ $driver->vehicle_size ?? '--' }}
                                             </span>
                                             <span class="vehicle-plate">
                                                 <i class="fas fa-car"></i>
