@@ -239,52 +239,49 @@ class UserController extends Controller
         $user->loadCount(['orders', 'contracts', 'payments']);
 
         if (request()->wantsJson()) {
-            // حساب إحصائيات الطلبات
+            // إحصائيات الطلبات
             $ordersCompleted = $user->orders()->where('order_status_id', 5)->count();
             $ordersCancelled = $user->orders()->where('order_status_id', 7)->count();
             $ordersPending   = $user->orders()->whereIn('order_status_id', [1, 2, 4])->count();
 
             return response()->json([
                 // بيانات أساسية
-                'id'                   => $user->id,
-                'name'                 => $user->name,
-                'phone'                => $user->phone_number,
-                'phone_number'         => $user->phone_number,
-                'country_code'         => $user->country_code,
-                'full_phone'           => $user->full_phone,
-                'status'               => $user->status,
-                'type'                 => $user->type,
-                'avatar'               => $user->avatar ? asset('storage/' . $user->avatar) : null,
-                'allow_notifications'  => (bool) $user->allow_notifications,
+                'id'                  => $user->id,
+                'name'                => $user->name,
+                'phone'               => $user->phone_number,
+                'full_phone'          => $user->full_phone,
+                'country_code'        => $user->country_code,
+                'status'              => $user->status,
+                'type'                => $user->type,
+                'avatar'              => $user->avatar ? asset('storage/' . $user->avatar) : null,
+                'allow_notifications' => (bool) $user->allow_notifications,
 
                 // التحقق
-                'phone_verified_at'    => $user->phone_verified_at,
-                'email_verified_at'    => $user->email_verified_at,
-                'is_phone_verified'    => !is_null($user->phone_verified_at),
-                'is_email_verified'    => !is_null($user->email_verified_at),
+                'is_phone_verified'   => !is_null($user->phone_verified_at),
+                'is_email_verified'   => !is_null($user->email_verified_at),
+                'phone_verified_at'   => $user->phone_verified_at?->format('Y-m-d H:i') ?? null,
+                'email_verified_at'   => $user->email_verified_at?->format('Y-m-d H:i') ?? null,
 
                 // طرق التسجيل
-                'has_google'           => !empty($user->google_id),
-                'has_facebook'         => !empty($user->facebook_id),
+                'has_google'          => !empty($user->google_id),
+                'has_facebook'        => !empty($user->facebook_id),
 
-                // التواريخ
-                'created_at'           => $user->created_at,
-                'updated_at'           => $user->updated_at,
-                'created_at_human'     => $user->created_at?->diffForHumans(),
+                // التواريخ - مُنسّقة كنص
+                'created_at'          => $user->created_at?->format('Y-m-d H:i') ?? '--',
+                'updated_at'          => $user->updated_at?->format('Y-m-d H:i') ?? '--',
+                'created_at_human'    => $user->created_at?->diffForHumans() ?? '',
 
-                // إحصائيات الطلبات
-                'orders_count'         => $user->orders->count(),
-                'orders_completed'     => $ordersCompleted,
-                'orders_cancelled'     => $ordersCancelled,
-                'orders_pending'       => $ordersPending,
-
-                // باقي الإحصائيات
-                'contracts_count'      => $user->contracts_count,
-                'payments_count'       => $user->payments_count,
-                'device_tokens_count'  => $user->deviceTokens->count(),
+                // إحصائيات
+                'orders_count'        => $user->orders_count,
+                'orders_completed'    => $ordersCompleted,
+                'orders_cancelled'    => $ordersCancelled,
+                'orders_pending'      => $ordersPending,
+                'contracts_count'     => $user->contracts_count,
+                'payments_count'      => $user->payments_count,
+                'device_tokens_count' => $user->deviceTokens->count(),
 
                 // المحفظة
-                'wallet'               => $user->wallet ? [
+                'wallet'              => $user->wallet ? [
                     'id'           => $user->wallet->id,
                     'balance'      => number_format($user->wallet->balance, 2),
                     'held_balance' => number_format($user->wallet->held_balance ?? 0, 2),
@@ -292,14 +289,13 @@ class UserController extends Controller
                     'status'       => $user->wallet->status,
                 ] : null,
 
-                // بيانات السائق إن وجد
-                'driver'               => $user->driver ? [
+                // السائق
+                'driver'              => $user->driver ? [
                     'id'                   => $user->driver->id,
                     'vehicle_size'         => $user->driver->vehicle_size,
                     'vehicle_plate_number' => $user->driver->vehicle_plate_number,
                     'is_verified'          => (bool) $user->driver->is_verified,
                     'is_active'            => (bool) $user->driver->is_active,
-                    'status'               => $user->driver->status,
                 ] : null,
             ]);
         }

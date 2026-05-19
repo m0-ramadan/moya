@@ -1194,6 +1194,11 @@
             $.ajax({
                 url: `/admin/users/${userId}`,
                 type: 'GET',
+                dataType: 'json',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
                 beforeSend: function() {
                     Swal.fire({
                         title: 'جاري التحميل...',
