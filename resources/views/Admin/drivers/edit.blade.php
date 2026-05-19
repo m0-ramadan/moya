@@ -1053,7 +1053,7 @@
                         </label>
                         @php
                             // get all vehicle sizes from the database
-                            $vehicle_sizes = DB::table('vehicle_sizes')->get();
+                            $vehicle_sizes = DB::table('services')->get();
                         @endphp
                         <select name="vehicle_size" class="form-select @error('vehicle_size') is-invalid @enderror" required>
                             <option value="">اختر حجم المركبة</option>
