@@ -17,10 +17,6 @@ class RoleController extends Controller
      */
     public function index(Request $request)
     {
-        // التحقق من الصلاحية
-        if (!auth()->guard('admin')->user()->can('roles.view')) {
-            abort(403, 'غير مصرح لك بعرض الرتب');
-        }
 
         $query = Role::withCount(['users', 'permissions']);
 
@@ -53,9 +49,7 @@ class RoleController extends Controller
      */
     public function create()
     {
-        if (!auth()->guard('admin')->user()->can('roles.create')) {
-            abort(403, 'غير مصرح لك بإنشاء رتب');
-        }
+
 
         $permissions = Permission::orderBy('module')->orderBy('name')->get();
         $modules = Permission::distinct()->pluck('module')->filter()->values();
@@ -68,9 +62,6 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
-        if (!auth()->guard('admin')->user()->can('roles.create')) {
-            abort(403, 'غير مصرح لك بإنشاء رتب');
-        }
 
         $validator = Validator::make($request->all(), [
             'name' => [
@@ -128,9 +119,7 @@ class RoleController extends Controller
      */
     public function show($id)
     {
-        if (!auth()->guard('admin')->user()->can('roles.view')) {
-            abort(403, 'غير مصرح لك بعرض الرتب');
-        }
+
 
         $role = Role::with(['permissions', 'users' => function ($query) {
             $query->orderBy('created_at', 'desc')->limit(10);
@@ -170,9 +159,6 @@ class RoleController extends Controller
      */
     public function update(Request $request, $id)
     {
-        if (!auth()->guard('admin')->user()->can('roles.edit')) {
-            abort(403, 'غير مصرح لك بتعديل الرتب');
-        }
 
         $role = Role::findOrFail($id);
 
@@ -229,9 +215,6 @@ class RoleController extends Controller
      */
     public function destroy($id)
     {
-        if (!auth()->guard('admin')->user()->can('delete_roles')) {
-            abort(403, 'غير مصرح لك بحذف الرتب');
-        }
 
         $role = Role::findOrFail($id);
 
@@ -271,9 +254,7 @@ class RoleController extends Controller
      */
     public function permissions($id)
     {
-        if (!auth()->guard('admin')->user()->can('roles.edit')) {
-            abort(403, 'غير مصرح لك بتعديل صلاحيات الرتب');
-        }
+ 
 
         $role = Role::findOrFail($id);
 
@@ -295,10 +276,7 @@ class RoleController extends Controller
      */
     public function syncPermissions(Request $request, $id)
     {
-        if (!auth()->guard('admin')->user()->can('roles.edit')) {
-            abort(403, 'غير مصرح لك بتعديل صلاحيات الرتب');
-        }
-
+ 
         $role = Role::findOrFail($id);
 
         // منع تعديل الرتب المحمية
@@ -340,9 +318,7 @@ class RoleController extends Controller
      */
     public function assignIndex(Request $request)
     {
-        if (!auth()->guard('admin')->user()->can('roles.assign')) {
-            abort(403, 'غير مصرح لك بتعيين الرتب');
-        }
+ 
 
         $admins = Admin::with('roles')
             ->orderBy('created_at', 'desc')

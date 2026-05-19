@@ -101,3 +101,95 @@ if (!function_exists('parsePHPLog')) {
         return $errors;
     }
 }
+
+if (!function_exists('module_icon')) {
+    function module_icon($module) {
+        $icons = [
+            'users' => 'users',
+            'roles' => 'shield-alt',
+            'permissions' => 'key',
+            'settings' => 'cog',
+            'orders' => 'shopping-cart',
+            'products' => 'box',
+            'categories' => 'tags',
+            'drivers' => 'car',
+            'banners' => 'image',
+            'contracts' => 'file-contract',
+            'chats' => 'comments',
+            'services' => 'concierge-bell',
+            'reports' => 'chart-bar',
+            'contactus' => 'envelope',
+            'faqs' => 'question-circle',
+        ];
+        return $icons[$module] ?? 'layer-group';
+    }
+}
+
+if (!function_exists('module_display_name')) {
+    function module_display_name($module) {
+        $names = [
+            'users' => 'المستخدمين',
+            'roles' => 'الرتب',
+            'permissions' => 'الصلاحيات',
+            'settings' => 'الإعدادات',
+            'orders' => 'الطلبات',
+            'products' => 'المنتجات',
+            'categories' => 'الأقسام',
+            'drivers' => 'السائقين',
+            'banners' => 'البنرات',
+            'contracts' => 'العقود',
+            'chats' => 'المحادثات',
+            'services' => 'الخدمات',
+            'reports' => 'التقارير',
+            'faqs' => 'الأسئلة الشائعة',
+            'contactus' => 'تواصل معنا',
+            'admins' => 'المدراء',
+            'employees' => 'الموظفين',
+        ];
+        return $names[$module] ?? ucfirst($module);
+    }
+}
+
+if (!function_exists('permission_type')) {
+    function permission_type($permissionName) {
+        $parts = explode('-', $permissionName);
+        if (count($parts) === 1) {
+            $parts = explode('_', $permissionName);
+        }
+        return $parts[0] ?? $permissionName;
+    }
+}
+
+if (!function_exists('permission_type_label')) {
+    function permission_type_label($permissionName) {
+        $type = permission_type($permissionName);
+        $labels = [
+            'create' => 'إضافة',
+            'read' => 'عرض',
+            'view' => 'عرض',
+            'update' => 'تعديل',
+            'edit' => 'تعديل',
+            'delete' => 'حذف',
+            'manage' => 'إدارة',
+            'destroy' => 'حذف',
+        ];
+        return $labels[$type] ?? ucfirst($type);
+    }
+}
+
+if (!function_exists('permission_badge_class')) {
+    function permission_badge_class($permissionName) {
+        $type = permission_type($permissionName);
+        $classes = [
+            'create' => 'badge-create',
+            'read' => 'badge-read',
+            'view' => 'badge-read',
+            'update' => 'badge-update',
+            'edit' => 'badge-update',
+            'delete' => 'badge-delete',
+            'destroy' => 'badge-delete',
+            'manage' => 'badge-manage',
+        ];
+        return $classes[$type] ?? 'badge-secondary';
+    }
+}

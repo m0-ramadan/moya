@@ -1,6 +1,6 @@
 @extends('Admin.layout.master')
 
-@section('title', 'تعديل الرتبة')
+@section('title', 'إدارة صلاحيات الرتبة')
 
 @section('css')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -173,7 +173,7 @@
                 <li class="breadcrumb-item">
                     <a href="{{ route('admin.roles.index') }}">الرتب</a>
                 </li>
-                <li class="breadcrumb-item active">تعديل رتبة</li>
+                <li class="breadcrumb-item active">إدارة الصلاحيات</li>
             </ol>
         </nav>
 
@@ -183,8 +183,8 @@
                     <div class="form-header" bis_skin_checked="1">
                         <div class="d-flex justify-content-between align-items-center" bis_skin_checked="1">
                             <div bis_skin_checked="1">
-                                <h5 class="mb-1">تعديل رتبة: {{ $role->display_name }}</h5>
-                                <small class="opacity-75">تعديل بيانات الرتبة وصلاحياتها</small>
+                                <h5 class="mb-1">إدارة صلاحيات: {{ $role->display_name }}</h5>
+                                <small class="opacity-75">تعديل الصلاحيات الممنوحة لهذه الرتبة</small>
                             </div>
                             <a href="{{ route('admin.roles.index') }}" class="btn btn-light">
                                 <i class="fas fa-arrow-right me-2"></i>العودة للقائمة
@@ -192,9 +192,8 @@
                         </div>
                     </div>
 
-                    <form action="{{ route('admin.roles.update', $role->id) }}" method="POST">
+                    <form action="{{ route('admin.roles.permissions.sync', $role->id) }}" method="POST">
                         @csrf
-                        @method('PUT')
 
                         <div class="row" bis_skin_checked="1">
                             <div class="col-lg-8" bis_skin_checked="1">
@@ -217,20 +216,14 @@
 
                                     <div class="form-group" bis_skin_checked="1">
                                         <label class="form-label">الاسم المعروض (عربي) *</label>
-                                        <input type="text" name="display_name"
-                                            class="form-control @error('display_name') is-invalid @enderror"
-                                            value="{{ old('display_name', $role->display_name) }}" required>
-                                        @error('display_name')
-                                            <div class="error-message">{{ $message }}</div>
-                                        @enderror
+                                        <input type="text"
+                                            class="form-control"
+                                            value="{{ $role->display_name }}" disabled>
                                     </div>
 
                                     <div class="form-group" bis_skin_checked="1">
                                         <label class="form-label">الوصف</label>
-                                        <textarea name="description" class="form-control @error('description') is-invalid @enderror" rows="3">{{ old('description', $role->description) }}</textarea>
-                                        @error('description')
-                                            <div class="error-message">{{ $message }}</div>
-                                        @enderror
+                                        <textarea class="form-control" rows="3" disabled>{{ $role->description }}</textarea>
                                     </div>
                                 </div>
 
