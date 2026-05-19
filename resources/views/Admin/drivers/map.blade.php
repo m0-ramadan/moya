@@ -721,8 +721,8 @@
                         <div class="stat-label">متاح</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="totalActive">{{ $stats['total_active'] }}</div>
-                        <div class="stat-label">إجمالي نشط</div>
+                        <div class="stat-value" id="totalDrivers">{{ $stats['total_drivers'] }}</div>
+                        <div class="stat-label">إجمالي السائقين</div>
                     </div>
                 </div>
 
@@ -762,40 +762,55 @@
 
                 <!-- Drivers List -->
                 <div class="drivers-list" id="driversList">
-                    @foreach($drivers as $driver)
-                        <div class="driver-item" data-id="{{ $driver['id'] }}" onclick="focusDriver({{ $driver['id'] }})">
-                            <div class="driver-avatar">
+                    @forelse($drivers as $driver)
+                        <div class="driver-item" data-id="{{ $driver['id'] }}" data-has-location="{{ $driver['location'] ? '1' : '0' }}" onclick="focusDriver({{ $driver['id'] }})">
+                            <div class="driver-avatar" style="position:relative;">
                                 @if($driver['avatar'])
                                     <img src="{{ $driver['avatar'] }}" alt="{{ $driver['name'] }}">
                                 @else
-                                    {{ substr($driver['name'], 0, 1) }}
+                                    <i class="fas fa-user"></i>
+                                @endif
+                                @if(!$driver['location'])
+                                    <span style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;background:#6c757d;border-radius:50%;border:2px solid #fff;"></span>
+                                @elseif($driver['current_order'])
+                                    <span style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;background:#dc3545;border-radius:50%;border:2px solid #fff;"></span>
+                                @else
+                                    <span style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;background:#198754;border-radius:50%;border:2px solid #fff;"></span>
                                 @endif
                             </div>
                             <div class="driver-info">
-                                <div class="driver-name">{{ $driver['name'] }}</div>
-                                <div class="driver-meta">
-                                    <span>
-                                        <i class="fas fa-car"></i>
-                                        {{ $driver['vehicle']['plate'] }}
-                                    </span>
-                                    <span>
-                                        <i class="fas fa-star text-warning"></i>
-                                        {{ number_format($driver['stats']['rating'], 1) }}
-                                    </span>
+                                <div class="driver-name" style="display:flex;align-items:center;gap:5px;">
+                                    {{ $driver['name'] }}
+                                    @if($driver['is_verified'])
+                                        <i class="fas fa-check-circle text-primary" style="font-size:11px;" title="موثق"></i>
+                                    @endif
                                 </div>
                                 <div class="driver-meta">
-                                    <span class="driver-badge {{ $driver['current_order'] ? 'busy' : 'online' }}"></span>
-                                    @if($driver['current_order'])
-                                        <span class="driver-order-status">
-                                            {{ $driver['current_order']['status_text'] }}
-                                        </span>
+                                    <span><i class="fas fa-car"></i> {{ $driver['vehicle']['plate'] }}</span>
+                                    <span><i class="fas fa-star text-warning"></i> {{ number_format($driver['stats']['rating'], 1) }}</span>
+                                </div>
+                                <div class="driver-meta" style="margin-top:3px;">
+                                    @if(!$driver['location'])
+                                        <span class="badge" style="background:#6c757d;color:#fff;font-size:10px;"><i class="fas fa-wifi-slash"></i> غير متصل</span>
+                                    @elseif($driver['current_order'])
+                                        <span class="badge" style="background:#dc3545;color:#fff;font-size:10px;">{{ $driver['current_order']['status_text'] }}</span>
+                                    @elseif($driver['is_available'])
+                                        <span class="badge" style="background:#198754;color:#fff;font-size:10px;"><i class="fas fa-circle"></i> متاح</span>
                                     @else
-                                        <span class="text-success" style="font-size: 11px;">متاح</span>
+                                        <span class="badge" style="background:#ffc107;color:#000;font-size:10px;">غير متاح</span>
+                                    @endif
+                                    @if($driver['location'])
+                                        <span style="font-size:10px;color:#6c757d;"><i class="fas fa-location-dot"></i> {{ $driver['location']['last_updated'] }}</span>
                                     @endif
                                 </div>
                             </div>
                         </div>
-                    @endforeach
+                    @empty
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <p>لا يوجد سائقون</p>
+                        </div>
+                    @endforelse
                 </div>
             </div>
 
@@ -890,20 +905,18 @@
 
         function loadDrivers() {
             showLoading();
-            
             fetch('{{ route("admin.drivers.map.locations") }}')
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(data => {
                     if (data.success) {
                         updateMarkers(data.drivers);
                         updateStats(data.stats);
+                    } else {
+                        console.error('Error:', data.message);
                     }
                     hideLoading();
                 })
-                .catch(error => {
-                    console.error('Error loading drivers:', error);
-                    hideLoading();
-                });
+                .catch(err => { console.error('Error loading drivers:', err); hideLoading(); });
         }
 
         function updateMarkers(drivers) {
@@ -911,11 +924,53 @@
             markerCluster.clearLayers();
             markers = {};
 
+            let withLocation = 0;
             drivers.forEach(driver => {
                 if (driver.location) {
                     addMarker(driver);
+                    withLocation++;
                 }
             });
+
+            // Update sidebar list
+            updateDriversList(drivers);
+
+            if (withLocation === 0) {
+                console.info('لا يوجد سائقون لديهم مواقع GPS حالياً');
+            }
+        }
+
+        function updateDriversList(drivers) {
+            const list = document.getElementById('driversList');
+            if (!list) return;
+            let html = '';
+            drivers.forEach(driver => {
+                const statusDot = !driver.location
+                    ? 'background:#6c757d'
+                    : (driver.has_order ? 'background:#dc3545' : 'background:#198754');
+                const statusBadge = !driver.location
+                    ? '<span style="background:#6c757d;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;">غير متصل</span>'
+                    : (driver.has_order
+                        ? `<span style="background:#dc3545;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;">${driver.order_status}</span>`
+                        : '<span style="background:#198754;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;">متاح</span>');
+                const lastUpdated = driver.location ? `<span style="font-size:10px;color:#6c757d;"><i class="fas fa-location-dot"></i> ${driver.location.last_updated}</span>` : '';
+                html += `
+                <div class="driver-item" data-id="${driver.id}" onclick="focusDriver(${driver.id})">
+                    <div class="driver-avatar" style="position:relative;">
+                        ${driver.avatar ? `<img src="${driver.avatar}" alt="${driver.name}">` : '<i class="fas fa-user"></i>'}
+                        <span style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;${statusDot};border-radius:50%;border:2px solid #fff;"></span>
+                    </div>
+                    <div class="driver-info">
+                        <div class="driver-name">${driver.name} ${driver.is_verified ? '<i class="fas fa-check-circle text-primary" style="font-size:11px;"></i>' : ''}</div>
+                        <div class="driver-meta">
+                            <span><i class="fas fa-car"></i> ${driver.vehicle?.plate ?? '--'}</span>
+                            <span><i class="fas fa-star text-warning"></i> ${Number(driver.stats?.rating ?? 0).toFixed(1)}</span>
+                        </div>
+                        <div class="driver-meta" style="margin-top:3px;gap:5px;">${statusBadge}${lastUpdated}</div>
+                    </div>
+                </div>`;
+            });
+            list.innerHTML = html || '<div class="text-center py-4 text-muted"><i class="fas fa-users fa-2x mb-2"></i><p>لا يوجد سائقون</p></div>';
         }
 
         function addMarker(driver) {
@@ -1194,14 +1249,10 @@
         }
 
         function updateStats(stats) {
-            document.getElementById('totalOnline').textContent = stats.online_now;
-            document.getElementById('totalOnDelivery').textContent = stats.on_delivery;
-            
-            // Update available count
-            const available = Object.values(markers).filter(m => 
-                !m.getPopup()?.getContent()?.includes('مشغول')
-            ).length;
-            document.getElementById('totalAvailable').textContent = available;
+            if (stats.online_now    !== undefined) document.getElementById('totalOnline').textContent     = stats.online_now;
+            if (stats.on_delivery   !== undefined) document.getElementById('totalOnDelivery').textContent = stats.on_delivery;
+            if (stats.available     !== undefined) document.getElementById('totalAvailable').textContent  = stats.available;
+            if (stats.total_drivers !== undefined) document.getElementById('totalDrivers').textContent    = stats.total_drivers;
         }
 
         function showLoading() {
