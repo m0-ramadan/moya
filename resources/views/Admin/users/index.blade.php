@@ -881,14 +881,6 @@
                         </select>
                     </div>
 
-                    <div class="filter-group">
-                        <label class="filter-label">نوع المستخدم</label>
-                        <select name="has_driver" class="filter-select">
-                            <option value="">الكل</option>
-                            <option value="1" {{ request('has_driver') == '1' ? 'selected' : '' }}>سائق</option>
-                            <option value="0" {{ request('has_driver') == '0' ? 'selected' : '' }}>عميل</option>
-                        </select>
-                    </div>
 
                     <div class="filter-group">
                         <label class="filter-label">طريقة التسجيل</label>
@@ -938,7 +930,7 @@
                     <div class="table-actions">
                         <div class="search-box">
                             <input type="text" id="searchInput" placeholder="بحث عن مستخدم..." value="{{ request('search') }}">
-                            <i class="fas fa-search"></i>
+                            <i class="fas fa-search" id="searchBtn" style="cursor: pointer;"></i>
                         </div>
                     </div>
                 </div>
@@ -1223,15 +1215,16 @@
             // Initialize tooltips
             $('[data-bs-toggle="tooltip"]').tooltip();
 
-            // Search functionality
-            let searchTimer;
-            $('#searchInput').on('keyup', function() {
-                clearTimeout(searchTimer);
-                const searchValue = $(this).val();
-                
-                searchTimer = setTimeout(() => {
+            $('#searchInput').on('keypress', function(e) {
+                if (e.which == 13) { // Enter key
+                    const searchValue = $(this).val();
                     performSearch(searchValue);
-                }, 500);
+                }
+            });
+
+            $('#searchBtn').on('click', function() {
+                const searchValue = $('#searchInput').val();
+                performSearch(searchValue);
             });
 
             function performSearch(search) {

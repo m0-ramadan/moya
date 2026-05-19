@@ -113,6 +113,6 @@ return [
 
     'percentages' => [
         'vat' => env('VAT_PERCENTAGE', 15),
-        'company_earning' => env('COMPANY_EARNING_PERCENTAGE', 10),
+        'company_earning' => env('COMPANY_EARNING_PERCENTAGE', 25),
     ],
 ];

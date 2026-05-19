@@ -31,7 +31,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::query()
+        $query = User::where('type', 'user')
             ->with(['driver', 'deviceTokens'])
             ->withCount(['orders', 'contracts', 'payments', 'deviceTokens']);
 
@@ -41,7 +41,6 @@ class UserController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%")
                     ->orWhere('full_phone', 'like', "%{$search}%");
             });
         }
