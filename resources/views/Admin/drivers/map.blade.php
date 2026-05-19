@@ -29,6 +29,7 @@
 
         /* Side Panel */
         .map-side-panel {
+            background: aliceblue;
             position: absolute;
             top: 20px;
             right: 20px;
