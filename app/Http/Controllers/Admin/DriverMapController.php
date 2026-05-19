@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Models\DriverCurrentLocation;
 use App\Models\Order;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -38,8 +39,12 @@ class DriverMapController extends Controller
                 'lng'          => (float) $driver->currectLocation->lng,
                 'speed'        => (float) ($driver->currectLocation->speed ?? 0),
                 'heading'      => (float) ($driver->currectLocation->heading ?? 0),
-                'last_updated' => $driver->currectLocation->last_updated_at?->diffForHumans() ?? 'غير معروف',
-                'last_updated_at' => $driver->currectLocation->last_updated_at?->format('Y-m-d H:i:s'),
+                'last_updated' => $driver->currectLocation->last_updated_at
+                    ? Carbon::parse($driver->currectLocation->last_updated_at)->diffForHumans()
+                    : 'غير معروف',
+                'last_updated_at' => $driver->currectLocation->last_updated_at
+                    ? Carbon::parse($driver->currectLocation->last_updated_at)->format('Y-m-d H:i:s')
+                    : null,
             ] : null,
             'vehicle' => [
                 'size'  => $driver->vehicle_size ?? '--',
@@ -204,7 +209,9 @@ class DriverMapController extends Controller
                         'lng'          => (float) $driver->currectLocation->lng,
                         'speed'        => (float) ($driver->currectLocation->speed ?? 0),
                         'heading'      => (float) ($driver->currectLocation->heading ?? 0),
-                        'last_updated' => $driver->currectLocation->last_updated_at?->diffForHumans(),
+                        'last_updated' => $driver->currectLocation->last_updated_at
+                            ? Carbon::parse($driver->currectLocation->last_updated_at)->diffForHumans()
+                            : 'غير معروف',
                     ] : null,
                     'vehicle' => [
                         'size'         => $driver->vehicle_size ?? '--',
