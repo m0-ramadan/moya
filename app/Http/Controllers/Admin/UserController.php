@@ -232,8 +232,9 @@ class UserController extends Controller
      * @param User $user
      * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
      */
-    public function show(User $user)
+    public function show($user)
     {
+        $user = User::findOrFail($user);
         $user->load(['driver', 'deviceTokens', 'wallet']);
         $user->loadCount(['orders', 'contracts', 'payments']);
 
