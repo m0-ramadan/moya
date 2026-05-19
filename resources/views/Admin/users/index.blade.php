@@ -1531,18 +1531,24 @@
                         response.ledger_entries.forEach(entry => {
                             content += `
                                 <tr>
-                                    <td>${entry.created_at}</td>
+                                    <td>${entry.formatted_date || entry.created_at}</td>
                                     <td>
-                                        <span class="badge bg-${entry.type == 'credit' ? 'success' : 'danger'}">
-                                            ${entry.type == 'credit' ? 'إيداع' : 'سحب'}
+                                        <span class="badge bg-${entry.direction == 'credit' ? 'success' : 'danger'}">
+                                            ${entry.direction == 'credit' ? 'إيداع' : 'سحب'}
                                         </span>
                                     </td>
-                                    <td>${entry.amount} ${entry.currency}</td>
+                                    <td>${entry.amount} ${response.currency || 'SAR'}</td>
                                     <td>${entry.description || '---'}</td>
                                     <td>
                                         <span class="badge bg-${entry.status == 'completed' ? 'success' : (entry.status == 'pending' ? 'warning' : 'danger')}">
                                             ${entry.status == 'completed' ? 'مكتملة' : (entry.status == 'pending' ? 'معلقة' : 'فاشلة')}
                                         </span>
+                                        ${entry.status == 'pending' ? `
+                                            <div class="mt-2 action-buttons justify-content-center">
+                                                <button class="btn btn-sm btn-success" onclick="approveTransaction(${response.user_id || entry.owner_id}, ${entry.id})" title="موافقة"><i class="fas fa-check"></i></button>
+                                                <button class="btn btn-sm btn-danger" onclick="rejectTransaction(${response.user_id || entry.owner_id}, ${entry.id})" title="رفض"><i class="fas fa-times"></i></button>
+                                            </div>
+                                        ` : ''}
                                     </td>
                                 </tr>
                             `;
@@ -1570,6 +1576,77 @@
                         icon: 'error',
                         title: 'خطأ!',
                         text: xhr.responseJSON?.message || 'حدث خطأ أثناء تحميل المحفظة'
+                    });
+                }
+            });
+        }
+
+        // Approve transaction
+        function approveTransaction(userId, transactionId) {
+            Swal.fire({
+                title: 'موافقة على العملية',
+                text: 'هل أنت متأكد من الموافقة على هذه العملية؟',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'نعم، أوافق',
+                cancelButtonText: 'إلغاء'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    processTransactionAction(userId, transactionId, 'approve');
+                }
+            });
+        }
+
+        // Reject transaction
+        function rejectTransaction(userId, transactionId) {
+            Swal.fire({
+                title: 'رفض العملية',
+                text: 'هل أنت متأكد من رفض هذه العملية؟',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'نعم، أرفض',
+                cancelButtonText: 'إلغاء'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    processTransactionAction(userId, transactionId, 'reject');
+                }
+            });
+        }
+
+        function processTransactionAction(userId, transactionId, action) {
+            $.ajax({
+                url: `/admin/users/${userId}/wallet/transaction/${transactionId}/${action}`,
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                beforeSend: function() {
+                    Swal.fire({
+                        title: 'جاري المعالجة...',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'تمت العملية بنجاح!',
+                        text: response.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    // Reload the wallet view
+                    viewUserWallet(userId);
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'خطأ!',
+                        text: xhr.responseJSON?.message || 'حدث خطأ أثناء معالجة العملية'
                     });
                 }
             });

@@ -75,7 +75,6 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
 
     // Resource Routes
     Route::resources([
-        'admins' => AdminController::class,
         // 'permissions' => PermissionsController::class,
         'roles' => RolesController::class,
         'countries' => CountryController::class,
@@ -86,6 +85,14 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         'managers' => ManagerController::class,
         'regions' => RegionController::class,
     ]);
+    Route::prefix('admins')->name('admins.')->group(function () {
+        Route::get('/', [AdminController::class, 'index'])->name('index');
+        Route::get('/create', [AdminController::class, 'create'])->name('create');
+        Route::post('/', [AdminController::class, 'store'])->name('store');
+        Route::get('/{admin}/edit', [AdminController::class, 'edit'])->name('edit');
+        Route::put('/{admin}', [AdminController::class, 'update'])->name('update');
+        Route::delete('/{admin}', [AdminController::class, 'destroy'])->name('destroy');
+    });
 
     // coupons
     // Route::prefix('coupons')->name('coupons.')->group(function () {
@@ -161,6 +168,7 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
 
         // User Wallet
         Route::get('/{user}/wallet', [UserController::class, 'wallet'])->name('wallet');
+        Route::post('/{user}/wallet/transaction/{transactionId}/{action}', [UserController::class, 'processTransactionAction'])->name('wallet.transaction');
 
         // User Notifications
         Route::post('/{user}/send-notification', [UserController::class, 'sendNotification'])->name('send-notification');

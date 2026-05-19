@@ -59,7 +59,7 @@
                <ul class="menu-sub">
 
                    <li class="menu-item ">
-                       <a href="#/admin/admins" class="menu-link">
+                       <a href="{{ route('admin.admins.index') }}" class="menu-link">
                            <div>مديرين الموقع</div>
                        </a>
                    </li>

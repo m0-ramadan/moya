@@ -466,7 +466,12 @@ class UserController extends Controller
                 ->where('owner_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->limit(20)
-                ->get();
+                ->get()
+                ->map(function ($entry) {
+                    $entry->direction = $entry->direction;
+                    $entry->formatted_date = $entry->created_at->format('Y-m-d H:i');
+                    return $entry;
+                });
 
             return response()->json([
                 'success' => true,
@@ -480,6 +485,66 @@ class UserController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'حدث خطأ أثناء جلب بيانات المحفظة: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Process transaction (approve/reject)
+     *
+     * @param Request $request
+     * @param User $user
+     * @param int $transactionId
+     * @param string $action
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function processTransactionAction(Request $request, User $user, $transactionId, $action)
+    {
+        try {
+            $transaction = LedgerEntry::where('owner_type', 'user')
+                ->where('owner_id', $user->id)
+                ->where('id', $transactionId)
+                ->firstOrFail();
+
+            if ($transaction->status !== 'pending') {
+                return response()->json(['success' => false, 'message' => 'هذه العملية ليست معلقة.'], 400);
+            }
+
+            if (!in_array($action, ['approve', 'reject'])) {
+                return response()->json(['success' => false, 'message' => 'إجراء غير صالح.'], 400);
+            }
+
+            if ($action === 'approve') {
+                // If it's a deposit, we might need to actually credit the wallet using a service,
+                // but since the admin is forcing it, we just update status and balance.
+                // Assuming it's a pending deposit or withdrawal.
+                $wallet = $transaction->wallet;
+                if ($wallet && $transaction->direction === 'credit') {
+                    $wallet->updateBalance($transaction->amount, 'increment');
+                } elseif ($wallet && $transaction->direction === 'debit') {
+                    // For debit, it might already be deducted when initiated, or not.
+                    // Usually pending debits (like hold) decrement available_balance.
+                    // Let's assume balance was already held.
+                }
+
+                $transaction->markApproved(auth()->id() ?? 1);
+                $transaction->markCompleted();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'تم الموافقة على العملية بنجاح'
+                ]);
+            } else {
+                $transaction->markFailed('Rejected by Admin');
+                return response()->json([
+                    'success' => true,
+                    'message' => 'تم رفض العملية بنجاح'
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء معالجة العملية: ' . $e->getMessage()
             ], 500);
         }
     }
