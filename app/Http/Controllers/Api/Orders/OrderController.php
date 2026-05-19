@@ -257,7 +257,7 @@ private function notifyAvailableDrivers(Order $order): void
         $offer = OrderOffer::create([
             'order_id' => $orderId,
             'driver_id' => $driver->id,
-            'price' => $validated['price'],
+            'price' => $validated['price'] + ($validated['price'] * (config('services.percentages.vat', 15) / 100)),
             'delivery_duration_minutes' => $validated['delivery_duration_minutes'],
             'status' => 'pending',
             'expires_at' => $expiredAt, // 
