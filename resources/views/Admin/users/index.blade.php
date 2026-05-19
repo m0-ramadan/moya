@@ -883,18 +883,6 @@
 
 
                     <div class="filter-group">
-                        <label class="filter-label">طريقة التسجيل</label>
-                        <select name="auth_method" class="filter-select">
-                            <option value="">الكل</option>
-                            <option value="email" {{ request('auth_method') == 'email' ? 'selected' : '' }}>بريد إلكتروني</option>
-                            <option value="google" {{ request('auth_method') == 'google' ? 'selected' : '' }}>جوجل</option>
-                            <option value="facebook" {{ request('auth_method') == 'facebook' ? 'selected' : '' }}>فيسبوك</option>
-                            <option value="apple" {{ request('auth_method') == 'apple' ? 'selected' : '' }}>أبل</option>
-                            <option value="phone" {{ request('auth_method') == 'phone' ? 'selected' : '' }}>جوال</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
                         <label class="filter-label">الإشعارات</label>
                         <select name="notifications" class="filter-select">
                             <option value="">الكل</option>
@@ -941,7 +929,6 @@
                             <tr>
                                 <th>المستخدم</th>
                                 <th>معلومات الاتصال</th>
-                                <th>طرق التسجيل</th>
                                 <th>الحالة</th>
                                 <th>السائق</th>
                                 <th>الإشعارات</th>
@@ -994,42 +981,6 @@
                                                     {{ $user->phone_verified_at->format('Y-m-d') }}
                                                 </small>
                                             @endif
-                                        </div>
-                                    </td>
-
-                                    <td>
-                                        <div class="auth-methods">
-                                            @if($user->email)
-                                                <div class="auth-badge email" title="بريد إلكتروني">
-                                                    <i class="fas fa-envelope"></i>
-                                                </div>
-                                            @endif
-                                            @if($user->google_id)
-                                                <div class="auth-badge google" title="جوجل">
-                                                    <i class="fab fa-google"></i>
-                                                </div>
-                                            @endif
-                                            @if($user->facebook_id)
-                                                <div class="auth-badge facebook" title="فيسبوك">
-                                                    <i class="fab fa-facebook-f"></i>
-                                                </div>
-                                            @endif
-                                            @if($user->apple_id)
-                                                <div class="auth-badge apple" title="أبل">
-                                                    <i class="fab fa-apple"></i>
-                                                </div>
-                                            @endif
-                                            @if($user->phone)
-                                                <div class="auth-badge phone" title="جوال">
-                                                    <i class="fas fa-mobile-alt"></i>
-                                                </div>
-                                            @endif
-                                        </div>
-                                        <div class="mt-2">
-                                            <small class="text-muted">
-                                                <i class="fas fa-key"></i>
-                                                آخر OTP: {{ $user->otp ?? 'لا يوجد' }}
-                                            </small>
                                         </div>
                                     </td>
 
@@ -1531,24 +1482,18 @@
                         response.ledger_entries.forEach(entry => {
                             content += `
                                 <tr>
-                                    <td>${entry.formatted_date || entry.created_at}</td>
+                                    <td>${entry.created_at}</td>
                                     <td>
-                                        <span class="badge bg-${entry.direction == 'credit' ? 'success' : 'danger'}">
-                                            ${entry.direction == 'credit' ? 'إيداع' : 'سحب'}
+                                        <span class="badge bg-${entry.type == 'credit' ? 'success' : 'danger'}">
+                                            ${entry.type == 'credit' ? 'إيداع' : 'سحب'}
                                         </span>
                                     </td>
-                                    <td>${entry.amount} ${response.currency || 'SAR'}</td>
+                                    <td>${entry.amount} ${entry.currency}</td>
                                     <td>${entry.description || '---'}</td>
                                     <td>
                                         <span class="badge bg-${entry.status == 'completed' ? 'success' : (entry.status == 'pending' ? 'warning' : 'danger')}">
                                             ${entry.status == 'completed' ? 'مكتملة' : (entry.status == 'pending' ? 'معلقة' : 'فاشلة')}
                                         </span>
-                                        ${entry.status == 'pending' ? `
-                                            <div class="mt-2 action-buttons justify-content-center">
-                                                <button class="btn btn-sm btn-success" onclick="approveTransaction(${response.user_id || entry.owner_id}, ${entry.id})" title="موافقة"><i class="fas fa-check"></i></button>
-                                                <button class="btn btn-sm btn-danger" onclick="rejectTransaction(${response.user_id || entry.owner_id}, ${entry.id})" title="رفض"><i class="fas fa-times"></i></button>
-                                            </div>
-                                        ` : ''}
                                     </td>
                                 </tr>
                             `;
@@ -1576,77 +1521,6 @@
                         icon: 'error',
                         title: 'خطأ!',
                         text: xhr.responseJSON?.message || 'حدث خطأ أثناء تحميل المحفظة'
-                    });
-                }
-            });
-        }
-
-        // Approve transaction
-        function approveTransaction(userId, transactionId) {
-            Swal.fire({
-                title: 'موافقة على العملية',
-                text: 'هل أنت متأكد من الموافقة على هذه العملية؟',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#198754',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'نعم، أوافق',
-                cancelButtonText: 'إلغاء'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    processTransactionAction(userId, transactionId, 'approve');
-                }
-            });
-        }
-
-        // Reject transaction
-        function rejectTransaction(userId, transactionId) {
-            Swal.fire({
-                title: 'رفض العملية',
-                text: 'هل أنت متأكد من رفض هذه العملية؟',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'نعم، أرفض',
-                cancelButtonText: 'إلغاء'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    processTransactionAction(userId, transactionId, 'reject');
-                }
-            });
-        }
-
-        function processTransactionAction(userId, transactionId, action) {
-            $.ajax({
-                url: `/admin/users/${userId}/wallet/transaction/${transactionId}/${action}`,
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}'
-                },
-                beforeSend: function() {
-                    Swal.fire({
-                        title: 'جاري المعالجة...',
-                        allowOutsideClick: false,
-                        didOpen: () => { Swal.showLoading(); }
-                    });
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'تمت العملية بنجاح!',
-                        text: response.message,
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                    // Reload the wallet view
-                    viewUserWallet(userId);
-                },
-                error: function(xhr) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'خطأ!',
-                        text: xhr.responseJSON?.message || 'حدث خطأ أثناء معالجة العملية'
                     });
                 }
             });
