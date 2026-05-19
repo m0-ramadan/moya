@@ -1208,11 +1208,11 @@
                     
                     let content = `
                         <div class="user-info-grid">
+
+                            <!-- المعلومات الشخصية -->
                             <div class="info-section">
                                 <div class="info-section-title">
-                                    <div class="info-section-icon">
-                                        <i class="fas fa-user"></i>
-                                    </div>
+                                    <div class="info-section-icon"><i class="fas fa-user"></i></div>
                                     <h6>معلومات شخصية</h6>
                                 </div>
                                 <div class="info-row">
@@ -1220,26 +1220,22 @@
                                     <span class="info-value">${response.name}</span>
                                 </div>
                                 <div class="info-row">
-                                    <span class="info-label">البريد:</span>
-                                    <span class="info-value">${response.email || 'لا يوجد'}</span>
+                                    <span class="info-label">البريد الإلكتروني:</span>
+                                    <span class="info-value">${response.email || '<span class="text-muted">لا يوجد</span>'}</span>
                                 </div>
                                 <div class="info-row">
-                                    <span class="info-label">الجوال:</span>
-                                    <span class="info-value">${response.full_phone || response.phone || 'غير محدد'}</span>
+                                    <span class="info-label">رقم الجوال:</span>
+                                    <span class="info-value">${response.full_phone || response.phone || '<span class="text-muted">غير محدد</span>'}</span>
                                 </div>
                                 <div class="info-row">
-                                    <span class="info-label">حالة الجوال:</span>
-                                    <span class="info-value">
-                                        <span class="badge ${response.phone_verified_at ? 'bg-success' : 'bg-warning'}">
-                                            ${response.phone_verified_at ? 'موثق' : 'غير موثق'}
-                                        </span>
-                                    </span>
+                                    <span class="info-label">نوع الحساب:</span>
+                                    <span class="info-value"><span class="badge bg-secondary">${response.type || 'مستخدم'}</span></span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">حالة الحساب:</span>
                                     <span class="info-value">
                                         <span class="badge ${response.status == 'active' ? 'bg-success' : 'bg-danger'}">
-                                            ${response.status == 'active' ? 'نشط' : 'غير نشط'}
+                                            ${response.status == 'active' ? '<i class="fas fa-check-circle me-1"></i>نشط' : '<i class="fas fa-times-circle me-1"></i>غير نشط'}
                                         </span>
                                     </span>
                                 </div>
@@ -1252,102 +1248,147 @@
                                 </div>
                             </div>
 
+                            <!-- التوثيق والتواريخ -->
                             <div class="info-section">
                                 <div class="info-section-title">
-                                    <div class="info-section-icon">
-                                        <i class="fas fa-calendar"></i>
-                                    </div>
-                                    <h6>التواريخ</h6>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">تاريخ التسجيل:</span>
-                                    <span class="info-value">${response.created_at}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">آخر تحديث:</span>
-                                    <span class="info-value">${response.updated_at}</span>
+                                    <div class="info-section-icon"><i class="fas fa-shield-halved"></i></div>
+                                    <h6>التوثيق والتواريخ</h6>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">توثيق الجوال:</span>
-                                    <span class="info-value">${response.phone_verified_at || 'لم يتم'}</span>
+                                    <span class="info-value">
+                                        ${response.is_phone_verified
+                                            ? `<span class="badge bg-success"><i class="fas fa-check me-1"></i>موثق</span> <small class="text-muted">${response.phone_verified_at}</small>`
+                                            : '<span class="badge bg-warning text-dark">غير موثق</span>'}
+                                    </span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">توثيق البريد:</span>
-                                    <span class="info-value">${response.email_verified_at || 'لم يتم'}</span>
-                                </div>
-                            </div>
-
-                            <div class="info-section">
-                                <div class="info-section-title">
-                                    <div class="info-section-icon">
-                                        <i class="fas fa-key"></i>
-                                    </div>
-                                    <h6>طرق التسجيل</h6>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">البريد:</span>
                                     <span class="info-value">
-                                        <i class="fas ${response.email ? 'fa-check text-success' : 'fa-times text-danger'}"></i>
-                                        ${response.email ? 'مسجل' : 'غير مسجل'}
+                                        ${response.is_email_verified
+                                            ? `<span class="badge bg-success"><i class="fas fa-check me-1"></i>موثق</span> <small class="text-muted">${response.email_verified_at}</small>`
+                                            : '<span class="badge bg-warning text-dark">غير موثق</span>'}
                                     </span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">جوجل:</span>
                                     <span class="info-value">
-                                        <i class="fas ${response.google_id ? 'fa-check text-success' : 'fa-times text-danger'}"></i>
-                                        ${response.google_id ? 'مرتبط' : 'غير مرتبط'}
+                                        <i class="fab fa-google ${response.has_google ? 'text-danger' : 'text-muted'}"></i>
+                                        ${response.has_google ? 'مرتبط' : 'غير مرتبط'}
                                     </span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">فيسبوك:</span>
                                     <span class="info-value">
-                                        <i class="fas ${response.facebook_id ? 'fa-check text-success' : 'fa-times text-danger'}"></i>
-                                        ${response.facebook_id ? 'مرتبط' : 'غير مرتبط'}
+                                        <i class="fab fa-facebook ${response.has_facebook ? 'text-primary' : 'text-muted'}"></i>
+                                        ${response.has_facebook ? 'مرتبط' : 'غير مرتبط'}
                                     </span>
                                 </div>
                                 <div class="info-row">
-                                    <span class="info-label">أبل:</span>
-                                    <span class="info-value">
-                                        <i class="fas ${response.apple_id ? 'fa-check text-success' : 'fa-times text-danger'}"></i>
-                                        ${response.apple_id ? 'مرتبط' : 'غير مرتبط'}
-                                    </span>
+                                    <span class="info-label">تاريخ التسجيل:</span>
+                                    <span class="info-value">${response.created_at} <small class="text-muted">(${response.created_at_human})</small></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">آخر تحديث:</span>
+                                    <span class="info-value">${response.updated_at}</span>
                                 </div>
                             </div>
 
+                            <!-- إحصائيات الطلبات -->
                             <div class="info-section">
                                 <div class="info-section-title">
-                                    <div class="info-section-icon">
-                                        <i class="fas fa-chart-line"></i>
-                                    </div>
+                                    <div class="info-section-icon"><i class="fas fa-chart-bar"></i></div>
                                     <h6>إحصائيات</h6>
                                 </div>
                                 <div class="info-row">
-                                    <span class="info-label">عدد الطلبات:</span>
-                                    <span class="info-value">${response.orders_count || 0}</span>
+                                    <span class="info-label">إجمالي الطلبات:</span>
+                                    <span class="info-value"><strong>${response.orders_count || 0}</strong></span>
                                 </div>
                                 <div class="info-row">
-                                    <span class="info-label">عدد العقود:</span>
+                                    <span class="info-label">مكتملة:</span>
+                                    <span class="info-value"><span class="badge bg-success">${response.orders_completed || 0}</span></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">جارية:</span>
+                                    <span class="info-value"><span class="badge bg-warning text-dark">${response.orders_pending || 0}</span></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">ملغاة:</span>
+                                    <span class="info-value"><span class="badge bg-danger">${response.orders_cancelled || 0}</span></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">العقود:</span>
                                     <span class="info-value">${response.contracts_count || 0}</span>
                                 </div>
                                 <div class="info-row">
-                                    <span class="info-label">عدد المدفوعات:</span>
+                                    <span class="info-label">المدفوعات:</span>
                                     <span class="info-value">${response.payments_count || 0}</span>
                                 </div>
                                 <div class="info-row">
-                                    <span class="info-label">الأجهزة:</span>
+                                    <span class="info-label">الأجهزة المسجلة:</span>
                                     <span class="info-value">${response.device_tokens_count || 0}</span>
                                 </div>
-                                ${response.driver ? `
+                            </div>
+
+                            <!-- المحفظة -->
+                            ${response.wallet ? `
+                            <div class="info-section">
+                                <div class="info-section-title">
+                                    <div class="info-section-icon"><i class="fas fa-wallet"></i></div>
+                                    <h6>المحفظة</h6>
+                                </div>
                                 <div class="info-row">
-                                    <span class="info-label">سائق:</span>
+                                    <span class="info-label">الرصيد:</span>
+                                    <span class="info-value"><strong class="text-success">${response.wallet.balance} ${response.wallet.currency}</strong></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">رصيد محجوز:</span>
+                                    <span class="info-value"><span class="text-warning">${response.wallet.held_balance} ${response.wallet.currency}</span></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">حالة المحفظة:</span>
                                     <span class="info-value">
-                                        <span class="badge bg-info">نعم</span>
-                                        ${response.driver.vehicle_size || ''}
+                                        <span class="badge ${response.wallet.status == 'active' ? 'bg-success' : 'bg-danger'}">
+                                            ${response.wallet.status == 'active' ? 'نشطة' : 'معطلة'}
+                                        </span>
                                     </span>
                                 </div>
-                                ` : ''}
                             </div>
-                        </div>
+                            ` : ''}
+
+                            <!-- بيانات السائق -->
+                            ${response.driver ? `
+                            <div class="info-section">
+                                <div class="info-section-title">
+                                    <div class="info-section-icon"><i class="fas fa-truck"></i></div>
+                                    <h6>بيانات السائق</h6>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">نوع المركبة:</span>
+                                    <span class="info-value">${response.driver.vehicle_size || '--'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">رقم اللوحة:</span>
+                                    <span class="info-value">${response.driver.vehicle_plate_number || '--'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">توثيق السائق:</span>
+                                    <span class="info-value">
+                                        <span class="badge ${response.driver.is_verified ? 'bg-success' : 'bg-warning text-dark'}">
+                                            ${response.driver.is_verified ? 'موثق' : 'غير موثق'}
+                                        </span>
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">حالة السائق:</span>
+                                    <span class="info-value">
+                                        <span class="badge ${response.driver.is_active ? 'bg-success' : 'bg-danger'}">
+                                            ${response.driver.is_active ? 'نشط' : 'غير نشط'}
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                            ` : ''}
                     `;
                     
                     $('#userDetailsContent').html(content);

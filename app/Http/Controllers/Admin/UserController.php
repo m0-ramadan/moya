@@ -238,11 +238,75 @@ class UserController extends Controller
         $user->loadCount(['orders', 'contracts', 'payments']);
 
         if (request()->wantsJson()) {
-            return response()->json($user);
+            // حساب إحصائيات الطلبات
+            $ordersCompleted = $user->orders()->where('order_status_id', 4)->count();
+            $ordersCancelled = $user->orders()->where('order_status_id', 5)->count();
+            $ordersPending   = $user->orders()->whereIn('order_status_id', [1, 2, 3])->count();
+
+            return response()->json([
+                // بيانات أساسية
+                'id'                   => $user->id,
+                'name'                 => $user->name,
+                'email'                => $user->email,
+                'phone'                => $user->phone_number,
+                'phone_number'         => $user->phone_number,
+                'country_code'         => $user->country_code,
+                'full_phone'           => $user->full_phone,
+                'status'               => $user->status,
+                'type'                 => $user->type,
+                'avatar'               => $user->avatar ? asset('storage/' . $user->avatar) : null,
+                'allow_notifications'  => (bool) $user->allow_notifications,
+
+                // التحقق
+                'phone_verified_at'    => $user->phone_verified_at?->format('Y-m-d H:i'),
+                'email_verified_at'    => $user->email_verified_at?->format('Y-m-d H:i'),
+                'is_phone_verified'    => !is_null($user->phone_verified_at),
+                'is_email_verified'    => !is_null($user->email_verified_at),
+
+                // طرق التسجيل
+                'has_google'           => !empty($user->google_id),
+                'has_facebook'         => !empty($user->facebook_id),
+
+                // التواريخ
+                'created_at'           => $user->created_at?->format('Y-m-d H:i'),
+                'updated_at'           => $user->updated_at?->format('Y-m-d H:i'),
+                'created_at_human'     => $user->created_at?->diffForHumans(),
+
+                // إحصائيات الطلبات
+                'orders_count'         => $user->orders_count,
+                'orders_completed'     => $ordersCompleted,
+                'orders_cancelled'     => $ordersCancelled,
+                'orders_pending'       => $ordersPending,
+
+                // باقي الإحصائيات
+                'contracts_count'      => $user->contracts_count,
+                'payments_count'       => $user->payments_count,
+                'device_tokens_count'  => $user->deviceTokens->count(),
+
+                // المحفظة
+                'wallet'               => $user->wallet ? [
+                    'id'           => $user->wallet->id,
+                    'balance'      => number_format($user->wallet->balance, 2),
+                    'held_balance' => number_format($user->wallet->held_balance ?? 0, 2),
+                    'currency'     => $user->wallet->currency ?? 'SAR',
+                    'status'       => $user->wallet->status,
+                ] : null,
+
+                // بيانات السائق إن وجد
+                'driver'               => $user->driver ? [
+                    'id'                   => $user->driver->id,
+                    'vehicle_size'         => $user->driver->vehicle_size,
+                    'vehicle_plate_number' => $user->driver->vehicle_plate_number,
+                    'is_verified'          => (bool) $user->driver->is_verified,
+                    'is_active'            => (bool) $user->driver->is_active,
+                    'status'               => $user->driver->status,
+                ] : null,
+            ]);
         }
 
         return view('Admin.users.show', compact('user'));
     }
+
 
     /**
      * Show the form for editing the specified user.
