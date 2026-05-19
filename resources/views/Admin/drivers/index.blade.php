@@ -1010,13 +1010,17 @@
                             </option>
                         </select>
                     </div>
-
+                    @php
+                        // get all vehicle sizes from the database
+                        $vehicle_sizes = DB::table('services')->get();
+                    @endphp
                     <div class="filter-group">
-                        <label class="filter-label">حجم المركبة</label>
-                        <select name="vehicle_size" class="filter-select">
+                        <label class="filter-label">نوع الخدمة</label>
+                           <select name="service_id" class="filter-select">
                             <option value="">الكل</option>
                             @foreach ($vehicle_sizes as $vehicle_size)
-                                <option value="{{ $vehicle_size->name }}" {{ request('vehicle_size') == $vehicle_size->name ? 'selected' : '' }}>{{ $vehicle_size->name }}</option>
+                                <option value="{{ $vehicle_size->id }}"
+                                    {{ request('service_id') == $vehicle_size->id ? 'selected' : '' }}>{{ $vehicle_size->name }}</option>
                             @endforeach
                         </select>
                     </div>
