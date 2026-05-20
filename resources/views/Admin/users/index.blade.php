@@ -1462,19 +1462,25 @@
                         <div class="wallet-info">
                             <h4 class="text-center mb-4">محفظة المستخدم</h4>
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="info-section bg-primary text-white p-3 rounded">
                                         <h6>الرصيد الحالي</h6>
                                         <h3>${response.balance || 0} ${response.currency || 'SAR'}</h3>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
+                                    <div class="info-section bg-info text-white p-3 rounded">
+                                        <h6>الرصيد المتاح</h6>
+                                        <h3>${response.available_balance || 0} ${response.currency || 'SAR'}</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
                                     <div class="info-section bg-warning p-3 rounded">
                                         <h6>الرصيد المعلق</h6>
                                         <h3>${response.held_balance || 0} ${response.currency || 'SAR'}</h3>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="info-section bg-success text-white p-3 rounded">
                                         <h6>حالة المحفظة</h6>
                                         <h3>
@@ -1483,6 +1489,36 @@
                                             </span>
                                         </h3>
                                     </div>
+                                </div>
+                            </div>
+
+                            <div class="info-section mt-4">
+                                <div class="info-section-title">
+                                    <div class="info-section-icon"><i class="fas fa-sliders-h"></i></div>
+                                    <h6>تحكم الإدارة في المحفظة</h6>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">نوع العملية</label>
+                                        <select class="form-control" id="walletActionType">
+                                            <option value="deposit">إضافة رصيد</option>
+                                            <option value="withdrawal">سحب من الرصيد</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">المبلغ</label>
+                                        <input type="number" min="0.01" step="0.01" class="form-control" id="walletActionAmount" placeholder="0.00">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">الوصف</label>
+                                        <input type="text" class="form-control" id="walletActionDescription" placeholder="سبب العملية">
+                                    </div>
+                                </div>
+                                <div class="mt-3 text-end">
+                                    <button class="btn btn-primary" onclick="submitWalletTransaction(${response.user_id})">
+                                        <i class="fas fa-check-circle"></i>
+                                        تنفيذ العملية
+                                    </button>
                                 </div>
                             </div>
                             
@@ -1508,16 +1544,16 @@
                                     <td>${entry.formatted_date || entry.created_at}</td>
                                     <td>
                                         <span class="badge bg-${entry.direction == 'credit' ? 'success' : 'danger'}">
-                                            ${entry.direction == 'credit' ? 'إيداع' : 'سحب'}
+                                            ${entry.type_label || (entry.direction == 'credit' ? 'إيداع' : 'سحب')}
                                         </span>
                                     </td>
                                     <td>${entry.amount} ${response.currency || 'SAR'}</td>
                                     <td>${entry.description || '---'}</td>
                                     <td>
-                                        <span class="badge bg-${entry.status == 'completed' ? 'success' : (entry.status == 'pending' ? 'warning' : 'danger')}">
-                                            ${entry.status == 'completed' ? 'مكتملة' : (entry.status == 'pending' ? 'معلقة' : 'فاشلة')}
+                                        <span class="badge bg-${entry.status == 'completed' ? 'success' : (entry.status == 'pending' ? 'warning text-dark' : (entry.status == 'processing' ? 'info text-dark' : 'danger'))}">
+                                            ${entry.status_label || entry.status}
                                         </span>
-                                        ${entry.status == 'pending' ? `
+                                        ${entry.can_review ? `
                                             <div class="mt-2 action-buttons justify-content-center">
                                                 <button class="btn btn-sm btn-success" onclick="approveTransaction(${response.user_id || entry.owner_id}, ${entry.id})" title="موافقة"><i class="fas fa-check"></i></button>
                                                 <button class="btn btn-sm btn-danger" onclick="rejectTransaction(${response.user_id || entry.owner_id}, ${entry.id})" title="رفض"><i class="fas fa-times"></i></button>
@@ -1579,6 +1615,9 @@
                 title: 'رفض العملية',
                 text: 'هل أنت متأكد من رفض هذه العملية؟',
                 icon: 'warning',
+                input: 'text',
+                inputLabel: 'سبب الرفض (اختياري)',
+                inputPlaceholder: 'اكتب سبب الرفض',
                 showCancelButton: true,
                 confirmButtonColor: '#dc3545',
                 cancelButtonColor: '#6c757d',
@@ -1586,17 +1625,18 @@
                 cancelButtonText: 'إلغاء'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    processTransactionAction(userId, transactionId, 'reject');
+                    processTransactionAction(userId, transactionId, 'reject', result.value || '');
                 }
             });
         }
 
-        function processTransactionAction(userId, transactionId, action) {
+        function processTransactionAction(userId, transactionId, action, reason = '') {
             $.ajax({
                 url: `/admin/users/${userId}/wallet/transaction/${transactionId}/${action}`,
                 type: 'POST',
                 data: {
-                    _token: '{{ csrf_token() }}'
+                    _token: '{{ csrf_token() }}',
+                    reason: reason
                 },
                 beforeSend: function() {
                     Swal.fire({
@@ -1621,6 +1661,66 @@
                         icon: 'error',
                         title: 'خطأ!',
                         text: xhr.responseJSON?.message || 'حدث خطأ أثناء معالجة العملية'
+                    });
+                }
+            });
+        }
+
+        function submitWalletTransaction(userId) {
+            const type = $('#walletActionType').val();
+            const amount = $('#walletActionAmount').val();
+            const description = $('#walletActionDescription').val();
+
+            if (!amount || parseFloat(amount) <= 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'تنبيه',
+                    text: 'من فضلك أدخل مبلغًا صحيحًا'
+                });
+                return;
+            }
+
+            if (!description) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'تنبيه',
+                    text: 'من فضلك أدخل وصف العملية'
+                });
+                return;
+            }
+
+            $.ajax({
+                url: `/admin/users/${userId}/wallet/transaction`,
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    type: type,
+                    amount: amount,
+                    description: description
+                },
+                beforeSend: function() {
+                    Swal.fire({
+                        title: 'جاري تنفيذ العملية...',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'تمت العملية بنجاح!',
+                        text: response.message,
+                        timer: 1800,
+                        showConfirmButton: false
+                    });
+
+                    viewUserWallet(userId);
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'خطأ!',
+                        text: xhr.responseJSON?.message || 'حدث خطأ أثناء تنفيذ العملية'
                     });
                 }
             });

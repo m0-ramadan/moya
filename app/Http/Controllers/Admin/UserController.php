@@ -32,7 +32,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $query = User::where('type', 'user')
-            ->with(['driver', 'deviceTokens'])
+            ->with(['driver', 'deviceTokens', 'wallet'])
             ->withCount(['orders', 'contracts', 'payments', 'deviceTokens']);
 
         // Apply filters
@@ -237,6 +237,11 @@ class UserController extends Controller
         $user = User::findOrFail($user);
         $user->load(['driver', 'deviceTokens', 'wallet']);
         $user->loadCount(['orders', 'contracts', 'payments']);
+
+        if (!$user->wallet) {
+            $user->createUserWallet();
+            $user->load('wallet');
+        }
 
         if (request()->wantsJson()) {
             // إحصائيات الطلبات
@@ -520,6 +525,8 @@ class UserController extends Controller
 
             if (!$wallet) {
                 $wallet = $user->createUserWallet();
+                $user->load('wallet');
+                $wallet = $user->wallet;
             }
 
             $ledgerEntries = LedgerEntry::where('owner_type', 'user')
@@ -528,15 +535,28 @@ class UserController extends Controller
                 ->limit(20)
                 ->get()
                 ->map(function ($entry) {
-                    $entry->direction = $entry->direction;
-                    $entry->formatted_date = $entry->created_at->format('Y-m-d H:i');
-                    return $entry;
+                    return [
+                        'id' => $entry->id,
+                        'owner_id' => $entry->owner_id,
+                        'type' => $entry->type,
+                        'type_label' => $this->getWalletEntryTypeLabel($entry->type, $entry->direction),
+                        'direction' => $entry->direction,
+                        'amount' => (float) $entry->amount,
+                        'description' => $entry->description,
+                        'status' => $entry->status,
+                        'status_label' => $this->getWalletEntryStatusLabel($entry->status),
+                        'formatted_date' => $entry->created_at->format('Y-m-d H:i'),
+                        'reference' => $entry->reference,
+                        'can_review' => $this->canReviewWalletEntry($entry),
+                    ];
                 });
 
             return response()->json([
                 'success' => true,
+                'user_id' => $user->id,
                 'balance' => $wallet->balance,
                 'held_balance' => $wallet->held_balance,
+                'available_balance' => $wallet->available_balance,
                 'currency' => $wallet->currency,
                 'status' => $wallet->status,
                 'ledger_entries' => $ledgerEntries
@@ -561,52 +581,326 @@ class UserController extends Controller
     public function processTransactionAction(Request $request, User $user, $transactionId, $action)
     {
         try {
-            $transaction = LedgerEntry::where('owner_type', 'user')
-                ->where('owner_id', $user->id)
-                ->where('id', $transactionId)
-                ->firstOrFail();
-
-            if ($transaction->status !== 'pending') {
-                return response()->json(['success' => false, 'message' => 'هذه العملية ليست معلقة.'], 400);
-            }
-
             if (!in_array($action, ['approve', 'reject'])) {
                 return response()->json(['success' => false, 'message' => 'إجراء غير صالح.'], 400);
             }
 
-            if ($action === 'approve') {
-                // If it's a deposit, we might need to actually credit the wallet using a service,
-                // but since the admin is forcing it, we just update status and balance.
-                // Assuming it's a pending deposit or withdrawal.
-                $wallet = $transaction->wallet;
-                if ($wallet && $transaction->direction === 'credit') {
-                    $wallet->updateBalance($transaction->amount, 'increment');
-                } elseif ($wallet && $transaction->direction === 'debit') {
-                    // For debit, it might already be deducted when initiated, or not.
-                    // Usually pending debits (like hold) decrement available_balance.
-                    // Let's assume balance was already held.
+            $message = DB::transaction(function () use ($request, $user, $transactionId, $action) {
+                $transaction = LedgerEntry::where('owner_type', 'user')
+                    ->where('owner_id', $user->id)
+                    ->where('id', $transactionId)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if (!$this->canReviewWalletEntry($transaction)) {
+                    throw new \RuntimeException('هذه العملية لا يمكن التحكم بها من لوحة الإدارة.');
                 }
 
-                $transaction->markApproved(auth()->id() ?? 1);
-                $transaction->markCompleted();
+                $wallet = UserWallet::where('id', $transaction->wallet_id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-                return response()->json([
-                    'success' => true,
-                    'message' => 'تم الموافقة على العملية بنجاح'
-                ]);
-            } else {
-                $transaction->markFailed('Rejected by Admin');
-                return response()->json([
-                    'success' => true,
-                    'message' => 'تم رفض العملية بنجاح'
-                ]);
-            }
+                if ($action === 'approve') {
+                    $this->approveWalletTransaction($wallet, $transaction);
+
+                    return 'تمت الموافقة على العملية بنجاح';
+                }
+
+                $this->rejectWalletTransaction($wallet, $transaction, $request->input('reason'));
+
+                return 'تم رفض العملية بنجاح';
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'حدث خطأ أثناء معالجة العملية: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Create a manual wallet transaction from admin panel.
+     *
+     * @param Request $request
+     * @param User $user
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function storeWalletTransaction(Request $request, User $user)
+    {
+        $validator = Validator::make($request->all(), [
+            'type' => 'required|in:deposit,withdrawal',
+            'amount' => 'required|numeric|min:0.01',
+            'description' => 'required|string|max:500',
+        ], [
+            'type.required' => 'نوع العملية مطلوب',
+            'type.in' => 'نوع العملية غير صالح',
+            'amount.required' => 'المبلغ مطلوب',
+            'amount.numeric' => 'المبلغ يجب أن يكون رقمًا',
+            'amount.min' => 'المبلغ يجب أن يكون أكبر من صفر',
+            'description.required' => 'الوصف مطلوب',
+            'description.max' => 'الوصف يجب ألا يزيد عن 500 حرف',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        try {
+            DB::transaction(function () use ($request, $user) {
+                $wallet = UserWallet::where('user_id', $user->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$wallet) {
+                    $user->createUserWallet();
+                    $wallet = UserWallet::where('user_id', $user->id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+                }
+
+                $amount = round((float) $request->amount, 2);
+                $type = $request->type;
+
+                if ($type === LedgerEntry::TYPE_WITHDRAWAL && $wallet->available_balance < $amount) {
+                    throw new \RuntimeException('رصيد المستخدم غير كافٍ لإتمام السحب.');
+                }
+
+                $balanceBefore = (float) $wallet->balance;
+                $availableBefore = (float) $wallet->available_balance;
+                $balanceAfter = $type === LedgerEntry::TYPE_DEPOSIT
+                    ? $balanceBefore + $amount
+                    : $balanceBefore - $amount;
+                $availableAfter = $type === LedgerEntry::TYPE_DEPOSIT
+                    ? $availableBefore + $amount
+                    : $availableBefore - $amount;
+
+                LedgerEntry::create([
+                    'wallet_type' => 'user',
+                    'wallet_id' => $wallet->id,
+                    'owner_type' => LedgerEntry::OWNER_TYPE_USER,
+                    'owner_id' => $user->id,
+                    'type' => $type,
+                    'amount' => $amount,
+                    'balance_before' => $balanceBefore,
+                    'balance_after' => $balanceAfter,
+                    'available_balance_before' => $availableBefore,
+                    'available_balance_after' => $availableAfter,
+                    'description' => $request->description,
+                    'status' => LedgerEntry::STATUS_COMPLETED,
+                    'reference' => $this->generateWalletReference($type === LedgerEntry::TYPE_DEPOSIT ? 'DEP' : 'WTH'),
+                    'metadata' => [
+                        'source' => 'admin_panel',
+                        'action_type' => $type,
+                        'admin_id' => auth()->guard('admin')->id(),
+                        'admin_name' => auth()->guard('admin')->user()?->name,
+                    ],
+                    'processed_at' => now(),
+                    'approved_at' => now(),
+                ]);
+
+                $this->updateWalletBalances(
+                    $wallet,
+                    $balanceAfter,
+                    $type === LedgerEntry::TYPE_WITHDRAWAL ? $amount : null
+                );
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => $request->type === LedgerEntry::TYPE_DEPOSIT
+                    ? 'تمت إضافة الرصيد بنجاح'
+                    : 'تم تنفيذ السحب من رصيد المستخدم بنجاح'
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء تنفيذ العملية: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function canReviewWalletEntry(LedgerEntry $entry): bool
+    {
+        if (!in_array($entry->status, [
+            LedgerEntry::STATUS_PENDING,
+            LedgerEntry::STATUS_PROCESSING,
+        ])) {
+            return false;
+        }
+
+        return in_array($entry->type, [
+            LedgerEntry::TYPE_DEPOSIT_PENDING,
+            LedgerEntry::TYPE_WITHDRAWAL,
+            LedgerEntry::TYPE_CASHOUT,
+        ]);
+    }
+
+    private function approveWalletTransaction(UserWallet $wallet, LedgerEntry $transaction): void
+    {
+        $metadata = array_merge($transaction->metadata ?? [], [
+            'approved_by_admin_id' => auth()->guard('admin')->id(),
+            'approved_by_admin_name' => auth()->guard('admin')->user()?->name,
+            'approved_at' => now()->toIso8601String(),
+            'approval_source' => 'admin_panel',
+        ]);
+
+        if ($transaction->type === LedgerEntry::TYPE_DEPOSIT_PENDING) {
+            $balanceBefore = (float) $wallet->balance;
+            $availableBefore = (float) $wallet->available_balance;
+            $amount = (float) $transaction->amount;
+            $balanceAfter = $balanceBefore + $amount;
+            $availableAfter = $availableBefore + $amount;
+
+            $completedEntry = LedgerEntry::create([
+                'wallet_type' => 'user',
+                'wallet_id' => $wallet->id,
+                'owner_type' => LedgerEntry::OWNER_TYPE_USER,
+                'owner_id' => $transaction->owner_id,
+                'type' => LedgerEntry::TYPE_DEPOSIT,
+                'amount' => $amount,
+                'balance_before' => $balanceBefore,
+                'balance_after' => $balanceAfter,
+                'available_balance_before' => $availableBefore,
+                'available_balance_after' => $availableAfter,
+                'description' => $transaction->description ?: 'إيداع تمت الموافقة عليه من الإدارة',
+                'status' => LedgerEntry::STATUS_COMPLETED,
+                'reference' => $this->generateWalletReference('DEP'),
+                'related_entry_id' => $transaction->id,
+                'metadata' => $metadata,
+                'processed_at' => now(),
+                'approved_at' => now(),
+            ]);
+
+            $transaction->update([
+                'status' => LedgerEntry::STATUS_COMPLETED,
+                'processed_at' => now(),
+                'approved_at' => now(),
+                'related_entry_id' => $completedEntry->id,
+                'metadata' => $metadata,
+            ]);
+
+            $this->updateWalletBalances($wallet, $balanceAfter);
+
+            return;
+        }
+
+        $transaction->update([
+            'status' => LedgerEntry::STATUS_COMPLETED,
+            'processed_at' => now(),
+            'approved_at' => now(),
+            'metadata' => $metadata,
+        ]);
+
+        $this->touchWallet($wallet);
+    }
+
+    private function rejectWalletTransaction(UserWallet $wallet, LedgerEntry $transaction, ?string $reason = null): void
+    {
+        $metadata = array_merge($transaction->metadata ?? [], [
+            'rejected_by_admin_id' => auth()->guard('admin')->id(),
+            'rejected_by_admin_name' => auth()->guard('admin')->user()?->name,
+            'rejected_at' => now()->toIso8601String(),
+            'rejection_reason' => $reason,
+            'rejection_source' => 'admin_panel',
+        ]);
+
+        if (in_array($transaction->type, [LedgerEntry::TYPE_WITHDRAWAL, LedgerEntry::TYPE_CASHOUT])) {
+            $newBalance = (float) $wallet->balance + (float) $transaction->amount;
+            $this->updateWalletBalances($wallet, $newBalance);
+
+            if ($transaction->type === LedgerEntry::TYPE_WITHDRAWAL) {
+                UserWallet::where('id', $wallet->id)->update([
+                    'total_withdrawals_today' => DB::raw('GREATEST(total_withdrawals_today - ' . (float) $transaction->amount . ', 0)')
+                ]);
+            }
+        } else {
+            $this->touchWallet($wallet);
+        }
+
+        $transaction->update([
+            'status' => LedgerEntry::STATUS_FAILED,
+            'processed_at' => now(),
+            'metadata' => $metadata,
+        ]);
+    }
+
+    private function updateWalletBalances(UserWallet $wallet, float $balance, ?float $withdrawalAmount = null): void
+    {
+        $updates = [
+            'balance' => $balance,
+            'last_transaction_at' => now(),
+            'version' => DB::raw('version + 1'),
+        ];
+
+        if (!is_null($withdrawalAmount)) {
+            $updates['total_withdrawals_today'] = DB::raw('total_withdrawals_today + ' . (float) $withdrawalAmount);
+        }
+
+        UserWallet::where('id', $wallet->id)->update($updates);
+        $wallet->refresh();
+    }
+
+    private function touchWallet(UserWallet $wallet): void
+    {
+        UserWallet::where('id', $wallet->id)->update([
+            'last_transaction_at' => now(),
+        ]);
+
+        $wallet->refresh();
+    }
+
+    private function getWalletEntryTypeLabel(string $type, string $direction): string
+    {
+        return match ($type) {
+            LedgerEntry::TYPE_DEPOSIT => 'إضافة رصيد',
+            LedgerEntry::TYPE_DEPOSIT_PENDING => 'إيداع معلق',
+            LedgerEntry::TYPE_WITHDRAWAL => 'سحب',
+            LedgerEntry::TYPE_TRANSFER_IN => 'تحويل وارد',
+            LedgerEntry::TYPE_TRANSFER_OUT => 'تحويل صادر',
+            LedgerEntry::TYPE_PAYMENT => 'دفع',
+            LedgerEntry::TYPE_REFUND => 'استرداد',
+            LedgerEntry::TYPE_FEE => 'رسوم',
+            LedgerEntry::TYPE_HOLD => 'حجز مبلغ',
+            LedgerEntry::TYPE_RELEASE => 'فك حجز',
+            LedgerEntry::TYPE_ADJUSTMENT => 'تعديل',
+            default => $direction === 'credit' ? 'إضافة' : 'خصم',
+        };
+    }
+
+    private function getWalletEntryStatusLabel(string $status): string
+    {
+        return match ($status) {
+            LedgerEntry::STATUS_PENDING => 'معلقة',
+            LedgerEntry::STATUS_PROCESSING => 'قيد المعالجة',
+            LedgerEntry::STATUS_COMPLETED => 'مكتملة',
+            LedgerEntry::STATUS_FAILED => 'مرفوضة',
+            LedgerEntry::STATUS_CANCELLED => 'ملغية',
+            LedgerEntry::STATUS_APPROVED => 'تمت الموافقة',
+            default => $status,
+        };
+    }
+
+    private function generateWalletReference(string $prefix): string
+    {
+        return $prefix . '-' . now()->format('YmdHis') . '-' . strtoupper(substr(uniqid(), -6));
     }
 
     /**

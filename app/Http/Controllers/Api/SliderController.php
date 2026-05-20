@@ -13,21 +13,20 @@ class SliderController extends Controller
     use ApiResponseTrait;
 
     /**
-     * Get sliders based on authenticated user type (driver/user).
+     * Get sliders based on user type.
+     * Guests receive user sliders by default.
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
         try {
-            $user = auth('sanctum')->user();
-            
-            if (!$user) {
-                return $this->errorResponse('المستخدم غير مصرح له', 401);
-            }
+            $user = auth('sanctum')->user() ?? auth()->user();
+            $sliderType = filled($user?->type) ? $user->type : 'user';
 
             // جلب السلايدرات حسب نوع المستخدم
-            $sliders = Slider::where('type', $user->type)
+            $sliders = Slider::query()
+                ->where('type', $sliderType)
                 ->where('is_active', 1)
                 ->orderBy('order', 'asc')
                 ->get();
@@ -45,7 +44,7 @@ class SliderController extends Controller
                 'تم جلب السلايدرات بنجاح'
             );
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return $this->errorResponse(
                 'حدث خطأ أثناء جلب السلايدرات: ' . $e->getMessage(),
                 500

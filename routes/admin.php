@@ -168,6 +168,7 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
 
         // User Wallet
         Route::get('/{user}/wallet', [UserController::class, 'wallet'])->name('wallet');
+        Route::post('/{user}/wallet/transaction', [UserController::class, 'storeWalletTransaction'])->name('wallet.store-transaction');
         Route::post('/{user}/wallet/transaction/{transactionId}/{action}', [UserController::class, 'processTransactionAction'])->name('wallet.transaction');
 
         // User Notifications
