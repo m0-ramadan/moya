@@ -164,6 +164,13 @@
                </a>
            </li>
 
+           <li class="menu-item">
+               <a href="{{ route('admin.operations.index') }}" class="menu-link">
+                   <i class="menu-icon ti ti-receipt-2"></i>
+                   <div>العمليات</div>
+               </a>
+           </li>
+
 
 
            {{-- <li class="menu-item ">

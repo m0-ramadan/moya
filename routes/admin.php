@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\ErrorController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\LogisticServiceController;
 use App\Http\Controllers\Admin\ManagerController;
+use App\Http\Controllers\Admin\OperationController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PaymentMethodController;
@@ -230,6 +231,11 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
 
         Route::get('/{order}/print', [OrderController::class, 'print'])->name('print');
         Route::get('/export', [OrderController::class, 'export'])->name('export');
+    });
+
+    Route::prefix('operations')->name('operations.')->group(function () {
+        Route::get('/', [OperationController::class, 'index'])->name('index');
+        Route::get('/{ledgerEntry}', [OperationController::class, 'show'])->name('show');
     });
 
     // Routes for Roles and Permissions
