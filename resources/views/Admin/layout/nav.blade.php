@@ -68,6 +68,7 @@
                  <ul class="dropdown-menu dropdown-menu-end py-0">
                      <li class="dropdown-menu-header border-bottom">
                          <div class="dropdown-header d-flex align-items-center py-3">
+                             <i class="ti ti-bell-ringing text-primary fs-4 me-2"></i>
                              <h5 class="text-body mb-0 me-auto">الاشعارات</h5>
                              <a href="javascript:void(0)" class="dropdown-notifications-all text-body"
                                  data-bs-toggle="tooltip" data-bs-placement="top" title="Mark all as read">

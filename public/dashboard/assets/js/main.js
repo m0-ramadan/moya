@@ -244,6 +244,157 @@ if (document.getElementById('layout-menu')) {
   // ------------
   const notificationMarkAsReadAll = document.querySelector('.dropdown-notifications-all');
   const notificationMarkAsReadList = document.querySelectorAll('.dropdown-notifications-read');
+  const listNotifications = document.getElementById('list_notifications');
+  const badgeNotifications = document.querySelector('.badge-notifications');
+  const btnNotify = document.getElementById('btn_notify');
+
+  // Load notifications from API
+  function loadNotifications() {
+    if (!listNotifications) return;
+
+    const adminToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
+    fetch('/admin/api/notifications', {
+      headers: {
+        'X-CSRF-TOKEN': adminToken,
+        'Accept': 'application/json'
+      }
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.notifications && data.notifications.length > 0) {
+          listNotifications.innerHTML = '';
+          
+          data.notifications.forEach(notification => {
+            const notificationEl = document.createElement('li');
+            notificationEl.className = 'list-group item list-group-item-action dropdown-notifications-item';
+            if (notification.read_at) {
+              notificationEl.classList.add('marked-as-read');
+            }
+            
+            notificationEl.innerHTML = `
+              <div class="d-flex">
+                <div class="flex-shrink-0 me-3">
+                  <div class="avatar">
+                    <span class="avatar-initial rounded-circle bg-label-primary">
+                      <i class="ti ti-bell"></i>
+                    </span>
+                  </div>
+                </div>
+                <div class="flex-grow-1">
+                  <h6 class="mb-1">${notification.title || 'إشعار جديد'}</h6>
+                  <p class="mb-0">${notification.message || notification.data?.body || ''}</p>
+                  <small class="text-muted text-nowrap">${new Date(notification.created_at).toLocaleString('ar-EG')}</small>
+                </div>
+                <div class="flex-shrink-0 dropdown-notifications-actions">
+                  <a href="javascript:void(0)" class="dropdown-notifications-read" data-id="${notification.id}">
+                    <i class="ti ti-circle-check"></i>
+                  </a>
+                  <a href="javascript:void(0)" class="dropdown-notifications-archive" data-id="${notification.id}">
+                    <i class="ti ti-trash"></i>
+                  </a>
+                </div>
+              </div>
+            `;
+            
+            listNotifications.appendChild(notificationEl);
+          });
+
+          // Update badge
+          const unreadCount = data.unread_count || 0;
+          if (badgeNotifications) {
+            badgeNotifications.textContent = unreadCount;
+            badgeNotifications.style.display = unreadCount > 0 ? 'block' : 'none';
+          }
+
+          // Rebind event listeners
+          attachNotificationListeners();
+        }
+      })
+      .catch(error => {
+        console.error('Error loading notifications:', error);
+      });
+  }
+
+  // Attach event listeners to notification items
+  function attachNotificationListeners() {
+    // Mark as read
+    document.querySelectorAll('.dropdown-notifications-read').forEach(item => {
+      item.addEventListener('click', event => {
+        event.preventDefault();
+        const notificationId = item.getAttribute('data-id');
+        const adminToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        fetch(`/admin/api/notifications/${notificationId}/mark-read`, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': adminToken,
+            'Accept': 'application/json'
+          }
+        })
+          .then(response => response.json())
+          .then(data => {
+            item.closest('.dropdown-notifications-item').classList.add('marked-as-read');
+            loadNotifications(); // Reload to update badge
+          })
+          .catch(error => console.error('Error marking notification as read:', error));
+      });
+    });
+
+    // Delete notification
+    document.querySelectorAll('.dropdown-notifications-archive').forEach(item => {
+      item.addEventListener('click', event => {
+        event.preventDefault();
+        const notificationId = item.getAttribute('data-id');
+        const adminToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        fetch(`/admin/api/notifications/${notificationId}`, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRF-TOKEN': adminToken,
+            'Accept': 'application/json'
+          }
+        })
+          .then(response => response.json())
+          .then(data => {
+            item.closest('.dropdown-notifications-item').remove();
+            loadNotifications(); // Reload to update badge
+          })
+          .catch(error => console.error('Error deleting notification:', error));
+      });
+    });
+
+    // Mark all as read
+    if (notificationMarkAsReadAll) {
+      notificationMarkAsReadAll.removeEventListener('click', null);
+      notificationMarkAsReadAll.addEventListener('click', event => {
+        event.preventDefault();
+        const adminToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        fetch('/admin/api/notifications/mark-all-read', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': adminToken,
+            'Accept': 'application/json'
+          }
+        })
+          .then(response => response.json())
+          .then(data => {
+            document.querySelectorAll('.dropdown-notifications-item').forEach(item => {
+              item.classList.add('marked-as-read');
+            });
+            loadNotifications(); // Reload to update badge
+          })
+          .catch(error => console.error('Error marking all as read:', error));
+      });
+    }
+  }
+
+  // Load notifications on page load
+  loadNotifications();
+
+  // Reload notifications every 30 seconds
+  setInterval(loadNotifications, 30000);
 
   // Notification: Mark as all as read
   if (notificationMarkAsReadAll) {

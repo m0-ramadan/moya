@@ -97,7 +97,7 @@
                                     <div class="d-flex align-items-center mb-2 pb-1">
                                         <div class="avatar me-2">
                                             <span class="avatar-initial rounded bg-label-danger">
-                                                <i class="ti ti-basket-x ti-md"></i>
+                                                <i class="ti ti-shopping-cart-x ti-md"></i>
                                             </span>
                                         </div>
                                         <h4 class="ms-1 mb-0">
@@ -198,58 +198,6 @@
                             </div>
                         </div>
 
-                        {{-- عدد المنتجات --}}
-                        <div class="col-sm-6 col-lg-4 mb-4">
-                            <div class="card card-border-shadow-warning">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center mb-2 pb-1">
-                                        <div class="avatar me-2">
-                                            <span class="avatar-initial rounded bg-label-warning">
-                                                <i class="ti ti-package ti-md"></i>
-                                            </span>
-                                        </div>
-                                        <h4 class="ms-1 mb-0"></h4>
-                                    </div>
-                                    <p class="mb-1">عدد المنتجات</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- المنتجات هذا الشهر --}}
-                        <div class="col-sm-6 col-lg-4 mb-4">
-                            <div class="card card-border-shadow-success">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center mb-2 pb-1">
-                                        <div class="avatar me-2">
-                                            <span class="avatar-initial rounded bg-label-success">
-                                                <i class="ti ti-package-import ti-md"></i>
-                                            </span>
-                                        </div>
-                                        <h4 class="ms-1 mb-0">
-
-                                        </h4>
-                                    </div>
-                                    <p class="mb-1">المنتجات المضافة هذا الشهر</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- الأقسام --}}
-                        <div class="col-sm-6 col-lg-4 mb-4">
-                            <div class="card card-border-shadow-secondary">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center mb-2 pb-1">
-                                        <div class="avatar me-2">
-                                            <span class="avatar-initial rounded bg-label-secondary">
-                                                <i class="ti ti-category ti-md"></i>
-                                            </span>
-                                        </div>
-                                        <h4 class="ms-1 mb-0"></h4>
-                                    </div>
-                                    <p class="mb-1">عدد الأقسام</p>
-                                </div>
-                            </div>
-                        </div>
 
                         {{-- الإيرادات --}}
                         <div class="col-sm-6 col-lg-4 mb-4">
