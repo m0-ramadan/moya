@@ -353,6 +353,8 @@ class PaymentController extends Controller
             // 🔥 فلترة حسب النوع
             if ($type === 'wallet') {
                 unset($gateways['wallet']);
+                unset($gateways['tamara']);
+                unset($gateways['tabby']);
                 unset($gateways['cash_on_delivery']);
             }
 
