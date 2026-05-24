@@ -1,5 +1,12 @@
+    <meta charset="utf-8" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
 
-<!-- Favicon -->
+    <title>
+            </title>
+
+    <meta name="description" content="" />
+    <!-- Favicon -->
 <link rel="icon" type="image/x-icon" href="#assets/img/favicon/favicon.ico" />
 
 <!-- Fonts -->
@@ -12,61 +19,53 @@
 
 
 <!-- Icons -->
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/fonts/fontawesome.css') }}">
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/fonts/fontawesome.css">
 
 <!-- Fonts -->
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/fonts/tabler-icons.css') }}" />
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/fonts/flag-icons.css') }}" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/fonts/tabler-icons.css" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/fonts/flag-icons.css" />
 
 <!-- Core CSS -->
-<script>
-    (function() {
-        const assetsPath = "{{ asset('dashboard/assets') }}/";
-        const style = document.documentElement.getAttribute('data-style') || 'light';
-        const coreCss = assetsPath + 'vendor/css/rtl/core' + (style === 'dark' ? '-dark' : '') + '.css';
-        const themeCss = assetsPath + 'vendor/css/rtl/theme-default' + (style === 'dark' ? '-dark' : '') + '.css';
-        
-        document.write('<link rel="stylesheet" type="text/css" href="' + coreCss + '" class="template-customizer-core-css" />');
-        document.write('<link rel="stylesheet" type="text/css" href="' + themeCss + '" class="template-customizer-theme-css" />');
-    })();
-</script>
-<link rel="stylesheet" href="{{ asset('dashboard/assets/css/demo.css') }}" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/css/rtl/core.css" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/css/rtl/theme-default.css" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/css/demo.css" />
 
 <!-- Vendors CSS -->
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/libs/node-waves/node-waves.css') }}" />
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css') }}" />
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/libs/typeahead-js/typeahead.css') }}" />
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/libs/apex-charts/apex-charts.css') }}" />
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/libs/swiper/swiper.css') }}" />
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.css') }}" />
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css') }}" />
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css') }}" />
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/libs/datatables-checkboxes-jquery/datatables.checkboxes.css') }}" />
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/css/pages/cards-advance.css') }}" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/libs/node-waves/node-waves.css" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/libs/typeahead-js/typeahead.css" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/libs/apex-charts/apex-charts.css" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/libs/swiper/swiper.css" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/libs/datatables-checkboxes-jquery/datatables.checkboxes.css" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/css/pages/cards-advance.css" />
 
 <!-- Select Inputs -->
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/libs/select2/select2.css') }}" />
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/libs/bootstrap-select/bootstrap-select.css') }}" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/libs/select2/select2.css" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/libs/bootstrap-select/bootstrap-select.css" />
 
 <!-- SweetAlert -->
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/libs/sweetalert2/sweetalert2.css') }}" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/libs/sweetalert2/sweetalert2.css" />
 
 <!-- Custom CSS -->
-<link rel="stylesheet" href="{{ asset('dashboard/assets/css/custome.css') }}" />
+<link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/css/custome.css" />
 
 
 
 <!-- Helpers -->
-<script src="{{ asset('dashboard/assets/vendor/js/helpers.js') }}"></script>
+<script src="https://dashboard.waytmiah.com/dashboard/assets/vendor/js/helpers.js"></script>
 <!--! Template customizer & Theme config files MUST be included after core stylesheets and helpers.js in the <head> section -->
 <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
 
-<script src="{{ asset('dashboard/assets/vendor/js/template-customizer.js') }}"></script>
+<script src="https://dashboard.waytmiah.com/dashboard/assets/vendor/js/template-customizer.js"></script>
 
 
-<script src="{{ asset('dashboard/assets/js/config.js') }}"></script>
+<script src="https://dashboard.waytmiah.com/dashboard/assets/js/config.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&family=Noto+Kufi+Arabic:wght@100..900&display=swap"
-        rel="stylesheet">
+        rel="stylesheet">    <!-- Page -->
+    <link rel="stylesheet" href="https://dashboard.waytmiah.com/dashboard/assets/vendor/css/pages/page-auth.css" />
