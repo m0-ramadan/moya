@@ -33,7 +33,7 @@ class OrderController extends Controller
             'location',
             'status',
             'acceptedOffer.driver.user',
-        ])->latest('order_date');
+        ])->latest('created_at');
 
         // Search by order number, user name, phone, etc.
         if ($request->filled('search')) {
