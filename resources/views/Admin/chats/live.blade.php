@@ -247,19 +247,23 @@
             const date = new Date(message.created_at);
             const timeAgo = timeSince(date);
 
+            // بناء اسم المرسل والصورة بأمان لتفادي الأخطاء عند استقبال رسائل من المشرف (والتي يكون فيها sender فارغاً)
+            const senderName = message.sender ? message.sender.name : 'الدعم الفني';
+            const isDriver = message.sender_type === 'App\\Models\\Driver';
+
             // بناء عنصر الرسالة
             const messageHtml = `
                 <div class="message-item mb-3 live-message">
                     <div class="d-flex gap-3">
-                        ${message.sender.avatar ? 
-                            `<img src="/storage/${message.sender.avatar}" class="message-avatar" alt="${message.sender.name}">` : 
+                        ${(message.sender && message.sender.avatar) ? 
+                            `<img src="/storage/${message.sender.avatar}" class="message-avatar" alt="${senderName}">` : 
                             `<div class="message-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
-                                <i class="fas fa-${message.sender_type === 'App\\Models\\Driver' ? 'truck' : 'user'}"></i>
+                                <i class="fas fa-${isDriver ? 'truck' : 'user'}"></i>
                             </div>`
                         }
                         <div class="message-content">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <strong>${message.sender.name}</strong>
+                                <strong>${senderName}</strong>
                                 <small class="text-muted">${timeAgo}</small>
                             </div>
                             
@@ -308,9 +312,10 @@
         // دالة لعرض التنبيه
         function showNotification(message) {
             if (Notification.permission === 'granted') {
+                const senderName = message.sender ? message.sender.name : 'الدعم الفني';
                 new Notification('رسالة جديدة', {
-                    body: `${message.sender.name}: ${message.message || 'رسالة صوتية'}`,
-                    icon: message.sender.avatar || '/favicon.ico'
+                    body: `${senderName}: ${message.message || 'رسالة صوتية'}`,
+                    icon: (message.sender && message.sender.avatar) ? message.sender.avatar : '/favicon.ico'
                 });
             }
         }
@@ -347,7 +352,7 @@
             window.location.reload();
         }
 
-        // تحديث تلقائي كل 30 ثانية
-        setInterval(refreshMessages, 30000);
+        // تحديث تلقائي كل 30 ثانية تم إيقافه للاعتماد كلياً على Pusher البث المباشر
+        // setInterval(refreshMessages, 30000);
     </script>
 @endsection

@@ -941,11 +941,11 @@
                                 <tr>
                                     <td>
                                         <div class="user-info">
-                                            <div class="user-avatar">
+                                            <div class="user-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
                                                 @if($user->avatar)
                                                     <img src="{{ asset('storage/' . $user->avatar) }}" alt="{{ $user->name }}">
                                                 @else
-                                                    {{ substr($user->name, 0, 1) }}
+                                                    <i class="fas fa-{{ $user->driver ? 'truck' : 'user' }}"></i>
                                                 @endif
                                             </div>
                                             <div class="user-details">

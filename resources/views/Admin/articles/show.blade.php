@@ -927,8 +927,12 @@
                             <div class="comment">
                                 <div class="comment-header">
                                     <div class="comment-author">
-                                        <div class="comment-avatar">
-                                            {{ substr($comment->user->name ?? ($comment->guest_name ?? 'زائر'), 0, 1) }}
+                                        <div class="comment-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
+                                            @if($comment->user && $comment->user->avatar)
+                                                <img src="{{ asset('storage/' . $comment->user->avatar) }}" alt="{{ $comment->user->name }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                            @else
+                                                <i class="fas fa-user" style="font-size: 14px;"></i>
+                                            @endif
                                         </div>
                                         <div>
                                             <div class="comment-name">
@@ -963,10 +967,14 @@
                                         <div class="comment-reply">
                                             <div class="comment-header">
                                                 <div class="comment-author">
-                                                    <div class="comment-avatar"
-                                                        style="width: 30px; height: 30px; font-size: 12px;">
-                                                        {{ substr($reply->user->name ?? ($reply->guest_name ?? 'رد'), 0, 1) }}
-                                                    </div>
+                                                     <div class="comment-avatar d-flex align-items-center justify-content-center bg-secondary text-white"
+                                                         style="width: 30px; height: 30px;">
+                                                         @if($reply->user && $reply->user->avatar)
+                                                             <img src="{{ asset('storage/' . $reply->user->avatar) }}" alt="{{ $reply->user->name }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                                         @else
+                                                             <i class="fas fa-user" style="font-size: 10px;"></i>
+                                                         @endif
+                                                     </div>
                                                     <div>
                                                         <div class="comment-name" style="font-size: 14px;">
                                                             {{ $reply->user->name ?? ($reply->guest_name ?? 'رد') }}

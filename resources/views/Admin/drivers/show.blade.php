@@ -969,11 +969,11 @@
             <!-- Profile Header -->
             <div class="profile-header">
                 <div class="profile-header-content">
-                    <div class="profile-avatar">
+                    <div class="profile-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
                         @if($driver->personal_photo)
                             <img src="{{ asset('storage/' . $driver->personal_photo) }}" alt="{{ $driver->user->name }}">
                         @else
-                            {{ substr($driver->user->name, 0, 1) }}
+                            <i class="fas fa-truck" style="font-size: 24px;"></i>
                         @endif
                     </div>
 

@@ -605,8 +605,12 @@
                             </div>
                             <div class="card-body">
                                 <div class="user-info-card">
-                                    <div class="user-avatar-lg">
-                                        {{ substr($contract->user->name ?? '?', 0, 1) }}
+                                    <div class="user-avatar-lg d-flex align-items-center justify-content-center bg-secondary text-white">
+                                        @if($contract->user && $contract->user->avatar)
+                                            <img src="{{ asset('storage/' . $contract->user->avatar) }}" alt="{{ $contract->user->name }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                        @else
+                                            <i class="fas fa-user" style="font-size: 32px;"></i>
+                                        @endif
                                     </div>
                                     <div class="user-details">
                                         <div class="user-name">{{ $contract->user->name ?? 'عميل محذوف' }}</div>

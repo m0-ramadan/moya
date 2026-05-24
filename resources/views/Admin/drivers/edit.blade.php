@@ -602,11 +602,11 @@
 
         <!-- Driver Info Card -->
         <div class="driver-info-card">
-            <div class="driver-avatar">
+            <div class="driver-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
                 @if($driver->personal_photo)
                     <img src="{{ asset('storage/' . $driver->personal_photo) }}" alt="{{ $driver->user->name }}">
                 @else
-                    {{ substr($driver->user->name, 0, 1) }}
+                    <i class="fas fa-truck" style="font-size: 24px;"></i>
                 @endif
             </div>
             <div class="driver-details">

@@ -966,7 +966,7 @@
                                                 @if($user->avatar)
                                                     <img src="{{ asset('storage/' . $user->avatar) }}" alt="{{ $user->name }}">
                                                 @else
-                                                    {{ substr($user->name, 0, 1) }}
+                                                    <i class="fas fa-{{ $user->driver ? 'truck' : 'user' }}"></i>
                                                 @endif
                                             </div>
                                             <div class="user-details">

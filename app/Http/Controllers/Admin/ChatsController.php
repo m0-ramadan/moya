@@ -85,9 +85,9 @@ class ChatsController extends Controller
         // الترقيم
         $chats = $query->paginate(20);
 
-        // جلب المستخدمين والسائقين للفلترة
-        $users = User::select('id', 'name')->get();
-        $drivers = Driver::select('id', 'full_name')->get();
+        // جلب المستخدمين والسائقين للفلترة (مع التخزين في الذاكرة بـ ID)
+        $users = User::select('id', 'name', 'avatar')->get()->keyBy('id');
+        $drivers = Driver::with('user')->get()->keyBy('id');
 
         // حساب الرسائل غير المقروءة لكل محادثة
         foreach ($chats as $chat) {
@@ -99,7 +99,20 @@ class ChatsController extends Controller
             $chat->participants_info = $this->getParticipantsInfo($chat, $users, $drivers);
         }
 
-        return view('Admin.chats.index', compact('chats', 'stats', 'users', 'drivers'));
+        // تحويل السائقين للفلترة في الواجهة
+        $driversFilter = $drivers->map(function ($d) {
+            return (object) [
+                'id' => $d->id,
+                'name' => $d->user?->name ?? 'سائق غير معروف'
+            ];
+        });
+
+        return view('Admin.chats.index', [
+            'chats' => $chats,
+            'stats' => $stats,
+            'users' => $users,
+            'drivers' => $driversFilter
+        ]);
     }
 
     /**
@@ -120,7 +133,7 @@ class ChatsController extends Controller
         $participantIds = collect($chat->participants)->unique();
 
         $users = User::whereIn('id', $participantIds)->get()->keyBy('id');
-        $drivers = Driver::whereIn('id', $participantIds)->get()->keyBy('id');
+        $drivers = Driver::with('user')->whereIn('id', $participantIds)->get()->keyBy('id');
 
         $participantsInfo = collect($chat->participants)->map(function ($id) use ($users, $drivers) {
 
@@ -129,22 +142,21 @@ class ChatsController extends Controller
                 return [
                     'id' => $u->id,
                     'name' => $u->name,
-                    'email' => $u->email,
                     'avatar' => $u->avatar,
                     'type' => 'user',
-                    'is_online' => $u->last_seen && $u->last_seen->gt(now()->subMinutes(5)),
+                    'is_online' => false,
                 ];
             }
 
             if ($drivers->has($id)) {
                 $d = $drivers[$id];
+                $u = $d->user;
                 return [
                     'id' => $d->id,
-                    'name' => $d->name,
-                    'email' => $d->email,
-                    'avatar' => $d->avatar,
+                    'name' => $u?->name ?? 'سائق غير معروف',
+                    'avatar' => $u?->avatar ?? '',
                     'type' => 'driver',
-                    'is_online' => $d->last_seen && $d->last_seen->gt(now()->subMinutes(5)),
+                    'is_online' => false,
                 ];
             }
 
@@ -291,8 +303,8 @@ class ChatsController extends Controller
                     $item->name = $user ? $user->name : 'Unknown';
                     $item->type = 'User';
                 } else {
-                    $driver = Driver::find($item->sender_id);
-                    $item->name = $driver ? $driver->name : 'Unknown';
+                    $driver = Driver::with('user')->find($item->sender_id);
+                    $item->name = $driver?->user?->name ?? 'Unknown';
                     $item->type = 'Driver';
                 }
                 return $item;
@@ -342,7 +354,7 @@ class ChatsController extends Controller
             ->values();
 
         $users = User::whereIn('id', $participantIds)->get()->keyBy('id');
-        $drivers = Driver::whereIn('id', $participantIds)->get()->keyBy('id');
+        $drivers = Driver::with('user')->whereIn('id', $participantIds)->get()->keyBy('id');
 
         foreach ($recentChats as $chat) {
             $chat->unread_count = $unreadCounts[$chat->id] ?? 0;
@@ -356,18 +368,19 @@ class ChatsController extends Controller
                         'name' => $u->name,
                         'avatar' => $u->avatar,
                         'type' => 'user',
-                        'is_online' => $u->last_seen && $u->last_seen->gt(now()->subMinutes(5)),
+                        'is_online' => false,
                     ];
                 }
 
                 if ($drivers->has($id)) {
                     $d = $drivers[$id];
+                    $u = $d->user;
                     return [
                         'id' => $d->id,
-                        'name' => $d->name,
-                        'avatar' => $d->avatar,
+                        'name' => $u?->name ?? 'سائق غير معروف',
+                        'avatar' => $u?->avatar,
                         'type' => 'driver',
-                        'is_online' => $d->last_seen && $d->last_seen->gt(now()->subMinutes(5)),
+                        'is_online' => false,
                     ];
                 }
 
@@ -401,29 +414,29 @@ class ChatsController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'email' => $user->email,
                     'avatar' => $user->avatar,
                     'type' => 'user',
-                    'is_online' => $user->last_seen && $user->last_seen->diffInMinutes(now()) < 5,
+                    'is_online' => false,
                 ];
             }
 
             if ($drivers->has($id)) {
                 $driver = $drivers[$id];
+                $user = $driver->user;
 
                 return [
                     'id' => $driver->id,
-                    'name' => $driver->name,
-                    'email' => $driver->email,
-                    'avatar' => $driver->avatar,
+                    'name' => $user?->name ?? 'سائق غير معروف',
+                    'avatar' => $user?->avatar ?? '',
                     'type' => 'driver',
-                    'is_online' => $driver->last_seen && $driver->last_seen->diffInMinutes(now()) < 5,
+                    'is_online' => false,
                 ];
             }
 
             return null;
         })->filter()->values()->toArray();
     }
+
     /**
      * إرسال رسالة كمشرف
      */
@@ -484,10 +497,20 @@ class ChatsController extends Controller
             ->orderBy('name')
             ->get();
 
-        $drivers = Driver::select('id', 'full_name', 'phone_number')
-            ->where('status', 'active')
-            ->orderBy('full_name')
-            ->get();
+        $drivers = Driver::with('user')
+            ->whereHas('user', function($q) {
+                $q->where('status', 'active');
+            })
+            ->get()
+            ->map(function($driver) {
+                return (object) [
+                    'id' => $driver->id,
+                    'full_name' => $driver->user?->name ?? 'سائق بدون اسم',
+                    'phone_number' => $driver->user?->phone_number ?? ''
+                ];
+            })
+            ->sortBy('full_name')
+            ->values();
 
         return view('Admin.chats.create', compact('users', 'drivers'));
     }
@@ -613,22 +636,32 @@ class ChatsController extends Controller
         try {
             if ($request->type == 'user') {
                 $participant = User::findOrFail($request->id);
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'id' => $participant->id,
+                        'name' => $participant->name,
+                        'phone' => $participant->phone_number,
+                        'avatar' => $participant->avatar,
+                        'is_online' => false,
+                        'last_seen' => 'غير متصل'
+                    ]
+                ]);
             } else {
-                $participant = Driver::findOrFail($request->id);
+                $participant = Driver::with('user')->findOrFail($request->id);
+                $user = $participant->user;
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'id' => $participant->id,
+                        'name' => $user?->name ?? 'سائق غير معروف',
+                        'phone' => $user?->phone_number ?? '',
+                        'avatar' => $user?->avatar ?? '',
+                        'is_online' => false,
+                        'last_seen' => 'غير متصل'
+                    ]
+                ]);
             }
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'id' => $participant->id,
-                    'name' => $participant->name,
-                    // 'email' => $participant->email,
-                    'phone' => $participant->phone_number,
-                    // 'avatar' => $participant->avatar,
-                    // 'is_online' => $participant->is_online ?? false,
-                    'last_seen' => $participant->last_seen ? $participant->last_seen->diffForHumans() : 'غير متصل'
-                ]
-            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -656,7 +689,6 @@ class ChatsController extends Controller
             $users = User::where('status', 'active')
                 ->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                        // ->orWhere('email', 'like', "%{$search}%")
                         ->orWhere('phone_number', 'like', "%{$search}%");
                 })
                 ->limit(10)
@@ -665,9 +697,8 @@ class ChatsController extends Controller
                     return [
                         'id' => $user->id,
                         'name' => $user->name,
-                        // 'email' => $user->email,
                         'phone' => $user->phone_number,
-                        // 'avatar' => $user->avatar,
+                        'avatar' => $user->avatar,
                         'type' => 'user',
                         'type_label' => 'مستخدم'
                     ];
@@ -677,24 +708,25 @@ class ChatsController extends Controller
         }
 
         if ($type == 'all' || $type == 'driver') {
-            $drivers = Driver::where('status', 'active')
-                ->where(function ($q) use ($search) {
-                    $q->where('full_name', 'like', "%{$search}%")
-                        // ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('phone_number', 'like', "%{$search}%");
+            $drivers = Driver::with('user')
+                ->whereHas('user', function ($q) use ($search) {
+                    $q->where('status', 'active')
+                      ->where(function ($q2) use ($search) {
+                          $q2->where('name', 'like', "%{$search}%")
+                             ->orWhere('phone_number', 'like', "%{$search}%");
+                      });
                 })
                 ->limit(10)
                 ->get()
                 ->map(function ($driver) {
+                    $user = $driver->user;
                     return [
                         'id' => $driver->id,
-                        'name' => $driver->name,
-                        // 'email' => $driver->email,
-                        'phone_number' => $driver->phone_number,
-                        // 'avatar' => $driver->avatar,
+                        'name' => $user?->name ?? 'سائق غير معروف',
+                        'phone_number' => $user?->phone_number ?? '',
+                        'avatar' => $user?->avatar ?? '',
                         'type' => 'driver',
-                        'type_label' => 'سائق',
-                        // 'is_online' => $driver->is_online
+                        'type_label' => 'سائق'
                     ];
                 });
 
@@ -712,17 +744,15 @@ class ChatsController extends Controller
      */
     public function adminChats(Request $request)
     {
-
         $currentUser = auth()->user();
 
         // جلب المحادثات التي يكون المشرف طرفاً فيها
         $query = Chat::with(['latestMessage.sender'])
-            // ->whereJsonContains('participants', (string)$currentUser->id)
-            // ->where(function ($q) {
-            //     $q->where('type', 'admin_user')
-            //         ->orWhere('type', 'admin_driver');
-            // })
-        ;
+            ->whereJsonContains('participants', (string)$currentUser->id)
+            ->where(function ($q) {
+                $q->where('type', 'admin_user')
+                    ->orWhere('type', 'admin_driver');
+            });
 
         // فلترة حسب النوع
         if ($request->filled('chat_type')) {
@@ -781,27 +811,26 @@ class ChatsController extends Controller
 
         // محاولة العثور على مستخدم
         $user = User::find($otherId);
-        if ($user) {
+        if ($user && $user->type === 'user') {
             return [
                 'id' => $user->id,
                 'name' => $user->name,
-                'email' => $user->email,
                 'avatar' => $user->avatar,
                 'type' => 'user',
-                'is_online' => $user->last_seen && $user->last_seen->diffInMinutes(now()) < 5
+                'is_online' => false
             ];
         }
 
         // محاولة العثور على سائق
-        $driver = Driver::find($otherId);
+        $driver = Driver::with('user')->find($otherId);
         if ($driver) {
+            $user = $driver->user;
             return [
                 'id' => $driver->id,
-                'name' => $driver->name,
-                'email' => $driver->email,
-                'avatar' => $driver->avatar,
+                'name' => $user?->name ?? 'سائق غير معروف',
+                'avatar' => $user?->avatar ?? '',
                 'type' => 'driver',
-                'is_online' => $driver->is_online
+                'is_online' => false
             ];
         }
 

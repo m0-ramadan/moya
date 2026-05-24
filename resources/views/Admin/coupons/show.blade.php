@@ -399,8 +399,14 @@
                                     <div class="d-flex justify-content-between align-items-center" bis_skin_checked="1">
                                         <div class="d-flex align-items-center gap-3" bis_skin_checked="1">
                                             @if($usage->user)
-                                                <img src="{{ $usage->user->avatar ? get_user_image($usage->user->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($usage->user->name) }}" 
-                                                     class="user-avatar" alt="{{ $usage->user->name }}">
+                                                @if($usage->user->avatar)
+                                                    <img src="{{ get_user_image($usage->user->avatar) }}" 
+                                                         class="user-avatar" alt="{{ $usage->user->name }}">
+                                                @else
+                                                    <div class="user-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
+                                                        <i class="fas fa-user" style="font-size: 14px;"></i>
+                                                    </div>
+                                                @endif
                                                 <div bis_skin_checked="1">
                                                     <div class="fw-semibold" bis_skin_checked="1">{{ $usage->user->name }}</div>
                                                     <small class="text-muted">{{ $usage->created_at->diffForHumans() }}</small>
@@ -476,8 +482,14 @@
                                 <td>
                                     @if($usage->user)
                                         <div class="d-flex align-items-center gap-2" bis_skin_checked="1">
-                                            <img src="{{ $usage->user->avatar ? get_user_image($usage->user->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($usage->user->name) }}" 
-                                                 class="user-avatar" alt="{{ $usage->user->name }}">
+                                            @if($usage->user->avatar)
+                                                <img src="{{ get_user_image($usage->user->avatar) }}" 
+                                                     class="user-avatar" alt="{{ $usage->user->name }}">
+                                            @else
+                                                <div class="user-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
+                                                    <i class="fas fa-user" style="font-size: 14px;"></i>
+                                                </div>
+                                            @endif
                                             <div bis_skin_checked="1">
                                                 <div class="fw-semibold" bis_skin_checked="1">{{ $usage->user->name }}</div>
                                                 <small class="text-muted">{{ $usage->user->email }}</small>

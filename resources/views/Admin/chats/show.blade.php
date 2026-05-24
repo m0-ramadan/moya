@@ -594,7 +594,6 @@
                                 </div>
                                 <div class="flex-grow-1" bis_skin_checked="1">
                                     <h6 class="mb-1">{{ $participant['name'] }}</h6>
-                                    <p class="mb-1 text-muted">{{ $participant['email'] }}</p>
                                     <small class="badge bg-{{ $participant['type'] == 'user' ? 'info' : 'warning' }}">
                                         {{ $participant['type'] == 'user' ? 'مستخدم' : 'سائق' }}
                                     </small>
@@ -610,7 +609,7 @@
 
                     <!-- أزرار التحكم -->
                     <div class="control-buttons" bis_skin_checked="1">
-                        <a href="{{ route('admin.chats.index') }}" class="btn btn-secondary flex-grow-1">
+                        <a href="{{ (str_contains($chat->type, 'admin_')) ? route('admin.adminChats.index') : route('admin.chats.index') }}" class="btn btn-secondary flex-grow-1">
                             <i class="fas fa-arrow-right me-2"></i>العودة للقائمة
                         </a>
                         <button class="btn btn-danger delete-chat-btn" data-id="{{ $chat->id }}">
@@ -745,10 +744,10 @@
                                         </div>
                                     </div>
 
-                                    @if (($message->sender_type == 'admin' || $message->sender_id == auth()->id()) && $message->sender_type != 'admin')
+                                    @if ($message->sender_type == 'admin')
                                         @if (isset(auth()->user()->avatar) && auth()->user()->avatar)
                                             <img src="{{ asset('storage/' . auth()->user()->avatar) }}"
-                                                class="message-avatar" alt="أنت">
+                                                class="message-avatar" alt="أنت" title="الدعم الفني">
                                         @else
                                             <div class="message-avatar d-flex align-items-center justify-content-center bg-primary text-white" title="أنت">
                                                 <i class="fas fa-user-tie"></i>
@@ -1024,17 +1023,21 @@
                 hour12: true
             });
 
+            // بناء اسم المرسل والصورة بأمان لتفادي الأخطاء عند استقبال رسائل من المشرف (والتي يكون فيها sender فارغاً)
+            const senderName = message.sender ? message.sender.name : 'الدعم الفني';
+            const isDriver = message.sender_type === 'App\\Models\\Driver';
+
             // بناء عنصر الرسالة
             const messageHtml = `
                 <div class="message-wrapper ${message.sender_type === 'admin' ? 'admin' : 'received'}">
                     ${message.sender_type !== 'admin' ? `
-                                    ${message.sender.avatar ? 
+                                    ${(message.sender && message.sender.avatar) ? 
                                         `<img src="/storage/${message.sender.avatar}" 
                                              class="message-avatar" 
-                                             alt="${message.sender.name || 'User'}"
-                                             title="${message.sender.name}">` : 
-                                        `<div class="message-avatar d-flex align-items-center justify-content-center bg-secondary text-white" title="${message.sender.name || 'User'}">
-                                            <i class="fas fa-${message.sender_type === 'App\\Models\\Driver' ? 'truck' : 'user'}"></i>
+                                             alt="${senderName}"
+                                             title="${senderName}">` : 
+                                        `<div class="message-avatar d-flex align-items-center justify-content-center bg-secondary text-white" title="${senderName}">
+                                            <i class="fas fa-${isDriver ? 'truck' : 'user'}"></i>
                                          </div>`
                                     }
                                     ` : ''}
@@ -1042,12 +1045,12 @@
                     <div class="message-content">
                         ${message.sender_type !== 'admin' ? `
                                             <div class="message-sender">
-                                                ${message.sender.name}
+                                                ${senderName}
                                                 <small class="text-muted ms-2">
-                                                    (${message.sender_type === 'App\\Models\\User' ? 'مستخدم' : 'سائق'})
+                                                    (${isDriver ? 'سائق' : 'مستخدم'})
                                                 </small>
                                             </div>
-                                        ` : ''}
+                                         ` : ''}
                         
                         <div class="message-bubble">
                             ${getMessageContent(message)}
@@ -1067,7 +1070,7 @@
             scrollToBottom();
 
             // عرض تنبيه
-            showNewMessageAlert(message.sender.name, message.message || 'رسالة جديدة');
+            showNewMessageAlert(senderName, message.message || 'رسالة جديدة');
         }
 
         // دالة للحصول على محتوى الرسالة
@@ -1147,22 +1150,6 @@
             $('#imageModal').modal('show');
         }
 
-        // تحديث تلقائي للرسائل
-        function refreshMessages() {
-            $.ajax({
-                url: "{{ route('admin.chats.show', $chat->id) }}",
-                type: 'GET',
-                data: {
-                    partial: true
-                },
-                success: function(response) {
-                    // تحديث قائمة الرسائل
-                    // يمكنك تحديث الجزء المطلوب فقط
-                }
-            });
-        }
-
-        // تحديث تلقائي كل 10 ثواني
-        setInterval(refreshMessages, 10000);
+        // تحديث تلقائي للرسائل (تم إيقافه للاعتماد كلياً على Pusher)
     </script>
 @endsection

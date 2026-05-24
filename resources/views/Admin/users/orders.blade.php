@@ -249,9 +249,11 @@
                 <div class="col-auto" bis_skin_checked="1">
                     @if ($user->image)
                         <img src="{{ asset('storage/' . $user->image) }}" alt="{{ $user->name }}" class="user-avatar">
+                    @elseif ($user->avatar)
+                        <img src="{{ asset('storage/' . $user->avatar) }}" alt="{{ $user->name }}" class="user-avatar">
                     @else
-                        <div class="user-avatar-placeholder" bis_skin_checked="1">
-                            {{ strtoupper(substr($user->name, 0, 1)) }}
+                        <div class="user-avatar-placeholder d-flex align-items-center justify-content-center bg-secondary text-white" bis_skin_checked="1">
+                            <i class="fas fa-user" style="font-size: 24px;"></i>
                         </div>
                     @endif
                 </div>

@@ -287,7 +287,6 @@
                                     </div>
                                     <div class="flex-grow-1" bis_skin_checked="1">
                                         <h6 class="mb-1" id="selectedName"></h6>
-                                        <p class="mb-1 text-muted" id="selectedEmail"></p>
                                         <span id="selectedType" class="type-badge"></span>
                                     </div>
                                     <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearSelection()">
@@ -465,7 +464,6 @@
                                     </div>
                                     <div class="flex-grow-1">
                                         <h6 class="mb-1">${participant.name}</h6>
-                                        <p class="mb-1 text-muted">${participant.email}</p>
                                         <span class="type-badge badge-${participant.type}">
                                             ${participant.type_label}
                                         </span>
@@ -522,7 +520,6 @@
                     $('#selectedAvatarIcon').html(`<i class="fas fa-${participant.type === 'user' ? 'user' : 'truck'}"></i>`).show();
                 }
                 $('#selectedName').text(participant.name);
-                $('#selectedEmail').text(participant.email);
 
                 if (participant.is_online) {
                     $('#selectedOnline').show();

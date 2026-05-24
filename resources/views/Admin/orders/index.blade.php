@@ -837,8 +837,12 @@
                                             <span class="detail-value">
                                                 @if($order->driver && $order->driver->user)
                                                     <div class="driver-info">
-                                                        <div class="driver-avatar">
-                                                            {{ substr($order->driver->user->name ?? 'S', 0, 1) }}
+                                                        <div class="driver-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
+                                                            @if($order->driver && $order->driver->personal_photo)
+                                                                <img src="{{ asset('storage/' . $order->driver->personal_photo) }}" alt="{{ $order->driver->user->name }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                                            @else
+                                                                <i class="fas fa-truck" style="font-size: 12px;"></i>
+                                                            @endif
                                                         </div>
                                                         <div>
                                                             {{ $order->driver->user->name }}

@@ -1091,12 +1091,12 @@
                                 <tr>
                                     <td>
                                         <div class="driver-info">
-                                            <div class="driver-avatar">
+                                            <div class="driver-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
                                                 @if ($driver->personal_photo)
                                                     <img src="{{ asset('storage/' . $driver->personal_photo) }}"
                                                         alt="{{ $driver->user?->name ?? 'غير متوفر' }}">
                                                 @else
-                                                    {{ substr($driver->user?->name ?? 'غير متوفر', 0, 1) }}
+                                                    <i class="fas fa-truck"></i>
                                                 @endif
                                             </div>
                                             <div class="driver-details">

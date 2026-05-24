@@ -696,8 +696,8 @@
                                 <div class="message-item {{ $contact->is_read ? 'read' : 'unread' }}" id="message-{{ $contact->id }}">
                                     <div class="message-header">
                                         <div class="message-sender">
-                                            <div class="sender-avatar">
-                                                {{ mb_substr($contact->name, 0, 1) }}
+                                            <div class="sender-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
+                                                <i class="fas fa-user" style="font-size: 14px;"></i>
                                             </div>
                                             <div class="sender-info">
                                                 <h6>
@@ -928,8 +928,8 @@
                     $('#messageModalBody').html(`
                         <div class="mb-4">
                             <div class="d-flex align-items-center gap-3 mb-3">
-                                <div class="sender-avatar" style="width:50px;height:50px;font-size:20px;">
-                                    ${response.name ? response.name.charAt(0).toUpperCase() : '?'}
+                                <div class="sender-avatar d-flex align-items-center justify-content-center bg-secondary text-white" style="width:50px;height:50px;">
+                                    <i class="fas fa-user" style="font-size: 20px;"></i>
                                 </div>
                                 <div>
                                     <h6 class="mb-1">
