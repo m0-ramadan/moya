@@ -823,10 +823,10 @@
                                             <span class="detail-value">
                                                 <i class="fas fa-user me-1"></i>
                                                 {{ $order->user->name ?? 'غير محدد' }}
-                                                @if($order->user && $order->user->phone)
+                                                @if($order->user && $order->user->full_phone)
                                                     <br>
                                                     <small class="text-muted">
-                                                        <i class="fas fa-phone me-1"></i>{{ $order->user->phone }}
+                                                        <i class="fas fa-phone me-1"></i>{{ $order->user->full_phone }}
                                                     </small>
                                                 @endif
                                             </span>
