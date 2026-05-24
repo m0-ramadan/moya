@@ -65,7 +65,7 @@
                                             </span>
                                         </div>
                                         <h4 class="ms-1 mb-0">
-                                            {{ \App\Models\Order::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count() }}
+                                            {{ $thisMonthOrders }}
                                         </h4>
                                     </div>
                                     <p class="mb-1">الطلبات في الشهر</p>
@@ -83,7 +83,7 @@
                                                 <i class="ti ti-basket-filled ti-md"></i>
                                             </span>
                                         </div>
-                                        <h4 class="ms-1 mb-0">{{ \App\Models\Order::count() }}</h4>
+                                        <h4 class="ms-1 mb-0">{{ $totalOrders }}</h4>
                                     </div>
                                     <p class="mb-1">إجمالي الطلبات</p>
                                 </div>
@@ -101,6 +101,7 @@
                                             </span>
                                         </div>
                                         <h4 class="ms-1 mb-0">
+                                            {{ $cancelledOrders }}
                                         </h4>
                                     </div>
                                     <p class="mb-1">الطلبات الملغية</p>
@@ -118,7 +119,7 @@
                                                 <i class="ti ti-users ti-md"></i>
                                             </span>
                                         </div>
-                                        <h4 class="ms-1 mb-0">{{ \App\Models\User::count() }}</h4>
+                                        <h4 class="ms-1 mb-0">{{ $totalCustomers }}</h4>
                                     </div>
                                     <p class="mb-1">عدد العملاء</p>
                                 </div>
@@ -136,7 +137,7 @@
                                             </span>
                                         </div>
                                         <h4 class="ms-1 mb-0">
-                                            {{ \App\Models\User::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count() }}
+                                            {{ $thisMonthCustomers }}
                                         </h4>
                                     </div>
                                     <p class="mb-1">العملاء في الشهر</p>
@@ -154,7 +155,7 @@
                                                 <i class="ti ti-user-cog ti-md"></i>
                                             </span>
                                         </div>
-                                        <h4 class="ms-1 mb-0">{{ \App\Models\Admin::count() }}</h4>
+                                        <h4 class="ms-1 mb-0">{{ $totalStaff }}</h4>
                                     </div>
                                     <p class="mb-1">عدد الموظفين</p>
                                 </div>
@@ -171,7 +172,7 @@
                                                 <i class="ti ti-eye ti-md"></i>
                                             </span>
                                         </div>
-                                        <h4 class="ms-1 mb-0">{{ \App\Models\Visitor::count() }}</h4>
+                                        <h4 class="ms-1 mb-0">{{ $totalVisits }}</h4>
                                     </div>
                                     <p class="mb-1">عدد الزيارات</p>
                                 </div>
@@ -189,7 +190,7 @@
                                             </span>
                                         </div>
                                         <h4 class="ms-1 mb-0">
-                                            {{ \App\Models\Visitor::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count() }}
+                                            {{ $thisMonthVisits }}
                                         </h4>
                                     </div>
                                     <p class="mb-1">الزيارات في الشهر</p>
@@ -401,16 +402,23 @@
                 <div class="col-12 col-xl-6 col-md-6 mb-4">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between">
-                            <h4 id="visitors_data">احصائيات الزيارات حسب الدولة</h4>
+                            <h4 id="visitors_data">احصائيات الزيارات حسب الشهر</h4>
 
-                            <div class="col-md-4 mb-4">
+                            <div class="col-md-3 mb-4">
                                 <select name="visitors_year" id="visitors_year" class="form-control select2">
                                     <option value="">اختر السنة</option>
-                                    <option value="2025">2025</option>
-                                    <option value="2024">2024</option>
-                                    <option value="2023">2023</option>
-                                    <option value="2022">2022</option>
-                                    <option value="2021">2021</option>
+                                    @foreach ($visitorYears as $year)
+                                        <option value="{{ $year }}" @selected($year === now()->year)>{{ $year }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-3 mb-4">
+                                <select name="visitors_month" id="visitors_month" class="form-control select2">
+                                    <option value="">كل الشهور</option>
+                                    @foreach ($visitorMonths as $monthNumber => $monthName)
+                                        <option value="{{ $monthNumber }}">{{ $monthName }}</option>
+                                    @endforeach
                                 </select>
                             </div>
 
@@ -543,64 +551,91 @@
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     <script>
-        function loadVisitorsChart(year = null) {
-            $.ajax({
-                url: "{{ route('admin.visitors.chart') }}",
-                data: {
-                    year: year
+        const visitorChartData = @json($visitorChartData);
+        let visitorsChart = null;
+
+        function loadVisitorsChart(year = null, month = null) {
+            var selectedYear = year || new Date().getFullYear();
+            var selectedMonth = month || '';
+            var selectedMonthText = $('#visitors_month option:selected').text();
+            var response = selectedMonth
+                ? ((visitorChartData.daily[selectedYear] && visitorChartData.daily[selectedYear][selectedMonth]) || {
+                    labels: [],
+                    visits: [],
+                    unique_visitors: []
+                })
+                : (visitorChartData.monthly[selectedYear] || {
+                    labels: [],
+                    visits: [],
+                    unique_visitors: []
+                });
+            var chartEl = document.querySelector("#visitorsAreaChart");
+            var title = selectedMonth
+                ? `احصائيات الزيارات اليومية - ${selectedMonthText} ${selectedYear}`
+                : `احصائيات الزيارات الشهرية - ${selectedYear}`;
+
+            $("#visitors_data").text(title);
+
+            var chartOptions = {
+                series: [{
+                        name: "عدد الزيارات",
+                        data: response.visits
+                    },
+                    {
+                        name: "الزوار المميزون",
+                        data: response.unique_visitors
+                    }
+                ],
+                chart: {
+                    height: 350,
+                    type: "area",
+                    toolbar: {
+                        show: false
+                    }
                 },
-                success: function(response) {
-
-                    console.log("Visitors Chart Data:", response); // ⬅️ Console Log Added
-
-                    var chartEl = document.querySelector("#visitorsAreaChart");
-
-                    var chartOptions = {
-                        series: [{
-                            name: "عدد الزيارات",
-                            data: response.count
-                        }],
-                        chart: {
-                            height: 350,
-                            type: "area",
-                            toolbar: false
-                        },
-                        dataLabels: {
-                            enabled: false
-                        },
-                        stroke: {
-                            curve: "smooth",
-                            width: 2
-                        },
-                        xaxis: {
-                            categories: response.countries
-                        },
-                        colors: ['#7367F0'],
-                        fill: {
-                            type: "gradient",
-                            gradient: {
-                                shadeIntensity: 1,
-                                opacityFrom: 0.5,
-                                opacityTo: 0.3,
-                                stops: [0, 90, 100]
-                            }
-                        }
-                    };
-
-                    var chart = new ApexCharts(chartEl, chartOptions);
-                    chart.render();
+                dataLabels: {
+                    enabled: false
+                },
+                stroke: {
+                    curve: "smooth",
+                    width: 2
+                },
+                xaxis: {
+                    categories: response.labels
+                },
+                yaxis: {
+                    min: 0,
+                    forceNiceScale: true
+                },
+                noData: {
+                    text: 'لا توجد زيارات في هذه الفترة'
+                },
+                colors: ['#7367F0', '#00CFE8'],
+                fill: {
+                    type: "gradient",
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.5,
+                        opacityTo: 0.3,
+                        stops: [0, 90, 100]
+                    }
                 }
-            });
+            };
+
+            if (visitorsChart) {
+                visitorsChart.updateOptions(chartOptions);
+            } else {
+                visitorsChart = new ApexCharts(chartEl, chartOptions);
+                visitorsChart.render();
+            }
         }
 
         // Initial Load
-        loadVisitorsChart();
+        loadVisitorsChart($('#visitors_year').val(), $('#visitors_month').val());
 
         // On Change
-        $('#visitors_year').on('change', function() {
-            let year = $(this).val();
-            $("#visitorsAreaChart").html('');
-            loadVisitorsChart(year);
+        $('#visitors_year, #visitors_month').on('change', function() {
+            loadVisitorsChart($('#visitors_year').val(), $('#visitors_month').val());
         });
         document.addEventListener('DOMContentLoaded', function() {
 

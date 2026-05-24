@@ -92,7 +92,6 @@ class AdminController extends Controller
 
         $topCustomers = \App\Models\Order::select('user_id')
             ->selectRaw('COUNT(*) as orders_count')
-            ->with(['user:id,name,avatar'])
             ->groupBy('user_id')
             ->orderByDesc('orders_count')
             ->take(10)
@@ -105,6 +104,65 @@ class AdminController extends Controller
             $date = Carbon::now()->subDays($i)->format('Y-m-d');
             $visitsLabels[] = Carbon::now()->subDays($i)->format('d M');
             $visitsData[] = $visits[$date] ?? 0;
+        }
+
+        // ---------------------------------------
+        // إحصائيات الزيارات حسب الشهر واليوم للرئيسية
+        // ---------------------------------------
+        $visitorYears = range(Carbon::now()->year, Carbon::now()->year - 5);
+        $visitorMonths = [];
+
+        for ($month = 1; $month <= 12; $month++) {
+            $visitorMonths[$month] = Carbon::create(null, $month, 1)->locale('ar')->translatedFormat('F');
+        }
+
+        $monthlyVisits = Visitor::selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as total, COUNT(DISTINCT ip) as unique_total')
+            ->whereYear('created_at', '>=', min($visitorYears))
+            ->whereYear('created_at', '<=', max($visitorYears))
+            ->groupBy('year', 'month')
+            ->get()
+            ->keyBy(fn ($row) => $row->year . '-' . $row->month);
+
+        $dailyVisits = Visitor::selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, DAY(created_at) as day, COUNT(*) as total, COUNT(DISTINCT ip) as unique_total')
+            ->whereYear('created_at', '>=', min($visitorYears))
+            ->whereYear('created_at', '<=', max($visitorYears))
+            ->groupBy('year', 'month', 'day')
+            ->get()
+            ->keyBy(fn ($row) => $row->year . '-' . $row->month . '-' . $row->day);
+
+        $visitorChartData = [
+            'years' => $visitorYears,
+            'months' => $visitorMonths,
+            'monthly' => [],
+            'daily' => [],
+        ];
+
+        foreach ($visitorYears as $year) {
+            $visitorChartData['monthly'][$year] = [
+                'labels' => array_values($visitorMonths),
+                'visits' => [],
+                'unique_visitors' => [],
+            ];
+
+            for ($month = 1; $month <= 12; $month++) {
+                $monthRow = $monthlyVisits->get($year . '-' . $month);
+                $visitorChartData['monthly'][$year]['visits'][] = (int) ($monthRow->total ?? 0);
+                $visitorChartData['monthly'][$year]['unique_visitors'][] = (int) ($monthRow->unique_total ?? 0);
+
+                $daysInMonth = Carbon::create($year, $month, 1)->daysInMonth;
+                $visitorChartData['daily'][$year][$month] = [
+                    'labels' => [],
+                    'visits' => [],
+                    'unique_visitors' => [],
+                ];
+
+                for ($day = 1; $day <= $daysInMonth; $day++) {
+                    $dayRow = $dailyVisits->get($year . '-' . $month . '-' . $day);
+                    $visitorChartData['daily'][$year][$month]['labels'][] = (string) $day;
+                    $visitorChartData['daily'][$year][$month]['visits'][] = (int) ($dayRow->total ?? 0);
+                    $visitorChartData['daily'][$year][$month]['unique_visitors'][] = (int) ($dayRow->unique_total ?? 0);
+                }
+            }
         }
 
         // ---------------------------------------
@@ -122,7 +180,28 @@ class AdminController extends Controller
         // ---------------------------------------
         // حالة الطلبات (Orders Status)
         // ---------------------------------------
-        $ordersStatus = [];
+        $ordersStatus = \App\Models\Order::selectRaw('order_status_id, COUNT(*) as count')
+            ->with(['status:id,name'])
+            ->groupBy('order_status_id')
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'status_name' => $order->status->name ?? 'Unknown',
+                    'status_id' => $order->order_status_id,
+                    'count' => $order->count,
+                ];
+            })
+            ->toArray();
+
+        // إحصائيات البيانات
+        $totalOrders = \App\Models\Order::count();
+        $totalCustomers = \App\Models\User::count();
+        $totalStaff = \App\Models\Admin::count();
+        $totalVisits = \App\Models\Visitor::count();
+        $thisMonthVisits = \App\Models\Visitor::where('created_at', '>=', Carbon::now()->startOfMonth())->count();
+        $thisMonthOrders = \App\Models\Order::where('created_at', '>=', Carbon::now()->startOfMonth())->count();
+        $thisMonthCustomers = \App\Models\User::where('created_at', '>=', Carbon::now()->startOfMonth())->count();
+        $cancelledOrders = \App\Models\Order::where('order_status_id', 6)->count();
 
         // ---------------------------------------
         // إرجاع البيانات للصفحة
@@ -132,7 +211,18 @@ class AdminController extends Controller
             'visitsData',
             'countriesData',
             'ordersStatus',
-            'topCustomers'
+            'topCustomers',
+            'totalOrders',
+            'totalCustomers',
+            'totalStaff',
+            'totalVisits',
+            'thisMonthVisits',
+            'thisMonthOrders',
+            'thisMonthCustomers',
+            'cancelledOrders',
+            'visitorYears',
+            'visitorMonths',
+            'visitorChartData'
         ));
     }
 
