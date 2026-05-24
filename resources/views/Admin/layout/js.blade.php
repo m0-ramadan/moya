@@ -781,4 +781,53 @@
 
 
     })
+
+    // Theme switching logic
+    function toggleThemeMode() {
+        const templateName = 'vertical-menu-template-no-customizer';
+        const currentStyle = document.documentElement.classList.contains('dark-style') ? 'dark' : 'light';
+        const newStyle = currentStyle === 'dark' ? 'light' : 'dark';
+        
+        localStorage.setItem('templateCustomizer-' + templateName + '--Style', newStyle);
+        
+        if (window.templateCustomizer) {
+            window.templateCustomizer.setStyle(newStyle);
+        } else {
+            document.documentElement.classList.remove('light-style', 'dark-style');
+            document.documentElement.classList.add(newStyle + '-style');
+        }
+        updateToggleIcons(newStyle);
+    }
+    
+    function updateToggleIcons(style) {
+        const icons = document.querySelectorAll('.theme-toggle-btn i');
+        icons.forEach(icon => {
+            if (style === 'dark') {
+                icon.className = 'ti ti-sun ti-md';
+            } else {
+                icon.className = 'ti ti-moon ti-md';
+            }
+        });
+    }
+
+    // Set initial icon and handle real-time system changes
+    document.addEventListener('DOMContentLoaded', function () {
+        const currentStyle = document.documentElement.classList.contains('dark-style') ? 'dark' : 'light';
+        updateToggleIcons(currentStyle);
+        
+        const templateName = 'vertical-menu-template-no-customizer';
+        const savedStyle = localStorage.getItem('templateCustomizer-' + templateName + '--Style');
+        if (!savedStyle || savedStyle === 'system') {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                const style = e.matches ? 'dark' : 'light';
+                if (window.templateCustomizer) {
+                    window.templateCustomizer.setStyle(style);
+                } else {
+                    document.documentElement.classList.remove('light-style', 'dark-style');
+                    document.documentElement.classList.add(style + '-style');
+                }
+                updateToggleIcons(style);
+            });
+        }
+    });
 </script>

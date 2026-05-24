@@ -1,6 +1,6 @@
    <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
        <div class="app-brand demo">
-           <a href="{{ route('admin.index') }}" class="app-brand-link">
+           <a href="{{ route('admin.home') }}" class="app-brand-link">
                <span style="width: 75px !important ; height:75px !important" class="app-brand-logo demo"></span>
                <span class="app-brand-text demo menu-text fw-bold"style="font-size: 0.90rem">{{ env('APP_NAME') }}</span>
            </a>
@@ -16,7 +16,7 @@
        <ul class="menu-inner py-1">
 
            <li class="menu-item ">
-               <a href="{{ route('admin.index') }}" class="menu-link">
+               <a href="{{ route('admin.home') }}" class="menu-link">
                    <i class="menu-icon tf-icons ti ti-home"></i>
                    <div>الرئيسية</div>
                </a>

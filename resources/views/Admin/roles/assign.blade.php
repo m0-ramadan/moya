@@ -108,7 +108,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
-                    <a href="{{ route('admin.index') }}">الرئيسية</a>
+                     <a href="{{ route('admin.home') }}">الرئيسية</a>
                 </li>
                 <li class="breadcrumb-item">
                     <a href="{{ route('admin.roles.index') }}">الرتب</a>

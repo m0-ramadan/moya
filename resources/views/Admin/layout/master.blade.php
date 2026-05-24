@@ -4,6 +4,18 @@
     data-template="vertical-menu-template-no-customizer">
 
 <head>
+    <script>
+        (function() {
+            const templateName = 'vertical-menu-template-no-customizer';
+            let style = localStorage.getItem('templateCustomizer-' + templateName + '--Style');
+            if (!style || style === 'system') {
+                style = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.className = style + '-style layout-navbar-fixed layout-menu-fixed layout-compact';
+            document.documentElement.setAttribute('data-theme', 'theme-default');
+            document.documentElement.setAttribute('data-style', style);
+        })();
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
@@ -15,12 +27,11 @@
     <meta name="description" content="" />
 
     @include('Admin.layout.css')
-
-
+    @include('Admin.layout.app-shell-style')
 </head>
 @yield('css')
 
-<body>
+<body class="app-shell">
     <!-- Layout wrapper -->
     <div class="layout-wrapper layout-content-navbar">
         <div class="layout-container">

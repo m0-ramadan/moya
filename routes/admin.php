@@ -60,7 +60,9 @@ Route::prefix('admin')->name('admin.')->middleware('guest:admin')->group(functio
 // Admin Routes (Authenticated)
 Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function () {
     // Dashboard
-    Route::get('/', [AdminController::class, 'index'])->name('index');
+    Route::get('/admins', [AdminController::class, 'index'])->name('index');
+    Route::get('/', [AdminController::class, 'home'])->name('home');
+
     Route::post('logout', [AdminAuthController::class, 'logout'])->name('logout');
     Route::get('/visitors', [VisitorController::class, 'index'])->name('visitors.index');
     Route::get('/visitors/chart', [VisitorController::class, 'chartData'])

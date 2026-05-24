@@ -139,7 +139,7 @@
     <div class="container-xxl flex-grow-1 container-p-y" dir="rtl">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('admin.index') }}">الرئيسية</a></li>
+                <li class="breadcrumb-item"> <a href="{{ route('admin.home') }}">الرئيسية</a></li>
                 <li class="breadcrumb-item active">الموظفين</li>
             </ol>
         </nav>

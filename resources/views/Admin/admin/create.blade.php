@@ -386,7 +386,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb bg-transparent p-0 mb-4">
                 <li class="breadcrumb-item">
-                    <a href="{{ route('admin.index') }}" class="text-primary">الرئيسية</a>
+                    <a href="{{ route('admin.home') }}" class="text-primary">الرئيسية</a>
                 </li>
                 <li class="breadcrumb-item">
                     <a href="{{ route('admin.admins.index') }}" class="text-primary">الموظفين</a>

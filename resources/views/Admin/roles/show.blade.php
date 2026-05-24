@@ -111,7 +111,7 @@
     <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('admin.index') }}">الرئيسية</a></li>
+                <li class="breadcrumb-item"> <a href="{{ route('admin.home') }}">الرئيسية</a></li>
                 <li class="breadcrumb-item"><a href="{{ route('admin.roles.index') }}">الرتب</a></li>
                 <li class="breadcrumb-item active">تفاصيل الرتبة</li>
             </ol>

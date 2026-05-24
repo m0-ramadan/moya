@@ -19,8 +19,17 @@
 <link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/fonts/flag-icons.css') }}" />
 
 <!-- Core CSS -->
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/css/rtl/core.css') }}" />
-<link rel="stylesheet" href="{{ asset('dashboard/assets/vendor/css/rtl/theme-default.css') }}" />
+<script>
+    (function() {
+        const assetsPath = "{{ asset('dashboard/assets') }}/";
+        const style = document.documentElement.getAttribute('data-style') || 'light';
+        const coreCss = assetsPath + 'vendor/css/rtl/core' + (style === 'dark' ? '-dark' : '') + '.css';
+        const themeCss = assetsPath + 'vendor/css/rtl/theme-default' + (style === 'dark' ? '-dark' : '') + '.css';
+        
+        document.write('<link rel="stylesheet" type="text/css" href="' + coreCss + '" class="template-customizer-core-css" />');
+        document.write('<link rel="stylesheet" type="text/css" href="' + themeCss + '" class="template-customizer-theme-css" />');
+    })();
+</script>
 <link rel="stylesheet" href="{{ asset('dashboard/assets/css/demo.css') }}" />
 
 <!-- Vendors CSS -->

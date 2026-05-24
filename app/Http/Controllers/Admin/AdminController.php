@@ -92,7 +92,7 @@ class AdminController extends Controller
 
         $topCustomers = \App\Models\Order::select('user_id')
             ->selectRaw('COUNT(*) as orders_count')
-            ->with(['user:id,name,image'])
+            ->with(['user:id,name,avatar'])
             ->groupBy('user_id')
             ->orderByDesc('orders_count')
             ->take(10)
