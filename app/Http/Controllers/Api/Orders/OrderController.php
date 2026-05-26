@@ -35,7 +35,7 @@ class OrderController extends Controller
      */
     public function __construct(FirebaseNotificationService $firebaseService, LocationValidationService $locationValidationService)
     {
-                $this->locationValidationService = $locationValidationService;
+        $this->locationValidationService = $locationValidationService;
         $this->firebaseService = $firebaseService;
     }
 
@@ -54,7 +54,7 @@ class OrderController extends Controller
 
         try {
             DB::beginTransaction();
-    // ✅ جلب الموقع المحفوظ
+            // ✅ جلب الموقع المحفوظ
             $savedLocation = SavedLocation::with('user')->findOrFail($validated['saved_location_id']);
 
             // ✅ التحقق من أن الموقع ينتمي للمستخدم الحالي
@@ -75,12 +75,30 @@ class OrderController extends Controller
                     $savedLocation->longitude
                 );
 
-                $message = $cityName 
+                $message = $cityName
                     ? "عذراً، الطلبات متاحة حالياً داخل مدينة الرياض فقط.\nأنت حالياً في {$cityName}.\nسوف نصل إليك قريباً!"
                     : "عذراً، الطلبات متاحة حالياً داخل مدينة الرياض فقط.\nسوف نصل إليك قريباً!";
 
                 return $this->errorResponse($message, 400);
             }
+
+            $pendingOrder = Order::with('status')
+                ->where('user_id', auth()->id())
+                ->where('order_status_id', OrderStatus::where('name', 'pendding')->first()->id)
+                ->latest('id')
+                ->first();
+
+            if ($pendingOrder) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "لديك طلب معلق بالفعل، كود الطلب {$pendingOrder->id}. يرجى متابعته من خلال الدخول على صفحة الطلبات.",
+                    'data' => [
+                        'order_id' => $pendingOrder->id,
+                        'code_confirmation' => $pendingOrder->code_confirmation,
+                    ],
+                ], 409);
+            }
+
             // Get saved location details
             //    $savedLocation = \App\Models\SavedLocation::findOrFail($validated['saved_location_id']);
             $statusOrder = null;
@@ -129,73 +147,73 @@ class OrderController extends Controller
     /**
      * إشعار السائقين المتاحين
      */
-private function notifyAvailableDrivers(Order $order): void
-{
-    $busyStatusIds = OrderStatus::whereIn('name', [
-        'pendding',
-        'in-road',
-    ])->pluck('id')->toArray();
+    private function notifyAvailableDrivers(Order $order): void
+    {
+        $busyStatusIds = OrderStatus::whereIn('name', [
+            'pendding',
+            'in-road',
+        ])->pluck('id')->toArray();
 
-    $availableDrivers = Driver::where('is_active', 1)
-        ->whereHas('user', function ($q) {
-            $q->where('allow_notifications', true);
-        })
-        ->whereDoesntHave('orders', function ($query) use ($busyStatusIds) {
-            $query->whereIn('order_status_id', $busyStatusIds);
-        })
-        ->with('user.activeDeviceTokens')
-        ->get();
+        $availableDrivers = Driver::where('is_active', 1)
+            ->whereHas('user', function ($q) {
+                $q->where('allow_notifications', true);
+            })
+            ->whereDoesntHave('orders', function ($query) use ($busyStatusIds) {
+                $query->whereIn('order_status_id', $busyStatusIds);
+            })
+            ->with('user.activeDeviceTokens')
+            ->get();
 
-    foreach ($availableDrivers as $driver) {
-        if (!$driver->user) {
-            continue;
-        }
+        foreach ($availableDrivers as $driver) {
+            if (!$driver->user) {
+                continue;
+            }
 
-        $user = $driver->user;
+            $user = $driver->user;
 
-        $notification = $user->createNotification([
-            'title' => 'طلب توصيل جديد',
-            'message' => 'طلب توصيل مياه جديد متاح! اضغط للموافقة.',
-            'type' => 'new_order_available',
-            'data' => [
-                'order_id' => $order->id,
-                'driver_id' => $driver->id,
-                'user_id' => $user->id,
-                'click_action' => 'NEW_ORDER_ACTION',
-            ],
-        ]);
-
-        $tokens = $user->activeDeviceTokens
-            ->pluck('token')
-            ->filter()
-            ->unique()
-            ->values()
-            ->toArray();
-
-        if (!empty($tokens)) {
-            $this->firebaseService->sendToMultipleDevices(
-                $tokens,
-                [
-                    'title' => 'طلب توصيل جديد',
-                    'body' => 'طلب توصيل مياه جديد متاح! اضغط للموافقة.',
-                    'image' => null,
-                ],
-                [
-                    'order_id' => (string) $order->id,
-                    'driver_id' => (string) $driver->id,
-                    'user_id' => (string) $user->id,
-                    'notification_id' => (string) ($notification->id ?? ''),
-                    'type' => 'new_order_available',
+            $notification = $user->createNotification([
+                'title' => 'طلب توصيل جديد',
+                'message' => 'طلب توصيل مياه جديد متاح! اضغط للموافقة.',
+                'type' => 'new_order_available',
+                'data' => [
+                    'order_id' => $order->id,
+                    'driver_id' => $driver->id,
+                    'user_id' => $user->id,
                     'click_action' => 'NEW_ORDER_ACTION',
-                ]
-            );
+                ],
+            ]);
+
+            $tokens = $user->activeDeviceTokens
+                ->pluck('token')
+                ->filter()
+                ->unique()
+                ->values()
+                ->toArray();
+
+            if (!empty($tokens)) {
+                $this->firebaseService->sendToMultipleDevices(
+                    $tokens,
+                    [
+                        'title' => 'طلب توصيل جديد',
+                        'body' => 'طلب توصيل مياه جديد متاح! اضغط للموافقة.',
+                        'image' => null,
+                    ],
+                    [
+                        'order_id' => (string) $order->id,
+                        'driver_id' => (string) $driver->id,
+                        'user_id' => (string) $user->id,
+                        'notification_id' => (string) ($notification->id ?? ''),
+                        'type' => 'new_order_available',
+                        'click_action' => 'NEW_ORDER_ACTION',
+                    ]
+                );
+            }
         }
+
+        event(new NewOrderAvailable($order));
+
+        $this->scheduleOrderExpiration($order);
     }
-
-    event(new NewOrderAvailable($order));
-
-    $this->scheduleOrderExpiration($order);
-}
 
     /**
      * قبول السائق للطلب
@@ -243,34 +261,34 @@ private function notifyAvailableDrivers(Order $order): void
                 ->first();
 
             if ($existingOffer) {
-                if($existingOffer->status === 'expired') {
-                    $existingOffer->forceDelete(); 
-                }else {
-                return $this->errorResponse('لقد قدمت بالفعل على هذا الطلب', 400);
+                if ($existingOffer->status === 'expired') {
+                    $existingOffer->forceDelete();
+                } else {
+                    return $this->errorResponse('لقد قدمت بالفعل على هذا الطلب', 400);
                 }
             }
 
-        // ✅ إضافة وقت انتهاء الصلاحية للعرض (مثلاً 3 دقائق)
-        $offerExpirationMinutes = env('OFFER_EXPIRATION_MINUTES', 3);
-        $expiredAt = Carbon::now()->addMinutes($offerExpirationMinutes);
+            // ✅ إضافة وقت انتهاء الصلاحية للعرض (مثلاً 3 دقائق)
+            $offerExpirationMinutes = env('OFFER_EXPIRATION_MINUTES', 3);
+            $expiredAt = Carbon::now()->addMinutes($offerExpirationMinutes);
 
-        $offer = OrderOffer::create([
-            'order_id' => $orderId,
-            'driver_id' => $driver->id,
-            'price' => $validated['price'] + ($validated['price'] * (config('services.percentages.vat', 15) / 100)),
-            'delivery_duration_minutes' => $validated['delivery_duration_minutes'],
-            'status' => 'pending',
-            'expires_at' => $expiredAt, // 
-        ]);
+            $offer = OrderOffer::create([
+                'order_id' => $orderId,
+                'driver_id' => $driver->id,
+                'price' => $validated['price'] + ($validated['price'] * (config('services.percentages.vat', 15) / 100)),
+                'delivery_duration_minutes' => $validated['delivery_duration_minutes'],
+                'status' => 'pending',
+                'expires_at' => $expiredAt, // 
+            ]);
             DB::commit();
 
-        // ✅ جدولة Job لانتهاء صلاحية العرض
-        ExpireOrderOfferJob::dispatch($offer->id)
-            ->delay($expiredAt)
-            ->onQueue('offers');
+            // ✅ جدولة Job لانتهاء صلاحية العرض
+            ExpireOrderOfferJob::dispatch($offer->id)
+                ->delay($expiredAt)
+                ->onQueue('offers');
 
-        // إرسال إشعار للمستخدم
-        $this->notifyUserAboutNewOffer($offer);
+            // إرسال إشعار للمستخدم
+            $this->notifyUserAboutNewOffer($offer);
             // Broadcast Event
             event(new DriverAcceptOrder($offer));
 
@@ -289,77 +307,77 @@ private function notifyAvailableDrivers(Order $order): void
     /**
      * إشعار المستخدم بعرض جديد
      */
-/**
- * إشعار المستخدم بعرض جديد
- */
-private function notifyUserAboutNewOffer(OrderOffer $offer)
-{
-    $user = $offer->order->user;
-    $tokens = $user->activeDeviceTokens->pluck('token')->toArray();
+    /**
+     * إشعار المستخدم بعرض جديد
+     */
+    private function notifyUserAboutNewOffer(OrderOffer $offer)
+    {
+        $user = $offer->order->user;
+        $tokens = $user->activeDeviceTokens->pluck('token')->toArray();
 
-    if (!empty($tokens)) {
-        // تحميل العلاقات المطلوبة
-        $offer->load(['driver.user', 'order.service', 'order.waterType']);
-        
-        $driver = $offer->driver;
-        $driverName = $driver->user?->name ?? 'سائق';
-        $price = number_format($offer->price, 2);
-        $duration = $offer->delivery_duration_minutes;
-        $serviceName = $offer->order?->service?->name ?? 'التوصيل';
-        $waterType = $offer->order?->waterType?->name ?? '';
-        
-        // بناء رسالة مخصصة
-        $body = "🚚 {$driverName}";
-        $body .= "\n💰 السعر: {$price} ريال";
-        $body .= "\n⏱️ مدة التوصيل: {$duration} دقيقة";
-        
-        if ($waterType) {
-            $body .= "\n💧 نوع المياه: {$waterType}";
-        }
-        
-        $body .= "\n📋 اضغط لعرض تفاصيل العرض";
+        if (!empty($tokens)) {
+            // تحميل العلاقات المطلوبة
+            $offer->load(['driver.user', 'order.service', 'order.waterType']);
 
-        // إنشاء إشعار في قاعدة البيانات
-        $notification = $user->createNotification([
-            'title' => '🔔 عرض جديد لطلبك',
-            'message' => $body,
-            'type' => 'new_offer',
-            'data' => [
-                'order_id' => $offer->order_id,
-                'offer_id' => $offer->id,
-                'driver_id' => $driver->id,
-                'driver_name' => $driverName,
-                'price' => $offer->price,
-                'delivery_duration_minutes' => $duration,
-                'service' => $serviceName,
-                'water_type' => $waterType,
-                'click_action' => 'NEW_OFFER_ACTION',
-            ],
-        ]);
+            $driver = $offer->driver;
+            $driverName = $driver->user?->name ?? 'سائق';
+            $price = number_format($offer->price, 2);
+            $duration = $offer->delivery_duration_minutes;
+            $serviceName = $offer->order?->service?->name ?? 'التوصيل';
+            $waterType = $offer->order?->waterType?->name ?? '';
 
-        $this->firebaseService->sendToMultipleDevices(
-            $tokens,
-            [
+            // بناء رسالة مخصصة
+            $body = "🚚 {$driverName}";
+            $body .= "\n💰 السعر: {$price} ريال";
+            $body .= "\n⏱️ مدة التوصيل: {$duration} دقيقة";
+
+            if ($waterType) {
+                $body .= "\n💧 نوع المياه: {$waterType}";
+            }
+
+            $body .= "\n📋 اضغط لعرض تفاصيل العرض";
+
+            // إنشاء إشعار في قاعدة البيانات
+            $notification = $user->createNotification([
                 'title' => '🔔 عرض جديد لطلبك',
-                'body' => $body,
-                'image' => $driver->user->profile_photo_url ?? null,
-            ],
-            [
-                'order_id' => (string) $offer->order_id,
-                'offer_id' => (string) $offer->id,
-                'driver_id' => (string) $driver->id,
-                'driver_name' => $driverName,
-                'price' => (string) $offer->price,
-                'delivery_duration_minutes' => (string) $duration,
-                'service' => $serviceName,
-                'water_type' => $waterType,
-                'notification_id' => (string) ($notification->id ?? ''),
+                'message' => $body,
                 'type' => 'new_offer',
-                'click_action' => 'NEW_OFFER_ACTION',
-            ]
-        );
+                'data' => [
+                    'order_id' => $offer->order_id,
+                    'offer_id' => $offer->id,
+                    'driver_id' => $driver->id,
+                    'driver_name' => $driverName,
+                    'price' => $offer->price,
+                    'delivery_duration_minutes' => $duration,
+                    'service' => $serviceName,
+                    'water_type' => $waterType,
+                    'click_action' => 'NEW_OFFER_ACTION',
+                ],
+            ]);
+
+            $this->firebaseService->sendToMultipleDevices(
+                $tokens,
+                [
+                    'title' => '🔔 عرض جديد لطلبك',
+                    'body' => $body,
+                    'image' => $driver->user->profile_photo_url ?? null,
+                ],
+                [
+                    'order_id' => (string) $offer->order_id,
+                    'offer_id' => (string) $offer->id,
+                    'driver_id' => (string) $driver->id,
+                    'driver_name' => $driverName,
+                    'price' => (string) $offer->price,
+                    'delivery_duration_minutes' => (string) $duration,
+                    'service' => $serviceName,
+                    'water_type' => $waterType,
+                    'notification_id' => (string) ($notification->id ?? ''),
+                    'type' => 'new_offer',
+                    'click_action' => 'NEW_OFFER_ACTION',
+                ]
+            );
+        }
     }
-}
 
 
     /**
@@ -755,7 +773,6 @@ private function notifyUserAboutNewOffer(OrderOffer $offer)
                 new OrderResource($order),
                 'تم إلغاء الطلب بنجاح'
             );
-
         } catch (\Exception $e) {
             DB::rollBack();
 
