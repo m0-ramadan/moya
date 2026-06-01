@@ -240,6 +240,7 @@
 @endsection
 
 @section('content')
+    @php($adminUser = auth('admin')->user())
     <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -266,9 +267,11 @@
                                     <input type="text" class="form-control" placeholder="بحث عن صلاحية..."
                                         id="searchInput" value="{{ request('search') }}">
                                 </div>
+                                @if (admin_can_access_module('permissions', 'create', $adminUser))
                                 <a href="{{ route('admin.permissions.create') }}" class="btn btn-light">
                                     <i class="fas fa-plus me-2"></i>إضافة صلاحية جديدة
                                 </a>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -281,9 +284,11 @@
                                 </div>
                                 <h5 class="empty-state-text">لا توجد صلاحيات</h5>
                                 <p class="text-muted">لم يتم إنشاء أي صلاحيات حتى الآن</p>
+                                @if (admin_can_access_module('permissions', 'create', $adminUser))
                                 <a href="{{ route('admin.permissions.create') }}" class="btn btn-primary">
                                     <i class="fas fa-plus me-2"></i>إضافة صلاحية أولى
                                 </a>
+                                @endif
                             </div>
                         @else
                             @foreach ($permissionsByModule as $module => $permissions)
@@ -334,16 +339,20 @@
                                                             </small>
                                                         </div>
                                                         <div class="permission-actions" bis_skin_checked="1">
+                                                            @if (admin_can_access_module('permissions', 'edit', $adminUser))
                                                             <a href="{{ route('admin.permissions.edit', $permission) }}"
                                                                 class="btn btn-sm btn-warning">
                                                                 <i class="fas fa-edit"></i>
                                                             </a>
+                                                            @endif
+                                                            @if (admin_can_access_module('permissions', 'delete', $adminUser))
                                                             <button type="button"
                                                                 class="btn btn-sm btn-danger delete-permission"
                                                                 data-id="{{ $permission->id }}"
                                                                 data-name="{{ $permission->display_name }}">
                                                                 <i class="fas fa-trash"></i>
                                                             </button>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 </div>

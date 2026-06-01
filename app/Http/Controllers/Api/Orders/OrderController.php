@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\WebsiteUser\OrderResource;
 use App\Jobs\ExpireOrderJob;
 use App\Jobs\ExpireOrderOfferJob;
+use App\Models\Admin;
 use App\Models\Driver;
 use App\Models\Order;
 use App\Models\OrderOffer;
@@ -17,11 +18,13 @@ use App\Models\OrderStatus;
 use App\Models\SavedLocation;
 use App\Services\FirebaseNotificationService;
 use App\Services\LocationValidationService;
+use App\Services\WhatsappService;
 use App\Traits\ApiResponseTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class OrderController extends Controller
 {
@@ -29,14 +32,19 @@ class OrderController extends Controller
 
     protected $firebaseService;
     protected $locationValidationService;
+    protected $whatsappService;
 
     /**
      * إنشاء طلب جديد
      */
-    public function __construct(FirebaseNotificationService $firebaseService, LocationValidationService $locationValidationService)
-    {
+    public function __construct(
+        FirebaseNotificationService $firebaseService,
+        LocationValidationService $locationValidationService,
+        WhatsappService $whatsappService
+    ) {
         $this->locationValidationService = $locationValidationService;
         $this->firebaseService = $firebaseService;
+        $this->whatsappService = $whatsappService;
     }
 
     /**
@@ -114,7 +122,7 @@ class OrderController extends Controller
                 'saved_location_id' => $validated['saved_location_id'],
                 'order_status_id' => $statusOrder->id ?? null,
                 'order_date' => $validated['order_date'] ?? null,
-                'notes' => $validated['notes'] ?? null,
+                //'notes' => $validated['notes'] ?? null,
                 'code_confirmation' => random_int(100000, 999999),
                 'created_at' => Carbon::now(),
                 'expires_at' => Carbon::now()->addMinutes(env('ORDER_EXPIRATION_MINUTES', 15)),
@@ -125,7 +133,8 @@ class OrderController extends Controller
             DB::commit();
 
             // Load relationships for the event
-            $order->load(['user', 'service', 'waterType', 'location']);
+            $order->load(['user', 'service', 'waterType', 'location', 'status']);
+            $this->sendOrderWhatsappNotification($order);
 
             // إذا كان الطلب غير مجدول (فوري)
             if (! $order->order_date) {
@@ -213,6 +222,141 @@ class OrderController extends Controller
         event(new NewOrderAvailable($order));
 
         $this->scheduleOrderExpiration($order);
+    }
+
+    private function sendOrderWhatsappNotification(Order $order): void
+    {
+        $recipients = $this->resolveOrderWhatsappRecipients();
+
+        if (empty($recipients)) {
+            Log::warning('Order WhatsApp recipient is not configured.', [
+                'order_id' => $order->id,
+            ]);
+
+            return;
+        }
+
+        $message = $this->formatOrderWhatsappMessage($order);
+
+        foreach ($recipients as $recipient) {
+            $response = $this->whatsappService->sendMessage($recipient, $message);
+
+            if (! ($response['success'] ?? false)) {
+                Log::warning('Failed to send order WhatsApp notification.', [
+                    'order_id' => $order->id,
+                    'recipient' => $recipient,
+                    'error' => $response['error'] ?? 'Unknown error',
+                ]);
+            }
+        }
+    }
+
+    private function resolveOrderWhatsappRecipients(): array
+    {
+        $configuredRole = config('services.orders.whatsapp_notifications_role');
+
+        if ($configuredRole) {
+            $roleRecipients = Admin::role($configuredRole)
+                ->whereNotNull('phone')
+                ->pluck('phone')
+                ->map(fn ($phone) => $this->normalizeWhatsappPhone($phone))
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
+            if (! empty($roleRecipients)) {
+                return $roleRecipients;
+            }
+        }
+
+        $configuredRecipient = config('services.orders.whatsapp_notifications_to');
+
+        if ($configuredRecipient) {
+            return [$this->normalizeWhatsappPhone($configuredRecipient)];
+        }
+
+        try {
+            if (Schema::hasTable('settings')) {
+                $settingsRecipient = DB::table('settings')->value('whatsapp');
+
+                if ($settingsRecipient) {
+                    return [$this->normalizeWhatsappPhone($settingsRecipient)];
+                }
+            }
+        } catch (\Throwable $exception) {
+            Log::warning('Unable to resolve WhatsApp order recipient from settings table.', [
+                'error' => $exception->getMessage(),
+            ]);
+        }
+
+        return [];
+    }
+
+    private function normalizeWhatsappPhone(string $phone): string
+    {
+        $normalized = trim($phone);
+
+        if (str_starts_with($normalized, 'whatsapp:')) {
+            $normalized = substr($normalized, 9);
+        }
+
+        return preg_replace('/[\s\-\(\)]+/', '', $normalized) ?: $phone;
+    }
+
+    private function formatOrderWhatsappMessage(Order $order): string
+    {
+        $user = $order->user;
+        $location = $order->location;
+        $status = $order->status;
+        $isScheduled = ! empty($order->order_date);
+
+        $orderDate = $isScheduled
+            ? $order->order_date?->format('Y-m-d h:i A')
+            : 'فوري';
+
+        $createdAt = $order->created_at?->format('Y-m-d h:i A') ?? now()->format('Y-m-d h:i A');
+        $notes = trim((string) $order->notes);
+        $addressParts = array_filter([
+            $location?->city,
+            $location?->area,
+            $location?->address,
+        ]);
+        $hasCoordinates = $location?->latitude !== null && $location?->longitude !== null;
+        $coordinates = $hasCoordinates
+            ? $location->latitude . ', ' . $location->longitude
+            : 'غير متوفرة';
+        $googleMapsLink = $hasCoordinates
+            ? 'https://www.google.com/maps?q=' . $location->latitude . ',' . $location->longitude
+            : 'غير متوفر';
+
+        return implode("\n", [
+            'طلب جديد #' . $order->id,
+            '------------------------------',
+            'بيانات العميل',
+            '• الاسم: ' . ($user?->name ?: 'غير مسجل'),
+            '• الجوال: ' . ($user?->full_phone ?: 'غير متوفر'),
+            '• رقم العميل: ' . ($user?->id ?: 'غير متوفر'),
+            '',
+            'تفاصيل الطلب',
+            '• الخدمة: ' . ($order->service?->name ?: 'غير محدد'),
+            '• نوع المياه: ' . ($order->waterType?->name ?: 'غير محدد'),
+            '• حالة الطلب: ' . ($status?->label ?: $status?->name ?: 'غير محددة'),
+            '• نوع التنفيذ: ' . ($isScheduled ? 'مجدول' : 'فوري'),
+            '• موعد الطلب: ' . $orderDate,
+            '• وقت الإنشاء: ' . $createdAt,
+            '• كود التأكيد: ' . ($order->code_confirmation ?: 'غير متوفر'),
+            '',
+            'العنوان',
+            '• اسم الموقع: ' . ($location?->name ?: 'غير محدد'),
+            '• العنوان: ' . (! empty($addressParts) ? implode(' - ', $addressParts) : 'غير متوفر'),
+            '• تفاصيل إضافية: ' . ($location?->additional_info ?: 'لا توجد'),
+            '• الإحداثيات: ' . $coordinates,
+            '• رابط الموقع: ' . $googleMapsLink,
+            '',
+            'ملاحظات الطلب',
+            '• ' . ($notes !== '' ? $notes : 'لا توجد ملاحظات'),
+        ]);
     }
 
     /**

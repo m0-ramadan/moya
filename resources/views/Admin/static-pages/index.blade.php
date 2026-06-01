@@ -278,6 +278,12 @@
 @endsection
 
 @section('content')
+    <?php
+    $adminUser = auth('admin')->user();
+    $canCreateStaticPages = admin_can_access_module('static_pages', 'create', $adminUser);
+    $canEditStaticPages = admin_can_access_module('static_pages', 'edit', $adminUser);
+    $canDeleteStaticPages = admin_can_access_module('static_pages', 'delete', $adminUser);
+    ?>
     <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -350,15 +356,18 @@
                         <button class="btn btn-primary" onclick="applyFilters()">
                             <i class="fas fa-filter me-2"></i>فلترة
                         </button>
-                        <a href="{{ route('admin.static-pages.create') }}" class="btn btn-success">
-                            <i class="fas fa-plus me-2"></i>إضافة صفحة
-                        </a>
+                        @if ($canCreateStaticPages)
+                            <a href="{{ route('admin.static-pages.create') }}" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>إضافة صفحة
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Bulk Actions -->
+        @if ($canEditStaticPages || $canDeleteStaticPages)
         <div class="bulk-actions" bis_skin_checked="1">
             <div class="d-flex justify-content-between align-items-center" bis_skin_checked="1">
                 <div class="d-flex align-items-center gap-2" bis_skin_checked="1">
@@ -376,15 +385,19 @@
                             <form id="bulkActionForm" method="POST" action="{{ route('admin.static-pages.bulk-action') }}">
                                 @csrf
                                 <input type="hidden" name="ids" id="selectedIds">
-                                <button type="submit" name="action" value="activate" class="action-item">
-                                    <i class="fas fa-check-circle me-2"></i>تفعيل
-                                </button>
-                                <button type="submit" name="action" value="deactivate" class="action-item">
-                                    <i class="fas fa-times-circle me-2"></i>تعطيل
-                                </button>
-                                <button type="submit" name="action" value="delete" class="action-item text-danger">
-                                    <i class="fas fa-trash me-2"></i>حذف
-                                </button>
+                                @if ($canEditStaticPages)
+                                    <button type="submit" name="action" value="activate" class="action-item">
+                                        <i class="fas fa-check-circle me-2"></i>تفعيل
+                                    </button>
+                                    <button type="submit" name="action" value="deactivate" class="action-item">
+                                        <i class="fas fa-times-circle me-2"></i>تعطيل
+                                    </button>
+                                @endif
+                                @if ($canDeleteStaticPages)
+                                    <button type="submit" name="action" value="delete" class="action-item text-danger">
+                                        <i class="fas fa-trash me-2"></i>حذف
+                                    </button>
+                                @endif
                             </form>
                         </div>
                     </div>
@@ -394,6 +407,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         <!-- جدول الصفحات -->
         <div class="card" bis_skin_checked="1">
@@ -407,9 +421,11 @@
                         <button class="btn btn-light" onclick="exportPages()">
                             <i class="fas fa-download me-2"></i>تصدير
                         </button>
-                        <a href="{{ route('admin.static-pages.create') }}" class="btn btn-light">
-                            <i class="fas fa-plus me-2"></i>إضافة جديدة
-                        </a>
+                        @if ($canCreateStaticPages)
+                            <a href="{{ route('admin.static-pages.create') }}" class="btn btn-light">
+                                <i class="fas fa-plus me-2"></i>إضافة جديدة
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -422,9 +438,11 @@
                         </div>
                         <h5 class="empty-state-text">لا توجد صفحات ثابتة</h5>
                         <p class="text-muted">لم يتم إنشاء أي صفحات ثابتة حتى الآن</p>
-                        <a href="{{ route('admin.static-pages.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>إنشاء صفحة جديدة
-                        </a>
+                        @if ($canCreateStaticPages)
+                            <a href="{{ route('admin.static-pages.create') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>إنشاء صفحة جديدة
+                            </a>
+                        @endif
                     </div>
                 @else
                     <div class="table-responsive" bis_skin_checked="1">
@@ -432,9 +450,11 @@
                             <thead>
                                 <tr>
                                     <th style="width: 50px;">
-                                        <div class="form-check" bis_skin_checked="1">
-                                            <input class="form-check-input" type="checkbox" id="tableSelectAll">
-                                        </div>
+                                        @if ($canEditStaticPages || $canDeleteStaticPages)
+                                            <div class="form-check" bis_skin_checked="1">
+                                                <input class="form-check-input" type="checkbox" id="tableSelectAll">
+                                            </div>
+                                        @endif
                                     </th>
                                     <th>العنوان</th>
                                     <th>الرابط</th>
@@ -448,10 +468,12 @@
                                 @foreach ($pages as $page)
                                     <tr data-id="{{ $page->id }}">
                                         <td>
-                                            <div class="form-check" bis_skin_checked="1">
-                                                <input class="form-check-input page-checkbox" type="checkbox"
-                                                    value="{{ $page->id }}">
-                                            </div>
+                                            @if ($canEditStaticPages || $canDeleteStaticPages)
+                                                <div class="form-check" bis_skin_checked="1">
+                                                    <input class="form-check-input page-checkbox" type="checkbox"
+                                                        value="{{ $page->id }}">
+                                                </div>
+                                            @endif
                                         </td>
                                         <td>
                                             <div class="fw-semibold" bis_skin_checked="1">{{ $page->title }}</div>
@@ -495,11 +517,13 @@
                                                     class="btn btn-sm btn-info" title="عرض">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <a href="{{ route('admin.static-pages.edit', $page) }}"
-                                                    class="btn btn-sm btn-warning" title="تعديل">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                @if (!in_array($page->slug, ['syas-alkhsosy', 'syas-alastrgaaa', 'aldman', 'mn-nhn', 'alshrot-oalahkam']))
+                                                @if ($canEditStaticPages)
+                                                    <a href="{{ route('admin.static-pages.edit', $page) }}"
+                                                        class="btn btn-sm btn-warning" title="تعديل">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                @endif
+                                                @if ($canDeleteStaticPages && !in_array($page->slug, ['syas-alkhsosy', 'syas-alastrgaaa', 'aldman', 'mn-nhn', 'alshrot-oalahkam']))
                                                     <button type="button" class="btn btn-sm btn-danger delete-btn"
                                                         data-id="{{ $page->id }}" data-name="{{ $page->title }}">
                                                         <i class="fas fa-trash"></i>

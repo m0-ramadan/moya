@@ -52,6 +52,18 @@ class OrderResource extends JsonResource
             ] : null,
 
             'price' => optional($this->acceptedOffer)->price,
+            'amounts' => [
+                'original_amount' => $this->getResolvedOriginalAmount(),
+                'discount_amount' => $this->getResolvedDiscountAmount(),
+                'final_amount' => $this->getResolvedFinalAmount(),
+            ],
+            'coupon' => $this->coupon_code ? [
+                'id' => $this->coupon_id,
+                'code' => $this->coupon_code,
+                'type' => $this->coupon_type,
+                'value' => (float) ($this->coupon_value ?? 0),
+                'discount_amount' => $this->getResolvedDiscountAmount(),
+            ] : null,
 
             'order_date' => $this->order_date,
 

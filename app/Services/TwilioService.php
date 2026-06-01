@@ -32,13 +32,6 @@ class TwilioService
         return $this->sendVerifyOtp($phone, 'sms');
     }
 
-    // OTP via WhatsApp
-    public function sendOtpWhatsapp(string $phone): array
-    {
-        return $this->sendVerifyOtp($phone, 'whatsapp');
-    }
-
-
     protected function sendVerifyOtp(string $to, string $channel): array
     {
         try {
@@ -84,46 +77,6 @@ class TwilioService
             ];
         }
     }
-
-    /* =======================
-     | WhatsApp Messages
-     ======================= */
-
-    public function sendWhatsappOtp(string $to, string $code): array
-    {
-        try {
-
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'Authorization' => 'Bearer ' . config('services.wasender.token'),
-                'Content-Type'  => 'application/json',
-            ])->post('https://wasenderapi.com/api/send-message', [
-                'to'   => $to,
-                'text' => "كود التحقق الخاص بك هو: {$code}",
-            ]);
-
-            $data = $response->json();
-
-            if ($response->successful() && ($data['success'] ?? false)) {
-                return [
-                    'success' => true,
-                    'sid'     => $data['data']['msgId'] ?? null,
-                    'status'  => $data['data']['status'] ?? 'sent',
-                ];
-            }
-
-            return [
-                'success' => false,
-                'error'   => $data['message'] ?? 'Failed to send message',
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'success' => false,
-                'error'   => $e->getMessage(),
-            ];
-        }
-    }
-
-
 
     /* =======================
      | SMS Fallback
@@ -180,4 +133,3 @@ class TwilioService
     }
 }
 }
-

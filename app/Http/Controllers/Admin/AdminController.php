@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Carbon\Carbon;
-use App\Models\Admin;
-use App\Models\Visitor;
-use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
-use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use App\Models\Admin;
+use App\Models\Order;
+use App\Models\User;
+use App\Models\Visitor;
+use Carbon\Carbon;
 use Flasher\Toastr\Laravel\Facade\Toastr;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Models\Role;
 
 class AdminController extends Controller
 {
@@ -81,6 +83,7 @@ class AdminController extends Controller
      */
     public function home()
     {
+
         // ---------------------------------------
         // زيارات آخر 10 أيام
         // ---------------------------------------
@@ -121,14 +124,14 @@ class AdminController extends Controller
             ->whereYear('created_at', '<=', max($visitorYears))
             ->groupBy('year', 'month')
             ->get()
-            ->keyBy(fn ($row) => $row->year . '-' . $row->month);
+            ->keyBy(fn($row) => $row->year . '-' . $row->month);
 
         $dailyVisits = Visitor::selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, DAY(created_at) as day, COUNT(*) as total, COUNT(DISTINCT ip) as unique_total')
             ->whereYear('created_at', '>=', min($visitorYears))
             ->whereYear('created_at', '<=', max($visitorYears))
             ->groupBy('year', 'month', 'day')
             ->get()
-            ->keyBy(fn ($row) => $row->year . '-' . $row->month . '-' . $row->day);
+            ->keyBy(fn($row) => $row->year . '-' . $row->month . '-' . $row->day);
 
         $visitorChartData = [
             'years' => $visitorYears,
@@ -194,14 +197,14 @@ class AdminController extends Controller
             ->toArray();
 
         // إحصائيات البيانات
-        $totalOrders = \App\Models\Order::count();
-        $totalCustomers = \App\Models\User::count();
-        $totalStaff = \App\Models\Admin::count();
-        $totalVisits = \App\Models\Visitor::count();
-        $thisMonthVisits = \App\Models\Visitor::where('created_at', '>=', Carbon::now()->startOfMonth())->count();
-        $thisMonthOrders = \App\Models\Order::where('created_at', '>=', Carbon::now()->startOfMonth())->count();
-        $thisMonthCustomers = \App\Models\User::where('created_at', '>=', Carbon::now()->startOfMonth())->count();
-        $cancelledOrders = \App\Models\Order::where('order_status_id', 6)->count();
+        $totalOrders = Order::count();
+        $totalCustomers = User::count();
+        $totalStaff = Admin::count();
+        $totalVisits = Visitor::count();
+        $thisMonthVisits = Visitor::where('created_at', '>=', Carbon::now()->startOfMonth())->count();
+        $thisMonthOrders = Order::where('created_at', '>=', Carbon::now()->startOfMonth())->count();
+        $thisMonthCustomers = User::where('created_at', '>=', Carbon::now()->startOfMonth())->count();
+        $cancelledOrders = Order::where('order_status_id', 6)->count();
 
         // ---------------------------------------
         // إرجاع البيانات للصفحة
@@ -276,16 +279,14 @@ class AdminController extends Controller
             ]);
 
             // Success notification
-    
+
 
             return redirect()
                 ->route('admin.admins.index')
                 ->with('success', 'تم إضافة المسؤول بنجاح');
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Validation errors are automatically handled by Laravel
             throw $e;
-
         } catch (\Exception $e) {
             // Log error
             Log::error('فشل إنشاء المسؤول: ' . $e->getMessage(), [
@@ -308,7 +309,7 @@ class AdminController extends Controller
     public function show(Admin $admin)
     {
         $admin->load('roles', 'permissions');
-        
+
         return view('Admin.admin.show', compact('admin'));
     }
 
@@ -383,10 +384,8 @@ class AdminController extends Controller
             return redirect()
                 ->route('admin.admins.index')
                 ->with('success', 'تم تحديث المسؤول بنجاح');
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
-
         } catch (\Exception $e) {
             Log::error('فشل تحديث المسؤول: ' . $e->getMessage(), [
                 'admin_id' => $admin->id,
@@ -435,7 +434,6 @@ class AdminController extends Controller
             return redirect()
                 ->route('admin.admins.index')
                 ->with('success', 'تم حذف المسؤول بنجاح.');
-
         } catch (\Exception $e) {
             Log::error('فشل حذف المسؤول: ' . $e->getMessage());
 
@@ -466,7 +464,6 @@ class AdminController extends Controller
                 'is_active' => $admin->is_active,
                 'message' => $admin->is_active ? 'تم تفعيل المسؤول' : 'تم تعطيل المسؤول'
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -489,9 +486,9 @@ class AdminController extends Controller
         try {
             $ids = $request->ids;
             $currentAdminId = auth()->guard('admin')->id();
-            
+
             // Remove current admin from IDs to prevent self-action
-            $ids = array_filter($ids, function($id) use ($currentAdminId) {
+            $ids = array_filter($ids, function ($id) use ($currentAdminId) {
                 return $id != $currentAdminId;
             });
 
@@ -533,7 +530,6 @@ class AdminController extends Controller
             return redirect()
                 ->route('admin.admins.index')
                 ->with('success', $message);
-
         } catch (\Exception $e) {
             Log::error('فشل الإجراء الجماعي: ' . $e->getMessage());
             return back()->with('error', $e->getMessage());

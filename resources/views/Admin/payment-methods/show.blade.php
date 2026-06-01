@@ -261,6 +261,7 @@
 @endsection
 
 @section('content')
+    @php($adminUser = auth('admin')->user())
     <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -279,10 +280,12 @@
                 <div class="detail-card" bis_skin_checked="1">
                     <div class="detail-header" bis_skin_checked="1">
                         <div class="action-buttons" bis_skin_checked="1">
+                            @if (admin_can_access_module('payment_methods', 'edit', $adminUser))
                             <a href="{{ route('admin.payment-methods.edit', $paymentMethod) }}" class="btn-action"
                                 title="تعديل">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            @endif
                             <a href="{{ route('admin.payment-methods.index') }}" class="btn-action" title="رجوع">
                                 <i class="fas fa-arrow-right"></i>
                             </a>
@@ -464,11 +467,14 @@ $method = PaymentMethod::where('key', '{{ $paymentMethod->key }}')->first();
                                     <h6><i class="fas fa-bolt me-2"></i>إجراءات سريعة</h6>
 
                                     <div class="d-grid gap-2" bis_skin_checked="1">
+                                        @if (admin_can_access_module('payment_methods', 'edit', $adminUser))
                                         <a href="{{ route('admin.payment-methods.edit', $paymentMethod) }}"
                                             class="btn btn-warning">
                                             <i class="fas fa-edit me-2"></i>تعديل وسيلة الدفع
                                         </a>
+                                        @endif
 
+                                        @if (admin_can_access_module('payment_methods', 'edit', $adminUser))
                                         <form action="{{ route('admin.payment-methods.toggle-status', $paymentMethod) }}"
                                             method="POST" style="display: inline;">
                                             @csrf
@@ -479,7 +485,9 @@ $method = PaymentMethod::where('key', '{{ $paymentMethod->key }}')->first();
                                                 {{ $paymentMethod->is_active ? 'تعطيل' : 'تفعيل' }}
                                             </button>
                                         </form>
+                                        @endif
 
+                                        @if (admin_can_access_module('payment_methods', 'delete', $adminUser))
                                         <form action="{{ route('admin.payment-methods.destroy', $paymentMethod) }}"
                                             method="POST" id="deleteForm" style="display: inline;">
                                             @csrf
@@ -489,6 +497,7 @@ $method = PaymentMethod::where('key', '{{ $paymentMethod->key }}')->first();
                                                 <i class="fas fa-trash me-2"></i>حذف وسيلة الدفع
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </div>
                             </div>

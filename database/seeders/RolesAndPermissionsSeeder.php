@@ -69,22 +69,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
     private function createPermissions(): void
     {
-        $modules = [
-            'users' => 'المستخدمين',
-            'admins' => 'المشرفين',
-            'roles' => 'الرتب',
-            'permissions' => 'الصلاحيات',
-            'products' => 'المنتجات',
-            'categories' => 'الأقسام',
-            'orders' => 'الطلبات',
-            'banners' => 'البانرات',
-            'coupons' => 'الكوبونات',
-            'settings' => 'الإعدادات',
-            'reports' => 'التقارير',
-            'payment_methods' => 'طرق الدفع',
-            'contact_us' => 'تواصل معنا',
-            'about' => 'عن الموقع'
-        ];
+        $modules = dashboard_permission_modules();
 
         foreach ($modules as $module => $display) {
             $permissions = [
@@ -120,26 +105,29 @@ class RolesAndPermissionsSeeder extends Seeder
         // مدير النظام - كل الصلاحيات ما عدا إدارة الأدوار والصلاحيات
         $admin = Role::where('name', 'admin')->first();
         if ($admin) {
-            $adminPermissions = Permission::whereNotIn('module', ['roles', 'permissions'])->get();
+            $adminPermissions = Permission::whereNotIn('module', ['roles', 'permissions', 'admins'])->get();
             $admin->syncPermissions($adminPermissions);
         }
 
         // محرر - صلاحيات محددة
         $editor = Role::where('name', 'editor')->first();
         if ($editor) {
-            $editorPermissions = Permission::whereIn('module', ['products', 'categories', 'banners', 'orders'])
+            $editorPermissions = Permission::whereIn('module', ['articles', 'banners', 'orders', 'services', 'faqs', 'static_pages'])
                 ->whereIn('name', [
-                    'products.view',
-                    'products.create',
-                    'products.edit',
-                    'categories.view',
-                    'categories.create',
-                    'categories.edit',
+                    'articles.view',
+                    'articles.create',
+                    'articles.edit',
                     'banners.view',
                     'banners.create',
                     'banners.edit',
                     'orders.view',
-                    'orders.edit'
+                    'orders.edit',
+                    'services.view',
+                    'services.edit',
+                    'faqs.view',
+                    'faqs.edit',
+                    'static_pages.view',
+                    'static_pages.edit'
                 ])->get();
             $editor->syncPermissions($editorPermissions);
         }

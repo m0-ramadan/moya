@@ -228,6 +228,7 @@
 @endsection
 
 @section('content')
+    <?php $adminUser = auth('admin')->user(); ?>
     <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -503,9 +504,11 @@
                                         class="btn btn-outline-secondary">
                                         <i class="fas fa-times me-2"></i>إلغاء
                                     </a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save me-2"></i>حفظ التغييرات
-                                    </button>
+                                    @if (admin_can_access_module('static_pages', 'edit', $adminUser))
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i>حفظ التغييرات
+                                        </button>
+                                    @endif
                                 </div>
                             </div>
                         </form>

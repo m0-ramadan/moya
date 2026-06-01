@@ -1,3 +1,4 @@
+   @php($admin = auth('admin')->user())
    <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
        <div class="app-brand demo">
            <a href="{{ route('admin.home') }}" class="app-brand-link">
@@ -15,12 +16,14 @@
 
        <ul class="menu-inner py-1">
 
+           @if (admin_can_access_module('dashboard', 'view', $admin))
            <li class="menu-item ">
                <a href="{{ route('admin.home') }}" class="menu-link">
                    <i class="menu-icon tf-icons ti ti-home"></i>
                    <div>الرئيسية</div>
                </a>
            </li>
+           @endif
 
            {{-- <li class="menu-item ">
                <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -50,6 +53,7 @@
 
                </ul>
            </li> --}}
+           @if (admin_can_access_any_module(['admins', 'users', 'drivers'], 'view', $admin))
            <li class="menu-item ">
                <a href="javascript:void(0);" class="menu-link menu-toggle">
                    <i class="menu-icon tf-icons ti ti-user-bolt"></i>
@@ -58,75 +62,98 @@
                </a>
                <ul class="menu-sub">
 
+                   @if (admin_can_access_module('admins', 'view', $admin))
                    <li class="menu-item ">
                        <a href="{{ route('admin.admins.index') }}" class="menu-link">
                            <div>مديرين الموقع</div>
                        </a>
                    </li>
+                   @endif
 
+                   @if (admin_can_access_module('users', 'view', $admin))
                    <li class="menu-item ">
                        <a href="{{ route('admin.users.index') }}" class="menu-link">
                            <div>العملاء</div>
                        </a>
                    </li>
+                   @endif
 
+                   @if (admin_can_access_module('drivers', 'view', $admin))
                    <li class="menu-item ">
                        <a href="{{ route('admin.drivers.index') }}" class="menu-link">
                            <div> السواقين </div>
                        </a>
                    </li>
+                   @endif
                </ul>
            </li>
+           @endif
+           @if (admin_can_access_any_module(['roles', 'permissions'], 'view', $admin))
            <li class="menu-item ">
                <a href="javascript:void(0);" class="menu-link menu-toggle">
                    <i class="menu-icon tf-icons ti ti-shield-lock"></i>
                    <div>الصلاحيات</div>
                </a>
                <ul class="menu-sub">
+                   @if (admin_can_access_module('roles', 'view', $admin))
                    <li class="menu-item ">
                        <a href="{{ route('admin.roles.index') }}" class="menu-link">
                            <div>الرتب</div>
                        </a>
                    </li>
+                   @endif
 
+                   @if (admin_can_access_module('permissions', 'view', $admin))
                    <li class="menu-item ">
                        <a href="{{ route('admin.permissions.index') }}" class="menu-link">
                            <div>الصلاحيات</div>
                        </a>
                    </li>
+                   @endif
 
+                   @if (admin_can_access_module('roles', 'manage', $admin))
                    <li class="menu-item ">
                        <a href="{{ route('admin.roles.assign.index') }}" class="menu-link">
                            <div>تخصيص الصلاحيات</div>
                        </a>
                    </li>
+                   @endif
                </ul>
            </li>
+           @endif
 
+           @if (admin_can_access_module('chats', 'view', $admin))
            <li class="menu-item">
                <a href="{{ route('admin.chats.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-messages"></i>
                    <div>الشات</div>
                </a>
            </li>
+           @endif
+           @if (admin_can_access_module('contracts', 'view', $admin))
            <li class="menu-item">
                <a href="{{ route('admin.contracts.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-file-text"></i>
                    <div>العقود</div>
                </a>
            </li>
+           @endif
+           @if (admin_can_access_module('drivers', 'view', $admin))
            <li class="menu-item">
                <a href="{{ route('admin.drivers.map.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-map-pin"></i>
                    <div>خريطة السائقين</div>
                </a>
            </li>
+           @endif
+           @if (admin_can_access_module('chats', 'view', $admin))
            <li class="menu-item">
                <a href="{{ route('admin.adminChats.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-message-circle"></i>
                    <div>محادثاتي</div>
                </a>
            </li>
+           @endif
 
            {{-- <li class="menu-item ">
                <a href="{{ route('admin.payment-methods.index') }}" class="menu-link">
@@ -142,20 +169,25 @@
                </a>
            </li> --}}
 
+           @if (admin_can_access_module('services', 'view', $admin))
            <li class="menu-item">
                <a href="{{ route('admin.services.index') }}" class="menu-link">
                    <i class="menua-icon ti ti-category"></i>
                    <div>الخدمات</div>
                </a>
            </li>
+           @endif
 
+           @if (admin_can_access_module('banners', 'view', $admin))
            <li class="menu-item">
                <a href="{{ route('admin.banners.index') }}" class="menu-link">
                    <i class="menua-icon ti ti-photo"></i>
                    <div>البانرات</div>
                </a>
            </li>
+           @endif
 
+           @if (admin_can_access_module('orders', 'view', $admin))
            <li class="menu-item">
                <a href="{{ route('admin.orders.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-package"></i>
@@ -163,13 +195,16 @@
                    <div>الطلبات</div>
                </a>
            </li>
+           @endif
 
+           @if (admin_can_access_module('operations', 'view', $admin))
            <li class="menu-item">
                <a href="{{ route('admin.operations.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-receipt-2"></i>
                    <div>العمليات</div>
                </a>
            </li>
+           @endif
 
 
 
@@ -180,35 +215,44 @@
                </a>
            </li> --}}
 
-           {{-- <li class="menu-item ">
+           @if (admin_can_access_module('coupons', 'view', $admin))
+           <li class="menu-item">
                <a href="{{ route('admin.coupons.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-discount"></i>
                    <div>الكوبونات</div>
                </a>
-           </li> --}}
+           </li>
+           @endif
+           @if (admin_can_access_module('articles', 'view', $admin))
            <li class="menu-item">
                <a href="{{ route('admin.articles.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-article"></i>
                    <div>المقالات</div>
                </a>
            </li>
+           @endif
 
 
+           @if (admin_can_access_module('contact_us', 'view', $admin))
            <li class="menu-item ">
                <a href="{{ route('admin.contact.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-messages"></i>
                    <div>تواصل معنا</div>
                </a>
            </li>
+           @endif
 
+           @if (admin_can_access_module('visitors', 'view', $admin))
            <li class="menu-item ">
                <a href="{{ route('admin.visitors.index') }}" class="menu-link">
                    <i class="menu-icon ti ti-users"></i>
                    <div>الزوار</div>
                </a>
            </li>
+           @endif
 
 
+           @if (admin_can_access_any_module(['static_pages', 'faqs'], 'view', $admin))
            <li class="menu-item ">
                <a href="javascript:void(0);" class="menu-link menu-toggle">
                    <i class="menu-icon tf-icons ti ti-info-circle"></i>
@@ -217,6 +261,7 @@
                </a>
                <ul class="menu-sub">
 
+                   @if (admin_can_access_module('static_pages', 'view', $admin))
                    <li class="menu-item ">
                        <a href="{{ route('admin.static-pages.index') }}" class="menu-link">
                            <i class="menu-icon ti ti-file-description"></i>
@@ -224,15 +269,20 @@
                            </div>
                        </a>
                    </li>
+                   @endif
+                   @if (admin_can_access_module('faqs', 'view', $admin))
                    <li class="menu-item ">
                        <a href="{{ route('admin.faqs.index') }}" class="menu-link">
                            <i class="menu-icon ti ti-help"></i>
                            <div>الأسئلة الشائعة</div>
                        </a>
                    </li>
+                   @endif
                </ul>
            </li>
+           @endif
 
+           @if (admin_can_access_module('errors', 'view', $admin))
            <li class="menu-item ">
                <a href="javascript:void(0);" class="menu-link menu-toggle">
                    <i class="menu-icon tf-icons ti ti-file-pencil "></i>
@@ -249,8 +299,10 @@
 
                </ul>
            </li>
+           @endif
 
 
+           @if (admin_can_access_module('settings', 'view', $admin))
            <li class="menu-item">
                <a href="javascript:void(0);" class="menu-link menu-toggle">
                    <i class="menu-icon tf-icons ti ti-settings"></i>
@@ -266,8 +318,14 @@
                    </li> --}}
 
                    <li class="menu-item">
-                       <a href="#/admin/settings/pages/General" class="menu-link">
+                       <a href="{{ route('admin.setting.edit') }}" class="menu-link">
                            <div>الإعدادات العامة</div>
+                       </a>
+                   </li>
+
+                   <li class="menu-item">
+                       <a href="{{ route('admin.setting.pages') }}" class="menu-link">
+                           <div>إعدادات الصفحات</div>
                        </a>
                    </li>
 
@@ -277,11 +335,13 @@
                        </a>
                    </li> --}}
 
+                   @if (admin_can_access_module('settings', 'view', $admin))
                    <li class="menu-item">
                        <a href="{{ route('admin.social-media.index') }}" class="menu-link">
                            <div>إعدادات التواصل</div>
                        </a>
                    </li>
+                   @endif
 
                    {{-- <li class="menu-item">
                        <a href="#/admin/settings/pages/Realtime" class="menu-link">
@@ -296,6 +356,7 @@
                    </li> --}}
                </ul>
            </li>
+           @endif
 
 
        </ul>

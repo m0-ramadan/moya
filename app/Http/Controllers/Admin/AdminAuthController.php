@@ -46,7 +46,7 @@ class AdminAuthController extends Controller
 
     if (Auth::guard('admin')->attempt($credentials)) {
       $request->session()->regenerate();
-      return redirect()->intended('/admin');
+      return redirect()->intended('/admin/home');
     }
 
     return back()->withErrors(['email' => 'يرجى إدخال بريد إلكتروني أو كلمة مرور صحيحة']);

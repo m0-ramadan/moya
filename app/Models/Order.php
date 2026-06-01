@@ -38,6 +38,7 @@ class Order extends Model
         'water_type_id',
         'saved_location_id',
         'order_status_id',
+        'notes',
         'payment_status',
         'payment_method',
         'payment_transaction_id',
@@ -45,6 +46,13 @@ class Order extends Model
         'paid_at',
         'order_date',
         'contract_id',
+        'coupon_id',
+        'coupon_code',
+        'coupon_type',
+        'coupon_value',
+        'original_amount',
+        'discount_amount',
+        'final_amount',
         'payment_gateway',
         'expires_at',
         'code_confirmation',
@@ -55,6 +63,10 @@ class Order extends Model
         'paid_at' => 'datetime',
         'order_date' => 'datetime',
         'expires_at' => 'datetime',
+        'coupon_value' => 'decimal:2',
+        'original_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'final_amount' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -95,6 +107,11 @@ class Order extends Model
     public function contract()
     {
         return $this->belongsTo(Contract::class, 'contract_id');
+    }
+
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class, 'coupon_id');
     }
 
     // السائق المسؤول عن الطلب
@@ -211,5 +228,30 @@ class Order extends Model
     public function completionLog()
     {
         return $this->hasOne(OrderCompletionLog::class);
+    }
+
+    public function getResolvedOriginalAmount(): float
+    {
+        return (float) ($this->original_amount ?? $this->getPaymentAmount());
+    }
+
+    public function getResolvedDiscountAmount(): float
+    {
+        return (float) ($this->discount_amount ?? 0);
+    }
+
+    public function getResolvedFinalAmount(): float
+    {
+        return (float) ($this->final_amount ?? max($this->getResolvedOriginalAmount() - $this->getResolvedDiscountAmount(), 0));
+    }
+
+    public function getTotalAttribute(): float
+    {
+        return $this->getResolvedFinalAmount();
+    }
+
+    public function getTotalAmountAttribute($value): float
+    {
+        return (float) ($value ?? $this->getResolvedFinalAmount());
     }
 }

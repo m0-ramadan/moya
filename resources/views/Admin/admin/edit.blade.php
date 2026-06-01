@@ -165,7 +165,7 @@
             margin-bottom: 10px;
         }
 
-        .form-check-input:checked + .form-check-label {
+        .form-check-input:checked+.form-check-label {
             background: rgba(105, 108, 255, 0.15);
             border-left: 3px solid var(--primary-color);
         }
@@ -187,7 +187,7 @@
             color: #2ecc71;
         }
 
-        .form-check-input:checked + .form-check-label i.fa-check-circle {
+        .form-check-input:checked+.form-check-label i.fa-check-circle {
             display: inline-block;
         }
     </style>
@@ -229,8 +229,9 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">الاسم الكامل *</label>
-                                    <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
-                                           value="{{ old('name', $admin->name) }}" required>
+                                    <input type="text" name="name"
+                                        class="form-control @error('name') is-invalid @enderror"
+                                        value="{{ old('name', $admin->name) }}" required>
                                     @error('name')
                                         <div class="error-message">{{ $message }}</div>
                                     @enderror
@@ -238,8 +239,9 @@
 
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">البريد الإلكتروني *</label>
-                                    <input type="email" name="email" class="form-control @error('email') is-invalid @enderror"
-                                           value="{{ old('email', $admin->email) }}" required>
+                                    <input type="email" name="email"
+                                        class="form-control @error('email') is-invalid @enderror"
+                                        value="{{ old('email', $admin->email) }}" required>
                                     @error('email')
                                         <div class="error-message">{{ $message }}</div>
                                     @enderror
@@ -247,8 +249,9 @@
 
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">رقم الهاتف</label>
-                                    <input type="text" name="phone" class="form-control @error('phone') is-invalid @enderror"
-                                           value="{{ old('phone', $admin->phone) }}">
+                                    <input type="text" name="phone"
+                                        class="form-control @error('phone') is-invalid @enderror"
+                                        value="{{ old('phone', $admin->phone) }}">
                                     @error('phone')
                                         <div class="error-message">{{ $message }}</div>
                                     @enderror
@@ -256,8 +259,8 @@
 
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">كلمة المرور الجديدة (اتركه فارغاً إن لم ترغب بالتغيير)</label>
-                                    <input type="password" name="password" class="form-control @error('password') is-invalid @enderror"
-                                           placeholder="********">
+                                    <input type="password" name="password"
+                                        class="form-control @error('password') is-invalid @enderror" placeholder="********">
                                     <div class="form-text">يجب أن تكون 8 أحرف على الأقل</div>
                                     @error('password')
                                         <div class="error-message">{{ $message }}</div>
@@ -265,21 +268,23 @@
                                 </div>
 
                                 <!-- الفرع - إن كان موجوداً -->
-                                @if(isset($branches))
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">الفرع</label>
-                                    <select name="branch_id" class="form-control @error('branch_id') is-invalid @enderror">
-                                        <option value="">بدون فرع</option>
-                                        @foreach($branches as $branch)
-                                            <option value="{{ $branch->id }}" {{ old('branch_id', $admin->branch_id) == $branch->id ? 'selected' : '' }}>
-                                                {{ $branch->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('branch_id')
-                                        <div class="error-message">{{ $message }}</div>
-                                    @enderror
-                                </div>
+                                @if (isset($branches))
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">الفرع</label>
+                                        <select name="branch_id"
+                                            class="form-control @error('branch_id') is-invalid @enderror">
+                                            <option value="">بدون فرع</option>
+                                            @foreach ($branches as $branch)
+                                                <option value="{{ $branch->id }}"
+                                                    {{ old('branch_id', $admin->branch_id) == $branch->id ? 'selected' : '' }}>
+                                                    {{ $branch->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('branch_id')
+                                            <div class="error-message">{{ $message }}</div>
+                                        @enderror
+                                    </div>
                                 @endif
                             </div>
                         </div>
@@ -292,14 +297,16 @@
                                     <div class="col-md-6 mb-3">
                                         <div class="form-check">
                                             <input type="checkbox" name="roles[]" value="{{ $role->id }}"
-                                                   id="role_{{ $role->id }}" class="form-check-input d-none"
-                                                   @if(in_array($role->id, old('roles', $admin->roles->pluck('id')->toArray()))) checked @endif>
+                                                id="role_{{ $role->id }}" class="form-check-input d-none"
+                                                @if (in_array($role->id, old('roles', $admin->roles->pluck('id')->toArray()))) checked @endif>
                                             <label class="form-check-label" for="role_{{ $role->id }}">
                                                 <div class="d-flex justify-content-between align-items-center w-100">
                                                     <div>
-                                                        <span class="role-name">{{ $role->display_name ?? $role->name }}</span>
-                                                        @if($role->description)
-                                                            <br><small class="role-description">{{ $role->description }}</small>
+                                                        <span
+                                                            class="role-name">{{ $role->display_name ?? $role->name }}</span>
+                                                        @if ($role->description)
+                                                            <br><small
+                                                                class="role-description">{{ $role->description }}</small>
                                                         @endif
                                                     </div>
                                                     <i class="fas fa-check-circle"></i>
@@ -318,7 +325,7 @@
                             <h6 class="module-title"><i class="fas fa-camera"></i> الصورة الشخصية</h6>
                             <div class="mb-3">
                                 <img src="{{ $admin->avatar ? get_user_image($admin->avatar) : asset('assets/images/default-avatar.png') }}"
-                                     alt="الصورة الحالية" class="avatar-preview" id="avatarPreview">
+                                    alt="الصورة الحالية" class="avatar-preview" id="avatarPreview">
                             </div>
                             <input type="file" name="avatar" class="form-control" id="avatarInput" accept="image/*">
                             <div class="form-text">يُسمح بـ JPG, PNG. الحجم الأقصى 2MB</div>
@@ -331,8 +338,10 @@
                         <div class="module-section">
                             <h6 class="module-title"><i class="fas fa-lightbulb"></i> تذكير</h6>
                             <ul class="list-unstyled" style="color: rgba(255, 255, 255, 0.7);">
-                                <li class="mb-2"><i class="fas fa-info-circle me-2 text-info"></i> تغيير الرتب يؤثر على صلاحيات الموظف فوراً.</li>
-                                <li class="mb-2"><i class="fas fa-info-circle me-2 text-info"></i> ترك كلمة المرور فارغة يعني الإبقاء على القديمة.</li>
+                                <li class="mb-2"><i class="fas fa-info-circle me-2 text-info"></i> تغيير الرتب يؤثر على
+                                    صلاحيات الموظف فوراً.</li>
+                                <li class="mb-2"><i class="fas fa-info-circle me-2 text-info"></i> ترك كلمة المرور فارغة
+                                    يعني الإبقاء على القديمة.</li>
                             </ul>
                         </div>
                     </div>

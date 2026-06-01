@@ -720,6 +720,7 @@
 @endsection
 
 @section('content')
+    @php($adminUser = auth('admin')->user())
     <div class="container-xxl flex-grow-1 container-p-y">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -814,8 +815,10 @@
                 </div>
 
                 <form
+                    @if (($editService && admin_can_access_module('services', 'edit', $adminUser)) || (!$editService && admin_can_access_module('services', 'create', $adminUser)))
                     action="{{ $editService ? route('admin.services.update', $editService->id) : route('admin.services.store') }}"
-                    method="POST" enctype="multipart/form-data">
+                    method="POST" enctype="multipart/form-data"
+                    @endif>
                     @csrf
                     @if ($editService)
                         @method('PUT')
@@ -894,10 +897,12 @@
                                             إلغاء التعديل
                                         </a>
                                     @endif
+                                    @if (($editService && admin_can_access_module('services', 'edit', $adminUser)) || (!$editService && admin_can_access_module('services', 'create', $adminUser)))
                                     <button type="submit" class="btn-save">
                                         <i class="fas {{ $editService ? 'fa-save' : 'fa-plus' }}"></i>
                                         {{ $editService ? 'حفظ التعديلات' : 'إضافة الخدمة' }}
                                     </button>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -1023,10 +1028,12 @@
 
                                     <td>
                                         <div class="action-buttons">
+                                            @if (admin_can_access_module('services', 'edit', $adminUser))
                                             <a href="{{ route('admin.services.index', ['edit' => $service->id]) }}"
                                                 class="btn-action edit" title="تعديل">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            @endif
 
                                             {{-- <button class="btn-action toggle"
                                                 onclick="toggleStatus({{ $service->id }}, {{ $service->is_active ? 'true' : 'false' }})"
@@ -1034,11 +1041,13 @@
                                                 <i class="fas {{ $service->is_active ? 'fa-pause' : 'fa-play' }}"></i>
                                             </button> --}}
 
+                                            @if (admin_can_access_module('services', 'delete', $adminUser))
                                             <button class="btn-action delete"
                                                 onclick="deleteService({{ $service->id }}, '{{ $service->name }}')"
                                                 title="حذف">
                                                 <i class="fas fa-trash"></i>
                                             </button>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -1077,6 +1086,7 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
+    @if (admin_can_access_module('services', 'delete', $adminUser))
     <div class="modal fade" id="deleteServiceModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -1099,6 +1109,7 @@
             </div>
         </div>
     </div>
+    @endif
 @endsection
 
 @section('js')

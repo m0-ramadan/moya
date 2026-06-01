@@ -447,9 +447,9 @@
                                     </div>
                                 @endif
                             </td>
-                            <td>{{ number_format($item->price_per_unit, 2) }} ج.م</td>
+                            <td>{{ number_format($item->price_per_unit, 2) }} ر.س</td>
                             <td>{{ $item->quantity }}</td>
-                            <td>{{ number_format($item->total_price, 2) }} ج.م</td>
+                            <td>{{ number_format($item->total_price, 2) }} ر.س</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -469,29 +469,29 @@
             <table class="summary-table">
                 <tr>
                     <td class="summary-label">المجموع الجزئي:</td>
-                    <td class="summary-value">{{ number_format($order->subtotal, 2) }} ج.م</td>
+                    <td class="summary-value">{{ number_format($order->subtotal, 2) }} ر.س</td>
                 </tr>
                 @if ($order->shipping_amount > 0)
                     <tr>
                         <td class="summary-label">تكلفة الشحن:</td>
-                        <td class="summary-value">{{ number_format($order->shipping_amount, 2) }} ج.م</td>
+                        <td class="summary-value">{{ number_format($order->shipping_amount, 2) }} ر.س</td>
                     </tr>
                 @endif
                 @if ($order->discount_amount > 0)
                     <tr>
                         <td class="summary-label">الخصم:</td>
-                        <td class="summary-value">-{{ number_format($order->discount_amount, 2) }} ج.م</td>
+                        <td class="summary-value">-{{ number_format($order->discount_amount, 2) }} ر.س</td>
                     </tr>
                 @endif
                 @if ($order->tax_amount > 0)
                     <tr>
                         <td class="summary-label">الضريبة:</td>
-                        <td class="summary-value">{{ number_format($order->tax_amount, 2) }} ج.م</td>
+                        <td class="summary-value">{{ number_format($order->tax_amount, 2) }} ر.س</td>
                     </tr>
                 @endif
                 <tr class="total-row">
                     <td class="summary-label">المجموع الإجمالي:</td>
-                    <td class="summary-value">{{ number_format($order->total_amount, 2) }} ج.م</td>
+                    <td class="summary-value">{{ number_format($order->total_amount, 2) }} ر.س</td>
                 </tr>
             </table>
         </div>

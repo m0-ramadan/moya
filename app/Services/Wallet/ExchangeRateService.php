@@ -432,7 +432,7 @@ class ExchangeRateService
             ],
             self::CURRENCY_EGP => [
                 'name' => 'الجنيه المصري',
-                'symbol' => 'ج.م',
+                'symbol' => 'ر.س',
                 'decimal_places' => 2,
                 'is_active' => true,
                 'is_default' => false

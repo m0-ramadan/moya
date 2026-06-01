@@ -76,14 +76,14 @@
             background: rgba(105, 108, 255, 0.2);
             color: #fff;
         }
-        
+
         .module-group {
             margin-bottom: 20px;
             background: rgba(0, 0, 0, 0.2);
             padding: 15px;
             border-radius: 10px;
         }
-        
+
         .module-group h6 {
             color: var(--primary-color);
             margin-bottom: 15px;
@@ -145,7 +145,7 @@
                                 <span class="info-label">عدد الصلاحيات:</span>
                                 <span>{{ $role->permissions->count() }} صلاحية</span>
                             </div>
-                            
+
                             <div class="mt-4 d-grid gap-2">
                                 <a href="{{ route('admin.roles.edit', $role->id) }}" class="btn btn-warning">
                                     <i class="fas fa-edit me-2"></i> تعديل بيانات الرتبة
@@ -165,17 +165,18 @@
                         <h5 class="mb-0 text-white">الصلاحيات الممنوحة ({{ $role->permissions->count() }})</h5>
                     </div>
                     <div class="card-body mt-3">
-                        @if($permissionsByModule->isEmpty())
+                        @if ($permissionsByModule->isEmpty())
                             <div class="text-center py-5 text-muted">
                                 <i class="fas fa-shield-alt fa-3x mb-3"></i>
                                 <p>لا توجد صلاحيات ممنوحة لهذه الرتبة</p>
                             </div>
                         @else
-                            @foreach($permissionsByModule as $module => $permissions)
+                            @foreach ($permissionsByModule as $module => $permissions)
                                 <div class="module-group">
-                                    <h6><i class="fas fa-{{ module_icon($module) }} me-2"></i> {{ module_display_name($module) }}</h6>
+                                    <h6><i class="fas fa-{{ module_icon($module) }} me-2"></i>
+                                        {{ module_display_name($module) }}</h6>
                                     <div>
-                                        @foreach($permissions as $permission)
+                                        @foreach ($permissions as $permission)
                                             <span class="permission-badge">
                                                 {{ $permission->display_name }}
                                             </span>
@@ -187,7 +188,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -209,11 +210,12 @@
                                         <tr>
                                             <td>{{ $user->name }}</td>
                                             <td>{{ $user->email }}</td>
-                                            <td>{{ $user->created_at->format('Y-m-d') }}</td>
+                                            <td>{{ $user->created_at?->format('Y-m-d') }}</td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="3" class="text-center py-4 text-muted">لا يوجد مستخدمين بهذه الرتبة</td>
+                                            <td colspan="3" class="text-center py-4 text-muted">لا يوجد مستخدمين بهذه
+                                                الرتبة</td>
                                         </tr>
                                     @endforelse
                                 </tbody>

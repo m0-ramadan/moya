@@ -231,7 +231,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
-                     <a href="{{ route('admin.home') }}">الرئيسية</a>
+                    <a href="{{ route('admin.home') }}">الرئيسية</a>
                 </li>
                 <li class="breadcrumb-item">
                     <a href="{{ route('admin.users.index') }}">المستخدمين</a>
@@ -252,7 +252,8 @@
                     @elseif ($user->avatar)
                         <img src="{{ asset('storage/' . $user->avatar) }}" alt="{{ $user->name }}" class="user-avatar">
                     @else
-                        <div class="user-avatar-placeholder d-flex align-items-center justify-content-center bg-secondary text-white" bis_skin_checked="1">
+                        <div class="user-avatar-placeholder d-flex align-items-center justify-content-center bg-secondary text-white"
+                            bis_skin_checked="1">
                             <i class="fas fa-user" style="font-size: 24px;"></i>
                         </div>
                     @endif
@@ -301,7 +302,7 @@
                         <i class="fas fa-money-bill-wave"></i>
                     </div>
                     <div class="stats-number" bis_skin_checked="1">
-                        {{ number_format($totalAmount, 2) }} ج.م
+                        {{ number_format($totalAmount, 2) }} ر.س
                     </div>
                     <div class="stats-label" bis_skin_checked="1">إجمالي القيمة</div>
                 </div>
@@ -387,7 +388,7 @@
                                     <div class="detail-item" bis_skin_checked="1">
                                         <span class="detail-label">القيمة:</span>
                                         <span class="detail-value">
-                                            {{ number_format($order->total_amount, 2) }} ج.م
+                                            {{ number_format($order->total_amount, 2) }} ر.س
                                         </span>
                                     </div>
 

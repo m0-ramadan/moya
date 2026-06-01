@@ -136,6 +136,7 @@
 @endsection
 
 @section('content')
+    @php($adminUser = auth('admin')->user())
     <div class="container-xxl flex-grow-1 container-p-y" dir="rtl">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -144,12 +145,12 @@
             </ol>
         </nav>
 
-        @if (!auth()->user()->role || auth()->user()->hasPermissionTo('عرض الإدمن'))
+        @if (admin_can_access_module('admins', 'view', $adminUser))
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <h5 class="mb-0"><i class="fas fa-users-cog me-2"></i>قائمة الموظفين</h5>
                     <div class="d-flex gap-2 align-items-center">
-                        @if (!auth()->user()->role || auth()->user()->hasPermissionTo('إضافة الإدمن'))
+                        @if (admin_can_access_module('admins', 'create', $adminUser))
                             <a href="{{ route('admin.admins.create') }}" class="btn btn-light">
                                 <i class="fas fa-plus-circle me-1"></i> إضافة موظف جديد
                             </a>
@@ -184,21 +185,23 @@
                                         </td>
           
                                         <td class="d-flex gap-1 justify-content-center">
-                                            @if (!auth()->user()->role || auth()->user()->hasPermissionTo('تعديل الإدمن'))
+                                            @if (admin_can_access_module('admins', 'edit', $adminUser))
                                                 <a href="{{ route('admin.admins.edit', $admin) }}" class="btn btn-success btn-icon">
                                                     <i class="fa fa-edit"></i>
                                                 </a>
                                             @endif
 
                                             {{-- زر تعيين الرتب --}}
+                                            @if (admin_can_access_module('roles', 'manage', $adminUser))
                                             <button class="btn btn-primary btn-icon assign-roles-btn"
                                                     data-id="{{ $admin->id }}"
                                                     data-name="{{ $admin->name }}"
                                                     data-roles="{{ $admin->roles->pluck('id') }}">
                                                 <i class="fa fa-user-tag"></i>
                                             </button>
+                                            @endif
 
-                                            @if (!auth()->user()->role || auth()->user()->hasPermissionTo('حذف الإدمن'))
+                                            @if (admin_can_access_module('admins', 'delete', $adminUser))
                                                 <button class="btn btn-danger btn-icon delete-admin-btn"
                                                         data-id="{{ $admin->id }}"
                                                         data-name="{{ $admin->name }}">

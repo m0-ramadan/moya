@@ -102,13 +102,15 @@ return [
     'orders' => [
         'expiration_minutes' => env('ORDER_EXPIRATION_MINUTES', 10),
         'offer_expiration_minutes' => env('OFFER_EXPIRATION_MINUTES', 1),
+        'whatsapp_notifications_role' => env('ORDER_WHATSAPP_ROLE'),
+        'whatsapp_notifications_to' => env('ORDER_WHATSAPP_TO'),
     ],
     'region' => [
         'default' => env('APP_TIMEZONE', 'asia/riyadh'),
     ],
 
     'wasender' => [
-        'token' => env('wasender', 'f9853c9a2b245a417474882022f5ffb4ec5349a27d72e47a05944d617ca3b03a'),
+        'token' => env('WASENDER_TOKEN', env('wasender', '')),
     ],
 
     'percentages' => [

@@ -83,12 +83,22 @@
             border: 1px solid rgba(111, 66, 193, 0.3);
         }
 
+        .contract-type-individual,
+        .contract-type-company {
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+
         .duration-badge {
             background: rgba(255, 255, 255, 0.1);
             color: #fff;
             border-radius: 4px;
             padding: 3px 8px;
             font-size: 11px;
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
         }
 
         .stats-card {
@@ -295,7 +305,18 @@
             display: flex;
             gap: 10px;
             margin-top: 15px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            white-space: nowrap;
+        }
+
+        .contract-actions .btn {
+            flex-shrink: 0;
+        }
+
+        .contract-end-date {
+            display: inline-block;
+            direction: ltr;
+            white-space: nowrap;
         }
 
         .empty-state {
@@ -416,13 +437,16 @@
             margin-bottom: 20px;
         }
 
-        .form-control, .form-select, .input-group-text {
+        .form-control,
+        .form-select,
+        .input-group-text {
             background: rgba(255, 255, 255, 0.05);
             border-color: rgba(255, 255, 255, 0.1);
             color: #fff;
         }
 
-        .form-control:focus, .form-select:focus {
+        .form-control:focus,
+        .form-select:focus {
             background: rgba(255, 255, 255, 0.1);
             border-color: var(--primary-color);
             color: #fff;
@@ -442,6 +466,9 @@
             padding: 4px 8px;
             border-radius: 4px;
             font-size: 11px;
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
         }
 
         .payment-completed {
@@ -527,11 +554,12 @@
 @endsection
 
 @section('content')
+    <?php $adminUser = auth('admin')->user(); ?>
     <div class="container-xxl flex-grow-1 container-p-y">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
-                     <a href="{{ route('admin.home') }}">الرئيسية</a>
+                    <a href="{{ route('admin.home') }}">الرئيسية</a>
                 </li>
                 <li class="breadcrumb-item active">العقود</li>
             </ol>
@@ -619,45 +647,48 @@
                 <div class="filter-row">
                     <div class="search-box">
                         <i class="fas fa-search search-icon"></i>
-                        <input type="text" class="form-control" name="search" placeholder="بحث برقم العقد أو اسم العميل..." 
-                               value="{{ request('search') }}">
+                        <input type="text" class="form-control" name="search"
+                            placeholder="بحث برقم العقد أو اسم العميل..." value="{{ request('search') }}">
                     </div>
 
                     <select class="form-select" name="contract_type">
                         <option value="">نوع العقد</option>
-                        <option value="individual" {{ request('contract_type') == 'individual' ? 'selected' : '' }}>فردي</option>
+                        <option value="individual" {{ request('contract_type') == 'individual' ? 'selected' : '' }}>فردي
+                        </option>
                         <option value="company" {{ request('contract_type') == 'company' ? 'selected' : '' }}>شركة</option>
                     </select>
 
                     <select class="form-select" name="duration_type">
                         <option value="">مدة العقد</option>
                         <option value="monthly" {{ request('duration_type') == 'monthly' ? 'selected' : '' }}>شهري</option>
-                        <option value="quarterly" {{ request('duration_type') == 'quarterly' ? 'selected' : '' }}>ربع سنوي</option>
-                        <option value="semi_annual" {{ request('duration_type') == 'semi_annual' ? 'selected' : '' }}>نصف سنوي</option>
+                        <option value="quarterly" {{ request('duration_type') == 'quarterly' ? 'selected' : '' }}>ربع سنوي
+                        </option>
+                        <option value="semi_annual" {{ request('duration_type') == 'semi_annual' ? 'selected' : '' }}>نصف
+                            سنوي</option>
                         <option value="annual" {{ request('duration_type') == 'annual' ? 'selected' : '' }}>سنوي</option>
                     </select>
                 </div>
 
                 <div class="filter-row">
                     <div class="input-group">
-                        <input type="date" class="form-control" name="date_from" placeholder="من تاريخ" 
-                               value="{{ request('date_from') }}">
+                        <input type="date" class="form-control" name="date_from" placeholder="من تاريخ"
+                            value="{{ request('date_from') }}">
                         <span class="input-group-text">إلى</span>
-                        <input type="date" class="form-control" name="date_to" placeholder="إلى تاريخ" 
-                               value="{{ request('date_to') }}">
+                        <input type="date" class="form-control" name="date_to" placeholder="إلى تاريخ"
+                            value="{{ request('date_to') }}">
                     </div>
 
                     <div class="input-group">
-                        <input type="number" class="form-control" name="amount_from" placeholder="المبلغ من" 
-                               value="{{ request('amount_from') }}" step="0.01">
+                        <input type="number" class="form-control" name="amount_from" placeholder="المبلغ من"
+                            value="{{ request('amount_from') }}" step="0.01">
                         <span class="input-group-text">إلى</span>
-                        <input type="number" class="form-control" name="amount_to" placeholder="المبلغ إلى" 
-                               value="{{ request('amount_to') }}" step="0.01">
+                        <input type="number" class="form-control" name="amount_to" placeholder="المبلغ إلى"
+                            value="{{ request('amount_to') }}" step="0.01">
                     </div>
 
                     <select class="form-select" name="user_id">
                         <option value="">جميع العملاء</option>
-                        @foreach($users ?? [] as $user)
+                        @foreach ($users ?? [] as $user)
                             <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
                                 {{ $user->name }} - {{ $user->phone }}
                             </option>
@@ -687,20 +718,25 @@
                                 <small class="opacity-75">إدارة جميع عقود العملاء</small>
                             </div>
                             <div class="d-flex gap-3">
-                                <a href="{{ route('admin.contracts.export') }}" class="btn btn-light" 
-                                   onclick="event.preventDefault(); document.getElementById('export-form').submit();">
-                                    <i class="fas fa-download me-2"></i>تصدير
-                                </a>
-                                <a href="{{ route('admin.contracts.create') }}" class="btn btn-light">
-                                    <i class="fas fa-plus me-2"></i>عقد جديد
-                                </a>
+                                @if (admin_can_access_module('contracts', 'view', $adminUser))
+                                    <a href="{{ route('admin.contracts.export') }}" class="btn btn-light"
+                                        onclick="event.preventDefault(); document.getElementById('export-form').submit();">
+                                        <i class="fas fa-download me-2"></i>تصدير
+                                    </a>
+                                @endif
+                                @if (admin_can_access_module('contracts', 'create', $adminUser))
+                                    <a href="{{ route('admin.contracts.create') }}" class="btn btn-light">
+                                        <i class="fas fa-plus me-2"></i>عقد جديد
+                                    </a>
+                                @endif
                             </div>
                         </div>
                     </div>
 
                     <div class="card-body">
                         <!-- نموذج التصدير المخفي -->
-                        <form id="export-form" action="{{ route('admin.contracts.export') }}" method="POST" class="d-none">
+                        <form id="export-form" action="{{ route('admin.contracts.export') }}" method="POST"
+                            class="d-none">
                             @csrf
                             <input type="hidden" name="search" value="{{ request('search') }}">
                             <input type="hidden" name="status" value="{{ request('status') }}">
@@ -712,29 +748,33 @@
                         <!-- إجراءات جماعية -->
                         <form id="bulkForm" method="POST" action="{{ route('admin.contracts.bulk-actions') }}">
                             @csrf
-                            <div class="bulk-actions">
-                                <select name="action" class="form-select" style="width: 200px;">
-                                    <option value="">اختر إجراء</option>
-                                    <option value="activate">تفعيل المحدد</option>
-                                    <option value="deactivate">تعطيل المحدد</option>
-                                    <option value="extend">تمديد المحدد</option>
-                                    <option value="delete">حذف المحدد</option>
-                                </select>
-                                <button type="submit" class="btn btn-primary" onclick="return confirmBulkAction()">
-                                    <i class="fas fa-play me-2"></i>تطبيق
-                                </button>
-                            </div>
+                            @if (admin_can_access_module('contracts', 'edit', $adminUser))
+                                <div class="bulk-actions">
+                                    <select name="action" class="form-select" style="width: 200px;">
+                                        <option value="">اختر إجراء</option>
+                                        <option value="activate">تفعيل المحدد</option>
+                                        <option value="deactivate">تعطيل المحدد</option>
+                                        <option value="extend">تمديد المحدد</option>
+                                        <option value="delete">حذف المحدد</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-primary" onclick="return confirmBulkAction()">
+                                        <i class="fas fa-play me-2"></i>تطبيق
+                                    </button>
+                                </div>
+                            @endif
 
-                            @if($contracts->isEmpty())
+                            @if ($contracts->isEmpty())
                                 <div class="empty-state">
                                     <div class="empty-state-icon">
                                         <i class="fas fa-file-contract"></i>
                                     </div>
                                     <h5 class="empty-state-text">لا توجد عقود</h5>
                                     <p class="text-muted">لم يتم إنشاء أي عقود حتى الآن</p>
-                                    <a href="{{ route('admin.contracts.create') }}" class="btn btn-primary">
-                                        <i class="fas fa-plus me-2"></i>إنشاء عقد جديد
-                                    </a>
+                                    @if (admin_can_access_module('contracts', 'create', $adminUser))
+                                        <a href="{{ route('admin.contracts.create') }}" class="btn btn-primary">
+                                            <i class="fas fa-plus me-2"></i>إنشاء عقد جديد
+                                        </a>
+                                    @endif
                                 </div>
                             @else
                                 <div class="table-responsive">
@@ -742,7 +782,9 @@
                                         <thead>
                                             <tr>
                                                 <th width="50">
-                                                    <input type="checkbox" id="selectAll" class="form-check-input">
+                                                    @if (admin_can_access_module('contracts', 'edit', $adminUser))
+                                                        <input type="checkbox" id="selectAll" class="form-check-input">
+                                                    @endif
                                                 </th>
                                                 <th>رقم العقد</th>
                                                 <th>العميل</th>
@@ -756,115 +798,145 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach($contracts as $contract)
+                                            @foreach ($contracts as $contract)
                                                 <tr>
                                                     <td>
-                                                        <input type="checkbox" class="contract-checkbox form-check-input" 
-                                                               name="ids[]" value="{{ $contract->id }}">
+                                                        @if (admin_can_access_module('contracts', 'edit', $adminUser))
+                                                            <input type="checkbox"
+                                                                class="contract-checkbox form-check-input" name="ids[]"
+                                                                value="{{ $contract->id }}">
+                                                        @endif
                                                     </td>
+
                                                     <td>
-                                                        <strong class="contract-number">{{ $contract->contract_number }}</strong>
+                                                        <strong
+                                                            class="contract-number">{{ $contract->contract_number }}</strong>
                                                     </td>
+
                                                     <td>
                                                         <div class="user-info">
-                                                            @if($contract->user)
-                                                                <div class="user-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
-                                                                    @if($contract->user->avatar)
-                                                                        <img src="{{ asset('storage/' . $contract->user->avatar) }}" alt="{{ $contract->user->name }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                                            @if ($contract->user)
+                                                                <div
+                                                                    class="user-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
+                                                                    @if ($contract->user->avatar)
+                                                                        <img src="{{ asset('storage/' . $contract->user->avatar) }}"
+                                                                            alt="{{ $contract->user->name }}"
+                                                                            style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
                                                                     @else
-                                                                        <i class="fas fa-user" style="font-size: 14px;"></i>
+                                                                        <i class="fas fa-user"
+                                                                            style="font-size: 14px;"></i>
                                                                     @endif
                                                                 </div>
                                                                 <div>
-                                                                    <strong class="d-block">{{ $contract->user->name }}</strong>
-                                                                    <small class="text-muted">{{ $contract->user->phone }}</small>
+                                                                    <strong
+                                                                        class="d-block">{{ $contract->user->name }}</strong>
+                                                                    <small
+                                                                        class="text-muted">{{ $contract->user->phone }}</small>
                                                                 </div>
                                                             @else
                                                                 <span class="text-muted">محذوف</span>
                                                             @endif
                                                         </div>
                                                     </td>
+
                                                     <td>
-                                                        @if($contract->contract_type == 'individual')
+                                                        @if ($contract->contract_type == 'individual')
                                                             <span class="badge-status contract-type-individual">
                                                                 <i class="fas fa-user me-1"></i>فردي
                                                             </span>
                                                         @else
                                                             <span class="badge-status contract-type-company">
-                                                                <i class="fas fa-building me-1"></i>{{ $contract->company_name }}
+                                                                <i
+                                                                    class="fas fa-building me-1"></i>{{ $contract->company_name }}
                                                             </span>
                                                         @endif
                                                     </td>
+
                                                     <td>
                                                         <span class="duration-badge">
                                                             @switch($contract->duration_type)
                                                                 @case('monthly')
                                                                     <i class="fas fa-calendar-alt me-1"></i>شهري
-                                                                    @break
+                                                                @break
+
                                                                 @case('quarterly')
                                                                     <i class="fas fa-calendar-alt me-1"></i>ربع سنوي
-                                                                    @break
+                                                                @break
+
                                                                 @case('semi_annual')
                                                                     <i class="fas fa-calendar-alt me-1"></i>نصف سنوي
-                                                                    @break
+                                                                @break
+
                                                                 @case('annual')
                                                                     <i class="fas fa-calendar-alt me-1"></i>سنوي
-                                                                    @break
+                                                                @break
                                                             @endswitch
                                                         </span>
                                                     </td>
+
                                                     <td>
                                                         <div class="d-flex flex-column gap-1">
                                                             <div>
                                                                 <small class="text-muted">الطلبات:</small>
                                                                 <strong>{{ $contract->remaining_orders }}/{{ $contract->total_orders_limit }}</strong>
                                                             </div>
-                                                            @if($contract->total_orders_limit > 0)
-                                                                @php $percentage = ($contract->remaining_orders / $contract->total_orders_limit) * 100; @endphp
+                                                            @if ($contract->total_orders_limit > 0)
                                                                 <div class="progress" style="width: 100px;">
-                                                                    <div class="progress-bar" style="width: {{ $percentage }}%"></div>
+                                                                    <div class="progress-bar"
+                                                                        style="width: {{ ($contract->remaining_orders / $contract->total_orders_limit) * 100 }}%"></div>
                                                                 </div>
                                                             @endif
                                                         </div>
                                                     </td>
+
                                                     <td>
                                                         <div class="d-flex flex-column gap-1">
                                                             <div>
                                                                 <small class="text-muted">الإجمالي:</small>
-                                                                <span class="amount-text">{{ number_format($contract->total_amount, 2) }} ر.س</span>
+                                                                <span
+                                                                    class="amount-text">{{ number_format($contract->total_amount, 2) }}
+                                                                    ر.س</span>
                                                             </div>
                                                             <div>
                                                                 <small class="text-muted">المتبقي:</small>
-                                                                <span class="remaining-text">{{ number_format($contract->remaining_amount, 2) }} ر.س</span>
+                                                                <span
+                                                                    class="remaining-text">{{ number_format($contract->remaining_amount, 2) }}
+                                                                    ر.س</span>
                                                             </div>
-                                                            @if($contract->paid_amount > 0)
-                                                                @php $paidPercentage = ($contract->paid_amount / $contract->total_amount) * 100; @endphp
+                                                            @if ($contract->paid_amount > 0)
                                                                 <div class="progress" style="width: 100px;">
-                                                                    <div class="progress-bar bg-success" style="width: {{ $paidPercentage }}%"></div>
+                                                                    <div class="progress-bar bg-success"
+                                                                        style="width: {{ ($contract->paid_amount / $contract->total_amount) * 100 }}%"></div>
                                                                 </div>
-                                                                <small class="text-muted">{{ number_format($paidPercentage, 1) }}% مدفوع</small>
+                                                                <small
+                                                                    class="text-muted">{{ number_format(($contract->paid_amount / $contract->total_amount) * 100, 1) }}%
+                                                                    مدفوع</small>
                                                             @endif
                                                         </div>
                                                     </td>
+
                                                     <td>
                                                         <div class="d-flex flex-column gap-2">
                                                             <span class="badge-status status-{{ $contract->status }}">
                                                                 @switch($contract->status)
                                                                     @case('active')
                                                                         <i class="fas fa-check-circle me-1"></i>نشط
-                                                                        @break
+                                                                    @break
+
                                                                     @case('expired')
                                                                         <i class="fas fa-clock me-1"></i>منتهي
-                                                                        @break
+                                                                    @break
+
                                                                     @case('pending')
                                                                         <i class="fas fa-hourglass-half me-1"></i>معلق
-                                                                        @break
+                                                                    @break
+
                                                                     @case('cancelled')
                                                                         <i class="fas fa-ban me-1"></i>ملغي
-                                                                        @break
+                                                                    @break
                                                                 @endswitch
                                                             </span>
-                                                            @if($contract->remaining_amount == 0)
+                                                            @if ($contract->remaining_amount == 0)
                                                                 <span class="badge-payment-status payment-completed">
                                                                     <i class="fas fa-check-circle me-1"></i>مدفوع بالكامل
                                                                 </span>
@@ -879,57 +951,64 @@
                                                             @endif
                                                         </div>
                                                     </td>
+
                                                     <td>
                                                         <div>
-                                                            <strong>{{ $contract->end_date?->format('Y-m-d') }}</strong>
-                                                            @php
-                                                                $daysLeft = $contract->end_date ? now()->diffInDays($contract->end_date, false) : 0;
-                                                            @endphp
-                                                            @if($contract->status == 'active' && $daysLeft > 0)
+                                                            <strong class="contract-end-date">{{ $contract->end_date?->format('Y-m-d') }}</strong>
+                                                            <?php $daysLeft = $contract->end_date ? now()->diffInDays($contract->end_date, false) : 0; ?>
+                                                            @if ($contract->status == 'active' && $daysLeft > 0)
                                                                 <br>
-                                                                <small class="text-{{ $daysLeft <= 7 ? 'danger' : 'success' }}">
+                                                                <small
+                                                                    class="text-{{ $daysLeft <= 7 ? 'danger' : 'success' }}">
                                                                     متبقي {{ $daysLeft }} يوم
                                                                 </small>
                                                             @endif
                                                         </div>
                                                     </td>
+
                                                     <td>
                                                         <div class="contract-actions">
-                                                            <a href="{{ route('admin.contracts.show', $contract->id) }}" 
-                                                               class="btn btn-sm btn-info" title="عرض التفاصيل">
+                                                            <a href="{{ route('admin.contracts.show', $contract->id) }}"
+                                                                class="btn btn-sm btn-info" title="عرض التفاصيل">
                                                                 <i class="fas fa-eye"></i>
                                                             </a>
-                                                            <a href="{{ route('admin.contracts.edit', $contract->id) }}" 
-                                                               class="btn btn-sm btn-warning" title="تعديل">
-                                                                <i class="fas fa-edit"></i>
-                                                            </a>
-                                                            <a href="{{ route('admin.contracts.payments', $contract->id) }}" 
-                                                               class="btn btn-sm btn-success" title="المدفوعات">
+                                                            @if (admin_can_access_module('contracts', 'edit', $adminUser))
+                                                                <a href="{{ route('admin.contracts.edit', $contract->id) }}"
+                                                                    class="btn btn-sm btn-warning" title="تعديل">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </a>
+                                                            @endif
+                                                            <a href="{{ route('admin.contracts.payments', $contract->id) }}"
+                                                                class="btn btn-sm btn-success" title="المدفوعات">
                                                                 <i class="fas fa-money-bill"></i>
                                                             </a>
-                                                            <a href="{{ route('admin.contracts.orders', $contract->id) }}" 
-                                                               class="btn btn-sm btn-info" title="الطلبات">
+                                                            <a href="{{ route('admin.contracts.orders', $contract->id) }}"
+                                                                class="btn btn-sm btn-info" title="الطلبات">
                                                                 <i class="fas fa-shopping-cart"></i>
                                                             </a>
-                                                            <button type="button" 
+                                                            @if (admin_can_access_module('contracts', 'edit', $adminUser))
+                                                                <button type="button"
                                                                     class="btn btn-sm {{ $contract->status == 'active' ? 'btn-secondary' : 'btn-success' }} toggle-status-btn"
                                                                     data-id="{{ $contract->id }}"
                                                                     title="{{ $contract->status == 'active' ? 'تعطيل' : 'تفعيل' }}">
-                                                                <i class="fas fa-power-off"></i>
-                                                            </button>
-                                                            <button type="button" 
+                                                                    <i class="fas fa-power-off"></i>
+                                                                </button>
+                                                                <button type="button"
                                                                     class="btn btn-sm btn-primary extend-btn"
                                                                     data-id="{{ $contract->id }}"
                                                                     data-end-date="{{ $contract->end_date?->format('Y-m-d') }}"
                                                                     title="تمديد العقد">
-                                                                <i class="fas fa-calendar-plus"></i>
-                                                            </button>
-                                                            <button type="button" 
+                                                                    <i class="fas fa-calendar-plus"></i>
+                                                                </button>
+                                                            @endif
+                                                            @if (admin_can_access_module('contracts', 'delete', $adminUser))
+                                                                <button type="button"
                                                                     class="btn btn-sm btn-danger delete-btn"
                                                                     data-id="{{ $contract->id }}"
                                                                     data-number="{{ $contract->contract_number }}">
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            @endif
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -947,27 +1026,27 @@
                                         </button>
                                         <div class="sort-dropdown-content">
                                             <div class="sort-item {{ request('sort_by') == 'created_at' && request('sort_direction') == 'desc' ? 'active' : '' }}"
-                                                 onclick="sortBy('created_at', 'desc')">
+                                                onclick="sortBy('created_at', 'desc')">
                                                 الأحدث أولاً
                                             </div>
                                             <div class="sort-item {{ request('sort_by') == 'created_at' && request('sort_direction') == 'asc' ? 'active' : '' }}"
-                                                 onclick="sortBy('created_at', 'asc')">
+                                                onclick="sortBy('created_at', 'asc')">
                                                 الأقدم أولاً
                                             </div>
                                             <div class="sort-item {{ request('sort_by') == 'total_amount' && request('sort_direction') == 'desc' ? 'active' : '' }}"
-                                                 onclick="sortBy('total_amount', 'desc')">
+                                                onclick="sortBy('total_amount', 'desc')">
                                                 الأعلى مبلغاً
                                             </div>
                                             <div class="sort-item {{ request('sort_by') == 'total_amount' && request('sort_direction') == 'asc' ? 'active' : '' }}"
-                                                 onclick="sortBy('total_amount', 'asc')">
+                                                onclick="sortBy('total_amount', 'asc')">
                                                 الأقل مبلغاً
                                             </div>
                                             <div class="sort-item {{ request('sort_by') == 'end_date' && request('sort_direction') == 'asc' ? 'active' : '' }}"
-                                                 onclick="sortBy('end_date', 'asc')">
+                                                onclick="sortBy('end_date', 'asc')">
                                                 الأقرب انتهاءً
                                             </div>
                                             <div class="sort-item {{ request('sort_by') == 'end_date' && request('sort_direction') == 'desc' ? 'active' : '' }}"
-                                                 onclick="sortBy('end_date', 'desc')">
+                                                onclick="sortBy('end_date', 'desc')">
                                                 الأبعد انتهاءً
                                             </div>
                                         </div>
@@ -975,45 +1054,50 @@
 
                                     <!-- معلومات العرض -->
                                     <div class="text-muted">
-                                        عرض {{ $contracts->firstItem() ?? 0 }} - {{ $contracts->lastItem() ?? 0 }} من {{ $contracts->total() }} عقد
+                                        عرض {{ $contracts->firstItem() ?? 0 }} - {{ $contracts->lastItem() ?? 0 }} من
+                                        {{ $contracts->total() }} عقد
                                     </div>
                                 </div>
 
                                 <!-- Pagination -->
-                                @if($contracts->hasPages())
+                                @if ($contracts->hasPages())
                                     <div class="mt-4">
                                         <nav>
                                             <ul class="pagination justify-content-center">
                                                 {{-- Previous Page Link --}}
-                                                @if($contracts->onFirstPage())
+                                                @if ($contracts->onFirstPage())
                                                     <li class="page-item disabled">
-                                                        <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                                                        <span class="page-link"><i
+                                                                class="fas fa-chevron-right"></i></span>
                                                     </li>
                                                 @else
                                                     <li class="page-item">
-                                                        <a class="page-link" href="{{ $contracts->previousPageUrl() }}" rel="prev">
+                                                        <a class="page-link" href="{{ $contracts->previousPageUrl() }}"
+                                                            rel="prev">
                                                             <i class="fas fa-chevron-right"></i>
                                                         </a>
                                                     </li>
                                                 @endif
 
                                                 {{-- Pagination Elements --}}
-                                                @foreach($contracts->getUrlRange(1, $contracts->lastPage()) as $page => $url)
-                                                    @if($page == $contracts->currentPage())
+                                                @foreach ($contracts->getUrlRange(1, $contracts->lastPage()) as $page => $url)
+                                                    @if ($page == $contracts->currentPage())
                                                         <li class="page-item active">
                                                             <span class="page-link">{{ $page }}</span>
                                                         </li>
                                                     @else
                                                         <li class="page-item">
-                                                            <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                                                            <a class="page-link"
+                                                                href="{{ $url }}">{{ $page }}</a>
                                                         </li>
                                                     @endif
                                                 @endforeach
 
                                                 {{-- Next Page Link --}}
-                                                @if($contracts->hasMorePages())
+                                                @if ($contracts->hasMorePages())
                                                     <li class="page-item">
-                                                        <a class="page-link" href="{{ $contracts->nextPageUrl() }}" rel="next">
+                                                        <a class="page-link" href="{{ $contracts->nextPageUrl() }}"
+                                                            rel="next">
                                                             <i class="fas fa-chevron-left"></i>
                                                         </a>
                                                     </li>
@@ -1040,7 +1124,8 @@
             <div class="modal-content" style="background: var(--dark-card); color: #fff;">
                 <div class="modal-header">
                     <h5 class="modal-title">تمديد العقد</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <form id="extendForm" method="POST">
                     @csrf
@@ -1052,7 +1137,8 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">تاريخ الانتهاء الجديد <span class="text-danger">*</span></label>
-                            <input type="date" name="new_end_date" class="form-control" required min="{{ now()->format('Y-m-d') }}">
+                            <input type="date" name="new_end_date" class="form-control" required
+                                min="{{ now()->format('Y-m-d') }}">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">سبب التمديد</label>
@@ -1106,7 +1192,8 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $.ajax({
-                            url: "{{ route('admin.contracts.toggle-status', '') }}/" + contractId,
+                            url: "{{ route('admin.contracts.toggle-status', '') }}/" +
+                                contractId,
                             type: 'POST',
                             data: {
                                 _token: "{{ csrf_token() }}",
@@ -1119,7 +1206,8 @@
                                     Swal.fire({
                                         icon: 'error',
                                         title: 'خطأ',
-                                        text: response.message || 'حدث خطأ أثناء التحديث'
+                                        text: response.message ||
+                                            'حدث خطأ أثناء التحديث'
                                     });
                                 }
                             },
@@ -1127,7 +1215,8 @@
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'خطأ',
-                                    text: xhr.responseJSON?.message || 'حدث خطأ أثناء التحديث'
+                                    text: xhr.responseJSON?.message ||
+                                        'حدث خطأ أثناء التحديث'
                                 });
                             }
                         });
@@ -1139,7 +1228,7 @@
             $('.extend-btn').on('click', function() {
                 const contractId = $(this).data('id');
                 const currentEndDate = $(this).data('end-date');
-                
+
                 $('#extendForm').attr('action', "{{ route('admin.contracts.extend', '') }}/" + contractId);
                 $('#currentEndDate').val(currentEndDate);
                 $('#extendModal').modal('show');
@@ -1163,7 +1252,8 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $.ajax({
-                            url: "{{ route('admin.contracts.destroy', '') }}/" + contractId,
+                            url: "{{ route('admin.contracts.destroy', '') }}/" +
+                                contractId,
                             type: 'POST',
                             data: {
                                 _token: "{{ csrf_token() }}",
@@ -1173,7 +1263,8 @@
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'تم الحذف',
-                                    text: response.success || 'تم حذف العقد بنجاح',
+                                    text: response.success ||
+                                        'تم حذف العقد بنجاح',
                                     timer: 1500,
                                     showConfirmButton: false
                                 }).then(() => {
@@ -1184,7 +1275,8 @@
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'خطأ',
-                                    text: xhr.responseJSON?.message || 'حدث خطأ أثناء الحذف'
+                                    text: xhr.responseJSON?.message ||
+                                        'حدث خطأ أثناء الحذف'
                                 });
                             }
                         });
@@ -1193,7 +1285,7 @@
             });
 
             // رسائل التنبيه من الجلسة
-            @if(session('success'))
+            @if (session('success'))
                 Swal.fire({
                     icon: 'success',
                     title: 'نجاح',
@@ -1203,7 +1295,7 @@
                 });
             @endif
 
-            @if(session('error'))
+            @if (session('error'))
                 Swal.fire({
                     icon: 'error',
                     title: 'خطأ',

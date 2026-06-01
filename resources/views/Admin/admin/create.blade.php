@@ -293,14 +293,17 @@
             background: var(--danger-color);
             width: 25%;
         }
+
         .strength-fair {
             background: var(--warning-color);
             width: 50%;
         }
+
         .strength-good {
             background: #17a2b8;
             width: 75%;
         }
+
         .strength-strong {
             background: var(--success-color);
             width: 100%;
@@ -443,8 +446,8 @@
                                 <div class="col-md-6 mb-3">
                                     <label for="name" class="form-label required">الاسم الكامل</label>
                                     <input type="text" name="name" id="name"
-                                        class="form-control @error('name') is-invalid @enderror"
-                                        value="{{ old('name') }}" placeholder="أدخل الاسم الكامل" required>
+                                        class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}"
+                                        placeholder="أدخل الاسم الكامل" required>
                                     @error('name')
                                         <div class="error-message">{{ $message }}</div>
                                     @enderror
@@ -476,10 +479,12 @@
                                         <input type="password" name="password" id="password"
                                             class="form-control @error('password') is-invalid @enderror"
                                             placeholder="********" required oninput="checkPasswordStrength()">
-                                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility()" title="إظهار/إخفاء كلمة المرور">
+                                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility()"
+                                            title="إظهار/إخفاء كلمة المرور">
                                             <i class="fas fa-eye" id="togglePasswordIcon"></i>
                                         </button>
-                                        <button type="button" class="generate-password-btn" onclick="generatePassword()" title="توليد كلمة مرور">
+                                        <button type="button" class="generate-password-btn" onclick="generatePassword()"
+                                            title="توليد كلمة مرور">
                                             <i class="fas fa-magic"></i>
                                         </button>
                                     </div>
@@ -493,22 +498,23 @@
                                 </div>
 
                                 <!-- الفرع - إن كان موجوداً -->
-                                @if(isset($branches) && $branches->count() > 0)
-                                <div class="col-md-6 mb-3">
-                                    <label for="branch_id" class="form-label">الفرع</label>
-                                    <select name="branch_id" id="branch_id"
-                                        class="form-select @error('branch_id') is-invalid @enderror">
-                                        <option value="">بدون فرع (رئيسي)</option>
-                                        @foreach($branches as $branch)
-                                            <option value="{{ $branch->id }}" {{ old('branch_id') == $branch->id ? 'selected' : '' }}>
-                                                {{ $branch->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('branch_id')
-                                        <div class="error-message">{{ $message }}</div>
-                                    @enderror
-                                </div>
+                                @if (isset($branches) && $branches->count() > 0)
+                                    <div class="col-md-6 mb-3">
+                                        <label for="branch_id" class="form-label">الفرع</label>
+                                        <select name="branch_id" id="branch_id"
+                                            class="form-select @error('branch_id') is-invalid @enderror">
+                                            <option value="">بدون فرع (رئيسي)</option>
+                                            @foreach ($branches as $branch)
+                                                <option value="{{ $branch->id }}"
+                                                    {{ old('branch_id') == $branch->id ? 'selected' : '' }}>
+                                                    {{ $branch->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('branch_id')
+                                            <div class="error-message">{{ $message }}</div>
+                                        @enderror
+                                    </div>
                                 @endif
                             </div>
                         </div>
@@ -525,7 +531,7 @@
                                 </button>
                             </div>
 
-                            @if($roles->count() > 0)
+                            @if ($roles->count() > 0)
                                 <div class="row">
                                     @foreach ($roles as $role)
                                         <div class="col-md-6 mb-3">
@@ -538,9 +544,11 @@
                                                         <i class="fas fa-check"></i>
                                                     </span>
                                                     <div>
-                                                        <span class="role-name">{{ $role->display_name ?? $role->name }}</span>
-                                                        @if($role->description)
-                                                            <br><small class="role-description">{{ $role->description }}</small>
+                                                        <span
+                                                            class="role-name">{{ $role->display_name ?? $role->name }}</span>
+                                                        @if ($role->description)
+                                                            <br><small
+                                                                class="role-description">{{ $role->description }}</small>
                                                         @endif
                                                     </div>
                                                 </label>
@@ -581,8 +589,8 @@
                                 </div>
                             </div>
 
-                            <input type="file" name="avatar" id="avatarInput" class="d-none"
-                                accept="image/*" onchange="previewAvatar(this)">
+                            <input type="file" name="avatar" id="avatarInput" class="d-none" accept="image/*"
+                                onchange="previewAvatar(this)">
 
                             <div class="form-text">صيغ مسموحة: JPG, PNG, WEBP</div>
                             <div class="form-text">الحجم الأقصى: 2 ميجابايت</div>
@@ -597,7 +605,8 @@
                                 <i class="fas fa-lightbulb"></i>
                                 إرشادات هامة
                             </h6>
-                            <ul class="list-unstyled" style="color: rgba(255, 255, 255, 0.7); font-size: 14px; line-height: 1.8;">
+                            <ul class="list-unstyled"
+                                style="color: rgba(255, 255, 255, 0.7); font-size: 14px; line-height: 1.8;">
                                 <li class="mb-2">
                                     <i class="fas fa-shield-alt me-2" style="color: var(--warning-color);"></i>
                                     استخدم كلمة مرور قوية تحتوي على أحرف وأرقام ورموز.
@@ -618,24 +627,24 @@
                         </div>
 
                         <!-- معلومات سريعة عن الرتب -->
-                        @if($roles->count() > 0)
-                        <div class="module-section">
-                            <h6 class="module-title">
-                                <i class="fas fa-list"></i>
-                                ملخص الرتب المتاحة
-                            </h6>
-                            <div style="max-height: 200px; overflow-y: auto;">
-                                @foreach ($roles as $role)
-                                    <div class="d-flex justify-content-between align-items-center mb-2 p-2"
-                                        style="background: rgba(255,255,255,0.02); border-radius: 6px;">
-                                        <span style="font-size: 13px;">{{ $role->display_name ?? $role->name }}</span>
-                                        <span class="badge bg-primary rounded-pill" style="font-size: 11px;">
-                                            {{ $role->permissions_count ?? 0 }} صلاحية
-                                        </span>
-                                    </div>
-                                @endforeach
+                        @if ($roles->count() > 0)
+                            <div class="module-section">
+                                <h6 class="module-title">
+                                    <i class="fas fa-list"></i>
+                                    ملخص الرتب المتاحة
+                                </h6>
+                                <div style="max-height: 200px; overflow-y: auto;">
+                                    @foreach ($roles as $role)
+                                        <div class="d-flex justify-content-between align-items-center mb-2 p-2"
+                                            style="background: rgba(255,255,255,0.02); border-radius: 6px;">
+                                            <span style="font-size: 13px;">{{ $role->display_name ?? $role->name }}</span>
+                                            <span class="badge bg-primary rounded-pill" style="font-size: 11px;">
+                                                {{ $role->permissions_count ?? 0 }} صلاحية
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
                             </div>
-                        </div>
                         @endif
                     </div>
                 </div>
@@ -686,28 +695,28 @@
             const length = 12;
             const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
             let password = "";
-            
+
             // Ensure at least one of each type
-            password += "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)];
-            password += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[Math.floor(Math.random() * 26)];
-            password += "0123456789"[Math.floor(Math.random() * 10)];
-            password += "!@#$%^&*"[Math.floor(Math.random() * 8)];
-            
+            password += "abcdefghijklmnopqrstuvwxyz" [Math.floor(Math.random() * 26)];
+            password += "ABCDEFGHIJKLMNOPQRSTUVWXYZ" [Math.floor(Math.random() * 26)];
+            password += "0123456789" [Math.floor(Math.random() * 10)];
+            password += "!@#$%^&*" [Math.floor(Math.random() * 8)];
+
             // Fill the rest
             for (let i = password.length; i < length; i++) {
                 password += charset[Math.floor(Math.random() * charset.length)];
             }
-            
+
             // Shuffle
             password = password.split('').sort(() => Math.random() - 0.5).join('');
-            
+
             $('#password').val(password);
             $('#password').attr('type', 'text');
             $('#togglePasswordIcon').removeClass('fa-eye').addClass('fa-eye-slash');
-            
+
             // Trigger strength check
             checkPasswordStrength();
-            
+
             // Auto hide after 3 seconds
             setTimeout(() => {
                 $('#password').attr('type', 'password');
@@ -721,7 +730,7 @@
         function togglePasswordVisibility() {
             const passwordInput = $('#password');
             const icon = $('#togglePasswordIcon');
-            
+
             if (passwordInput.attr('type') === 'password') {
                 passwordInput.attr('type', 'text');
                 icon.removeClass('fa-eye').addClass('fa-eye-slash');
@@ -738,32 +747,32 @@
             const password = $('#password').val();
             const bar = $('#passwordStrengthBar');
             const text = $('#passwordStrengthText');
-            
+
             // Remove all classes
             bar.removeClass('strength-weak strength-fair strength-good strength-strong');
-            
+
             if (password.length === 0) {
                 bar.css('width', '0');
                 text.text('يجب أن تكون 6 أحرف على الأقل');
                 text.css('color', 'rgba(255, 255, 255, 0.6)');
                 return;
             }
-            
+
             let strength = 0;
-            
+
             // Length check
             if (password.length >= 6) strength++;
             if (password.length >= 8) strength++;
             if (password.length >= 12) strength++;
-            
+
             // Complexity checks
             if (/[a-z]/.test(password)) strength++;
             if (/[A-Z]/.test(password)) strength++;
             if (/[0-9]/.test(password)) strength++;
             if (/[^a-zA-Z0-9]/.test(password)) strength++;
-            
+
             let strengthClass, strengthText;
-            
+
             if (strength <= 2) {
                 strengthClass = 'strength-weak';
                 strengthText = 'ضعيفة جداً';
@@ -781,7 +790,7 @@
                 strengthText = 'قوية جداً';
                 text.css('color', '#28a745');
             }
-            
+
             bar.addClass(strengthClass);
             text.text('قوة كلمة المرور: ' + strengthText);
         }
@@ -792,7 +801,7 @@
         function selectAllRoles() {
             const checkboxes = $('input[name="role"]');
             const allChecked = checkboxes.length === checkboxes.filter(':checked').length;
-            
+
             // Toggle all
             checkboxes.prop('checked', !allChecked);
             updateCheckIcons();
@@ -819,31 +828,32 @@
         // ============================================
         $('#adminForm').on('submit', function(e) {
             const roleChecked = $('input[name="role"]:checked').length > 0;
-            
+
             if (!roleChecked) {
                 e.preventDefault();
-                
+
                 // Highlight the roles section
                 $('.module-section:has(input[name="role"])').css({
                     'border-color': '#dc3545',
                     'animation': 'shake 0.5s ease'
                 });
-                
+
                 // Show error message if not exists
                 if (!$('#role-error').length) {
                     $('input[name="role"]').first().closest('.row').after(
                         '<div id="role-error" class="error-message mt-2">يرجى اختيار رتبة واحدة على الأقل</div>'
                     );
                 }
-                
+
                 // Scroll to roles section
                 $('html, body').animate({
                     scrollTop: $('input[name="role"]').first().offset().top - 150
                 }, 500);
-                
+
                 // Remove highlight after animation
                 setTimeout(() => {
-                    $('.module-section:has(input[name="role"])').css('border-color', 'rgba(255, 255, 255, 0.05)');
+                    $('.module-section:has(input[name="role"])').css('border-color',
+                        'rgba(255, 255, 255, 0.05)');
                 }, 2000);
             }
         });
@@ -863,7 +873,7 @@
                 e.preventDefault();
                 $('#adminForm').submit();
             }
-            
+
             // Escape to cancel
             if (e.key === 'Escape') {
                 window.location.href = '{{ route('admin.admins.index') }}';

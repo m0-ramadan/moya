@@ -58,10 +58,10 @@ Route::prefix('admin')->name('admin.')->middleware('guest:admin')->group(functio
 });
 
 // Admin Routes (Authenticated)
-Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function () {
+Route::prefix('admin')->as('admin.')->middleware(['auth:admin'])->group(function () {
     // Dashboard
     Route::get('/admins', [AdminController::class, 'index'])->name('index');
-    Route::get('/', [AdminController::class, 'home'])->name('home');
+    Route::get('/home', [AdminController::class, 'home'])->name('home');
 
     Route::post('logout', [AdminAuthController::class, 'logout'])->name('logout');
     Route::get('/visitors', [VisitorController::class, 'index'])->name('visitors.index');
@@ -97,22 +97,20 @@ Route::prefix('admin')->as('admin.')->middleware('auth:admin')->group(function (
         Route::delete('/{admin}', [AdminController::class, 'destroy'])->name('destroy');
     });
 
-    // coupons
-    // Route::prefix('coupons')->name('coupons.')->group(function () {
-    //     //  Route::resource('/', CouponController::class);
-    //     Route::get('/', [CouponController::class, 'index'])->name('index');
-    //     Route::get('/create', [CouponController::class, 'create'])->name('create');
-    //     Route::post('/', [CouponController::class, 'store'])->name('store');
-    //     Route::get('/{coupon}/edit', [CouponController::class, 'edit'])->name('edit');
-    //     Route::put('/{coupon}', [CouponController::class, 'update'])->name('update');
-    //     Route::delete('/{coupon}', [CouponController::class, 'destroy'])->name('destroy');
-    //     Route::get('/{coupon}', [CouponController::class, 'show'])->name('show');
-    //     Route::post('bulk-action', [CouponController::class, 'bulkAction'])->name('bulk-action');
-    //     Route::post('{coupon}/duplicate', [CouponController::class, 'duplicate'])->name('duplicate');
-    //     Route::post('generate-code', [CouponController::class, 'generateCode'])->name('generate-code');
-    //     Route::post('validate-code', [CouponController::class, 'validateCode'])->name('validate-code');
-    //     Route::get('export', [CouponController::class, 'export'])->name('export');
-    // });
+    Route::prefix('coupons')->name('coupons.')->group(function () {
+        Route::get('/', [CouponController::class, 'index'])->name('index');
+        Route::get('/create', [CouponController::class, 'create'])->name('create');
+        Route::post('/', [CouponController::class, 'store'])->name('store');
+        Route::post('/bulk-action', [CouponController::class, 'bulkAction'])->name('bulk-action');
+        Route::post('/generate-code', [CouponController::class, 'generateCode'])->name('generate-code');
+        Route::post('/validate-code', [CouponController::class, 'validateCode'])->name('validate-code');
+        Route::get('/export/data', [CouponController::class, 'export'])->name('export');
+        Route::get('/{coupon}', [CouponController::class, 'show'])->name('show');
+        Route::get('/{coupon}/edit', [CouponController::class, 'edit'])->name('edit');
+        Route::put('/{coupon}', [CouponController::class, 'update'])->name('update');
+        Route::delete('/{coupon}', [CouponController::class, 'destroy'])->name('destroy');
+        Route::post('/{coupon}/duplicate', [CouponController::class, 'duplicate'])->name('duplicate');
+    });
 
     // errors
     Route::prefix('errors')->name('errors.')->group(function () {

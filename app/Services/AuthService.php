@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Http\Request;
 use App\Services\TwilioService;
+use App\Services\WhatsappService;
 use App\Exceptions\OtpException;
 use App\Services\Otp\OtpManager;
 use App\Http\Repositories\UserRepository;
@@ -13,88 +14,21 @@ class AuthService
 {
     protected UserRepository $users;
     protected TwilioService $twilio;
+    protected WhatsappService $whatsapp;
     protected OtpManager $otpManager;
 
-    public function __construct(UserRepository $users, TwilioService $twilio, OtpManager $otpManager)
+    public function __construct(
+        UserRepository $users,
+        TwilioService $twilio,
+        WhatsappService $whatsapp,
+        OtpManager $otpManager
+    )
     {
         $this->users = $users;
         $this->twilio = $twilio;
+        $this->whatsapp = $whatsapp;
         $this->otpManager = $otpManager;
     }
-
-    /**
-     * Send OTP (tries Twilio Verify, falls back to SMS via local generated OTP)
-     */
-    //     public function sendOtp(PhoneLoginData $data,  $request): array
-    //     {
-    //         // 1️⃣ Find or create user
-    //         $user = $this->users->findByFullPhone($data->full_phone)
-    //             ?? $this->users->createByPhone($data->country_code, $data->phone_number);
-
-    //         // 2️⃣ Generate OTP once
-    //         $otp = $this->otpManager->generateAndStore($user);
-
-    //         /* ==========================
-    //      | User explicitly wants SMS
-    //      ========================== */
-    //         if ($request->input('otp_method') === "sms") {
-
-    //             $sms = $this->twilio->sendSms(
-    //                 $data->full_phone,
-    //                 "رمز التحقق الخاص بك هو: $otp\nصالح لمدة 10 دقائق"
-    //             );
-
-    //             if (!empty($sms['success']) && $sms['success'] === true) {
-    //                 return [
-    //                     'method' => 'sms_verify',
-    //                     'phone' => $data->full_phone,
-    //                     'otp' => $otp,
-
-    //                 ];
-    //             } else {
-    //                 // لو فشل الإرسال، نرجع السبب
-    //                 return [
-    //                     'method' => 'sms_verify',
-    //                     'phone' => $data->full_phone,
-    //                     'otp' => $otp,
-
-    //                     'success' => false,
-    //                     'error' => $sms['error'] ?? 'فشل إرسال الرسالة بدون سبب محدد',
-    //                 ];
-    //             }
-    //         }
-
-
-    //         /* ==========================
-    //      | Try WhatsApp OTP
-    //      ========================== */
-    //         $whatsapp = $this->twilio->sendWhatsappOtp($data->full_phone, $otp);
-    // // dd($whatsapp);
-    //         if (!empty($whatsapp['success']) && $whatsapp['success'] === true) {
-    //             return [
-    //                 'method' => 'whatsapp_verify',
-    //                 'phone' => $data->full_phone,
-    //                 'otp' => $otp,
-    //             ];
-    //         }
-
-    //         /* ==========================
-    //      | Final fallback: SMS
-    //      ========================== */
-    //         $sms = $this->twilio->sendSms(
-    //             $data->full_phone,
-    //             "رمز التحقق الخاص بك هو: $otp\nصالح لمدة 10 دقائق"
-    //         );
-
-    //         if (empty($sms['success']) || $sms['success'] !== true) {
-    //                     throw new OtpException('لا يمكن ارسال رمز التحقق الي هذاالرقم حاليا، يرجى المحاولة لاحقاً.');
-    //         }
-
-    //         return [
-    //             'method' => 'sms_fallback',
-    //             'phone' => $data->full_phone,
-    //         ];
-    //     }
 
     public function sendOtp(PhoneLoginData $data, $request): array
     {
@@ -148,7 +82,7 @@ class AuthService
             ];
         }
 
-        $whatsapp = $this->twilio->sendWhatsappOtp($data->full_phone, $otp);
+        $whatsapp = $this->whatsapp->sendOtp($data->full_phone, $otp);
 
         if (!empty($whatsapp['success']) && $whatsapp['success'] === true) {
             return [

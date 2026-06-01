@@ -280,6 +280,7 @@
 @endsection
 
 @section('content')
+    @php($adminUser = auth('admin')->user())
     <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -356,9 +357,11 @@
                                 <input type="text" class="form-control" placeholder="بحث عن رتبة..." id="searchInput"
                                     value="{{ request('search') }}">
                             </div>
+                            @if (admin_can_access_module('roles', 'create', $adminUser))
                             <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>إضافة رتبة جديدة
                             </a>
+                            @endif
                         </div>
                     </div>
 
@@ -370,9 +373,11 @@
                                 </div>
                                 <h5 class="empty-state-text">لا توجد رتب</h5>
                                 <p class="text-muted">لم يتم إنشاء أي رتب حتى الآن</p>
+                                @if (admin_can_access_module('roles', 'create', $adminUser))
                                 <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">
                                     <i class="fas fa-plus me-2"></i>إضافة أول رتبة
                                 </a>
+                                @endif
                             </div>
                         @else
                             @foreach ($roles as $role)
@@ -445,20 +450,24 @@
                                         <a href="{{ route('admin.roles.show', $role) }}" class="btn btn-sm btn-info">
                                             <i class="fas fa-eye me-1"></i>عرض التفاصيل
                                         </a>
+                                        @if (admin_can_access_module('roles', 'edit', $adminUser))
                                         <a href="{{ route('admin.roles.edit', $role) }}" class="btn btn-sm btn-warning">
                                             <i class="fas fa-edit me-1"></i>تعديل
                                         </a>
-                                        @if (!$role->is_default && $role->name !== 'super_admin')
+                                        @endif
+                                        @if (admin_can_access_module('roles', 'delete', $adminUser) && !$role->is_default && $role->name !== 'super_admin')
                                             <button type="button" class="btn btn-sm btn-danger delete-btn"
                                                 data-id="{{ $role->id }}"
                                                 data-name="{{ $role->display_name ?: $role->name }}">
                                                 <i class="fas fa-trash me-1"></i>حذف
                                             </button>
                                         @endif
+                                        @if (admin_can_access_module('roles', 'manage', $adminUser))
                                         <a href="{{ route('admin.roles.permissions', $role) }}"
                                             class="btn btn-sm btn-secondary">
                                             <i class="fas fa-key me-1"></i>إدارة الصلاحيات
                                         </a>
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach

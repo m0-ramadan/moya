@@ -191,7 +191,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
-                     <a href="{{ route('admin.home') }}">الرئيسية</a>
+                    <a href="{{ route('admin.home') }}">الرئيسية</a>
                 </li>
                 <li class="breadcrumb-item">
                     <a href="{{ route('admin.users.index') }}">المستخدمين</a>
@@ -259,7 +259,7 @@
                         <i class="fas fa-money-bill-wave"></i>
                     </div>
                     <div class="stats-number" bis_skin_checked="1">
-                        {{ number_format($averagePrice, 2) }} ج.م
+                        {{ number_format($averagePrice, 2) }} ر.س
                     </div>
                     <div class="stats-label" bis_skin_checked="1">متوسط سعر المنتجات</div>
                 </div>
@@ -333,11 +333,11 @@
 
                                             <div class="product-price" bis_skin_checked="1">
                                                 <span class="current-price">
-                                                    {{ number_format($product->final_price, 2) }} ج.م
+                                                    {{ number_format($product->final_price, 2) }} ر.س
                                                 </span>
                                                 @if ($product->has_discount && $product->price > $product->final_price)
                                                     <span class="old-price">
-                                                        {{ number_format($product->price, 2) }} ج.م
+                                                        {{ number_format($product->price, 2) }} ر.س
                                                     </span>
                                                 @endif
                                             </div>

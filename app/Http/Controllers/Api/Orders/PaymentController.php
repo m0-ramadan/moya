@@ -9,6 +9,7 @@ use App\Http\Resources\WebsiteUser\OrderResource;
 use App\Models\Order;
 use App\Models\OrderStatus;
 use App\Notifications\PaymentSuccessful;
+use App\Services\CouponService;
 use App\Services\FirebaseNotificationService;
 use App\Services\Payment\PaymentService;
 use App\Traits\ApiResponseTrait;
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
 {
@@ -23,12 +25,19 @@ class PaymentController extends Controller
 
     private PaymentService $paymentService;
 
+    private CouponService $couponService;
+
     private $firebaseService;
 
-    public function __construct(PaymentService $paymentService, FirebaseNotificationService $firebaseService)
+    public function __construct(
+        PaymentService $paymentService,
+        FirebaseNotificationService $firebaseService,
+        CouponService $couponService
+    )
     {
         $this->paymentService = $paymentService;
         $this->firebaseService = $firebaseService;
+        $this->couponService = $couponService;
 
     }
 
@@ -42,11 +51,13 @@ class PaymentController extends Controller
             'gateway' => 'required|in:wallet,paymob,tamara,tabby,cash_on_delivery',
             'payment_method' => 'required|string',
             'save_card' => 'nullable|boolean',
+            'coupon_code' => 'nullable|string|max:50',
         ]);
 
         try {
             $user = $request->user();
             $paymentUrl = null;
+            $this->authorizeOrderOwner($order, $user->id);
 
             $result = DB::transaction(function () use ($request, $order, $user, &$paymentUrl) {
 
@@ -66,7 +77,7 @@ class PaymentController extends Controller
                     ->lockForUpdate()
                     ->firstOrFail();
 
-                    
+                $this->syncCouponState($request, $order, (float) $offer->price);
 
                 $offer->update(['status' => 'payment_pending']);
 
@@ -99,6 +110,7 @@ class PaymentController extends Controller
                         ]),
                         'expires_at' => null,
                     ]);
+                    $this->couponService->recordUsage($order, $request);
                     $order->offers()
                         ->whereIn('status', ['accepted', 'payment_pending'])
                         ->update([
@@ -200,8 +212,14 @@ class PaymentController extends Controller
             return $this->successResponse([
                 'order' => new OrderResource($order->fresh()),
                 'payment_url' => $paymentUrl,
+                'coupon' => $order->fresh()->coupon_code ? [
+                    'code' => $order->fresh()->coupon_code,
+                    'discount_amount' => $order->fresh()->getResolvedDiscountAmount(),
+                ] : null,
                 'payment' => $result,
             ], 'Payment initiated successfully');
+        } catch (ValidationException $e) {
+            return $this->validationError($e->errors(), $e->getMessage(), 422);
         } catch (\Throwable $e) {
             Log::channel('payment')->error('Payment initiation failed', [
                 'order_id' => $order->id,
@@ -250,6 +268,10 @@ class PaymentController extends Controller
      */
     public function checkPaymentStatus(Order $order)
     {
+        if (auth()->id() !== $order->user_id) {
+            return $this->errorResponse('هذا الطلب غير مصرح لك بالوصول إليه.', 403);
+        }
+
         try {
             $result = $this->paymentService->verifyPayment($order);
 
@@ -261,6 +283,16 @@ class PaymentController extends Controller
                 'payment_gateway' => $order->payment_gateway,
                 'can_confirm_driver' => $order->isPaid(),
                 'price' => $order->getPaymentAmount(),
+                'amounts' => [
+                    'original_amount' => $order->getResolvedOriginalAmount(),
+                    'discount_amount' => $order->getResolvedDiscountAmount(),
+                    'final_amount' => $order->getResolvedFinalAmount(),
+                ],
+                'coupon' => $order->coupon_code ? [
+                    'code' => $order->coupon_code,
+                    'type' => $order->coupon_type,
+                    'value' => (float) ($order->coupon_value ?? 0),
+                ] : null,
                 'verification_result' => $result,
             ];
 
@@ -434,6 +466,8 @@ class PaymentController extends Controller
                     ->update([
                         'status' => 'rejected',
                     ]);
+
+                $this->couponService->recordUsage($order);
             });
 
             event(new TripStartedForDriver($order));
@@ -572,7 +606,119 @@ class PaymentController extends Controller
                 'trace' => $e->getTraceAsString(),
                 'request_data' => $request->all(),
             ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process payment callback',
+            ], 500);
         }
+    }
+
+    public function applyCoupon(Request $request, Order $order)
+    {
+        $request->validate([
+            'offer_id' => 'required|exists:order_offers,id',
+            'coupon_code' => 'required|string|max:50',
+        ]);
+
+        try {
+            $this->authorizeOrderOwner($order, $request->user()->id);
+
+            $offer = $order->offers()
+                ->where('id', $request->offer_id)
+                ->firstOrFail();
+
+            $summary = $this->couponService->applyCouponToOrder(
+                $order,
+                $request->user(),
+                (float) $offer->price,
+                $request->coupon_code
+            );
+
+            return $this->successResponse([
+                'order' => new OrderResource($order->fresh(['coupon'])),
+                'coupon' => $summary['coupon'],
+                'amounts' => [
+                    'original_amount' => $summary['original_amount'],
+                    'discount_amount' => $summary['discount_amount'],
+                    'final_amount' => $summary['final_amount'],
+                ],
+            ], 'تم تطبيق الكوبون بنجاح');
+        } catch (ValidationException $e) {
+            return $this->validationError($e->errors(), $e->getMessage(), 422);
+        } catch (\Throwable $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
+    }
+
+    public function removeCoupon(Request $request, Order $order)
+    {
+        $request->validate([
+            'offer_id' => 'nullable|exists:order_offers,id',
+        ]);
+
+        try {
+            $this->authorizeOrderOwner($order, $request->user()->id);
+
+            $baseAmount = $this->resolveBaseAmount($order, $request->input('offer_id'));
+            $summary = $this->couponService->clearCouponFromOrder($order, $baseAmount);
+
+            return $this->successResponse([
+                'order' => new OrderResource($order->fresh()),
+                'coupon' => null,
+                'amounts' => $summary,
+            ], 'تم إزالة الكوبون من الطلب');
+        } catch (\Throwable $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
+    }
+
+    private function authorizeOrderOwner(Order $order, ?int $userId): void
+    {
+        if ($userId === null || $order->user_id !== $userId) {
+            throw ValidationException::withMessages([
+                'order' => 'هذا الطلب غير مصرح لك بالوصول إليه.',
+            ]);
+        }
+    }
+
+    private function syncCouponState(Request $request, Order $order, float $baseAmount): void
+    {
+        if ($request->filled('coupon_code')) {
+            $this->couponService->applyCouponToOrder(
+                $order,
+                $request->user(),
+                $baseAmount,
+                $request->coupon_code
+            );
+
+            return;
+        }
+
+        if ($order->coupon_id) {
+            $this->couponService->revalidateAppliedCoupon($order, $request->user(), $baseAmount);
+
+            return;
+        }
+
+        $this->couponService->clearCouponFromOrder($order, $baseAmount);
+    }
+
+    private function resolveBaseAmount(Order $order, ?string $offerId = null): float
+    {
+        if ($offerId) {
+            $offer = $order->offers()->where('id', $offerId)->first();
+
+            if ($offer) {
+                return (float) $offer->price;
+            }
+        }
+
+        if ($order->original_amount !== null) {
+            return (float) $order->original_amount;
+        }
+
+        return (float) $order->getPaymentAmount();
     }
 
     /**

@@ -66,6 +66,8 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/{orderId}/offers', [RatingController::class, 'getOrderOffers']);
             Route::get('/{orderId}/tracking', [DriverOrderController::class, 'getLiveTracking']);
+            Route::post('/{order}/coupon/apply', [PaymentOrdersController::class, 'applyCoupon']);
+            Route::delete('/{order}/coupon', [PaymentOrdersController::class, 'removeCoupon']);
 
             // دفع الطلبات
             Route::prefix('payments')->middleware(['auth:sanctum'])->group(function () {

@@ -8,6 +8,7 @@ use App\Models\OrderStatus;
 use App\Models\User;
 use App\Notifications\OrderPaid;
 use App\Notifications\PaymentSuccessful;
+use App\Services\CouponService;
 use App\Services\Payment\Factories\PaymentGatewayFactory;
 use App\Services\Wallet\UserWalletService;
 use Illuminate\Support\Facades\DB;
@@ -19,12 +20,16 @@ class PaymentService
 
     private UserWalletService $walletService;
 
+    private CouponService $couponService;
+
     public function __construct(
         PaymentGatewayFactory $gatewayFactory,
-        UserWalletService $walletService
+        UserWalletService $walletService,
+        CouponService $couponService
     ) {
         $this->gatewayFactory = $gatewayFactory;
         $this->walletService = $walletService;
+        $this->couponService = $couponService;
     }
 
     public function processOrderPayment(
@@ -41,7 +46,7 @@ class PaymentService
             // التحقق من صحة الطلب والعرض
             $this->validatePaymentRequest($order, $offer);
 
-            $amount = $offer->price;
+            $amount = $order->getResolvedFinalAmount();
             $orderData = $this->prepareOrderData($order, $offer, $user, $gateway, $additionalData);
 
             // اختيار Gateway المناسب
@@ -108,9 +113,16 @@ class PaymentService
         string $gateway,
         array $additionalData
     ): array {
+        $originalAmount = $order->getResolvedOriginalAmount();
+        $discountAmount = $order->getResolvedDiscountAmount();
+        $finalAmount = $order->getResolvedFinalAmount();
+
         $baseData = [
             'order_id' => $order->id,
-            'amount' => $offer->price,
+            'amount' => $finalAmount,
+            'discount_amount' => $discountAmount,
+            'original_amount' => $originalAmount,
+            'total_amount' => $finalAmount,
             'description' => "Order #{$order->order_number} - Water Delivery",
             'customer' => [
                 'first_name' => $user->first_name,
@@ -131,6 +143,7 @@ class PaymentService
                 'offer_id' => $offer->id,
                 'driver_id' => $offer->driver_id,
                 'service_type' => $order->service->name ?? 'Water Delivery',
+                'coupon_code' => $order->coupon_code,
             ],
         ];
 
@@ -144,8 +157,9 @@ class PaymentService
                 'name' => $order->service->name ?? 'Water Delivery Service',
                 'description' => 'Water delivery to your location',
                 'quantity' => 1,
-                'unit_price' => $offer->price,
-                'total_price' => $offer->price,
+                'unit_price' => $order->getResolvedOriginalAmount(),
+                'discount_amount' => $order->getResolvedDiscountAmount(),
+                'total_price' => $order->getResolvedFinalAmount(),
                 'sku' => 'SERVICE-'.$order->service_id,
             ],
         ];
@@ -214,11 +228,14 @@ class PaymentService
                 'status' => 'rejected',
             ]);
 
+        $this->couponService->recordUsage($order);
+
         return [
             'success' => true,
             'transaction_id' => 'WALLET-'.$walletEntry->id,
             'amount' => $amount,
             'gateway' => 'wallet',
+            'discount_amount' => $order->getResolvedDiscountAmount(),
             'message' => 'Payment processed from wallet',
         ];
     }
@@ -241,6 +258,18 @@ class PaymentService
                     'gateway' => $gateway,
                     'method' => $paymentMethod,
                     'initiated_at' => now(),
+                    'coupon' => $order->coupon_code ? [
+                        'id' => $order->coupon_id,
+                        'code' => $order->coupon_code,
+                        'type' => $order->coupon_type,
+                        'value' => $order->coupon_value,
+                        'discount_amount' => $order->getResolvedDiscountAmount(),
+                    ] : null,
+                    'amounts' => [
+                        'original_amount' => $order->getResolvedOriginalAmount(),
+                        'discount_amount' => $order->getResolvedDiscountAmount(),
+                        'final_amount' => $order->getResolvedFinalAmount(),
+                    ],
                     'payment_data' => $paymentResult,
                 ]
             ),
@@ -318,6 +347,8 @@ class PaymentService
             if ($offer) {
                 $offer->update(['status' => 'paid']);
             }
+
+            $this->couponService->recordUsage($order);
 
             // إرسال الإشعارات
             $this->sendPaymentNotifications($order);

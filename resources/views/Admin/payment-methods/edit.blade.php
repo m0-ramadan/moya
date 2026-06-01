@@ -277,6 +277,7 @@
 @endsection
 
 @section('content')
+    @php($adminUser = auth('admin')->user())
     <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -529,9 +530,11 @@
                                         <button type="submit" class="btn btn-success btn-lg">
                                             <i class="fas fa-save me-2"></i>حفظ التعديلات
                                         </button>
+                                        @if (admin_can_access_module('payment_methods', 'delete', $adminUser))
                                         <button type="button" class="btn btn-outline-danger" onclick="confirmDelete()">
                                             <i class="fas fa-trash me-2"></i>حذف وسيلة الدفع
                                         </button>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -543,11 +546,13 @@
     </div>
 
     <!-- Delete Form -->
+    @if (admin_can_access_module('payment_methods', 'delete', $adminUser))
     <form id="deleteForm" action="{{ route('admin.payment-methods.destroy', $paymentMethod) }}" method="POST"
         style="display: none;">
         @csrf
         @method('DELETE')
     </form>
+    @endif
 @endsection
 
 @section('js')

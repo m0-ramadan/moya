@@ -497,6 +497,7 @@
 @endsection
 
 @section('content')
+    @php($adminUser = auth('admin')->user())
     <div class="container-xxl flex-grow-1 container-p-y">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -603,12 +604,16 @@
                                 <small class="opacity-75">إدارة جميع السلايدرات المتحركة</small>
                             </div>
                             <div class="d-flex gap-2">
+                                @if (admin_can_access_module('banners', 'create', $adminUser))
                                 <a href="{{ route('admin.banners.create') }}" class="btn btn-light">
                                     <i class="fas fa-plus me-2"></i>إضافة سلايدر جديد
                                 </a>
+                                @endif
+                                @if (admin_can_access_module('banners', 'edit', $adminUser))
                                 <button class="btn btn-light" id="saveOrderBtn" style="display: none;" onclick="saveOrder()">
                                     <i class="fas fa-save me-2"></i>حفظ الترتيب
                                 </button>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -621,9 +626,11 @@
                                 </div>
                                 <h5 class="empty-state-text">لا توجد سلايدرات</h5>
                                 <p class="text-muted">لم يتم إنشاء أي سلايدرات حتى الآن</p>
+                                @if (admin_can_access_module('banners', 'create', $adminUser))
                                 <a href="{{ route('admin.banners.create') }}" class="btn btn-primary">
                                     <i class="fas fa-plus me-2"></i>إنشاء سلايدر جديد
                                 </a>
+                                @endif
                             </div>
                         @else
                             <div id="sortableList">
@@ -650,12 +657,14 @@
                                                 <span class="text-muted small">
                                                     الترتيب: {{ $slider->order }}
                                                 </span>
+                                                @if (admin_can_access_module('banners', 'edit', $adminUser))
                                                 <label class="toggle-switch" title="تغيير الحالة">
                                                     <input type="checkbox" 
                                                            {{ $slider->is_active ? 'checked' : '' }}
                                                            onchange="toggleStatus({{ $slider->id }}, this)">
                                                     <span class="toggle-slider"></span>
                                                 </label>
+                                                @endif
                                             </div>
                                         </div>
 
@@ -688,13 +697,17 @@
                                         </div>
 
                                         <div class="slider-actions">
+                                            @if (admin_can_access_module('banners', 'edit', $adminUser))
                                             <a href="{{ route('admin.banners.edit', $slider) }}" class="btn btn-sm btn-warning">
                                                 <i class="fas fa-edit me-1"></i>تعديل
                                             </a>
+                                            @endif
+                                            @if (admin_can_access_module('banners', 'delete', $adminUser))
                                             <button type="button" class="btn btn-sm btn-outline-danger delete-btn"
                                                 data-id="{{ $slider->id }}" data-name="{{ $slider->title }}">
                                                 <i class="fas fa-trash me-1"></i>حذف
                                             </button>
+                                            @endif
                                         </div>
                                     </div>
                                 @endforeach

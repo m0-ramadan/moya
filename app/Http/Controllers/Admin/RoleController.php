@@ -334,7 +334,7 @@ class RoleController extends Controller
      */
     public function assignRoles(Request $request)
     {
-        if (!auth()->guard('admin')->user()->can('assign_roles')) {
+        if (!auth()->guard('admin')->user()->can('roles.manage')) {
             abort(403, 'غير مصرح لك بتعيين الرتب');
         }
 

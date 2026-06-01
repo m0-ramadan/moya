@@ -105,7 +105,9 @@ if (!function_exists('parsePHPLog')) {
 if (!function_exists('module_icon')) {
     function module_icon($module) {
         $icons = [
+            'dashboard' => 'gauge-high',
             'users' => 'users',
+            'admins' => 'user-shield',
             'roles' => 'shield-alt',
             'permissions' => 'key',
             'settings' => 'cog',
@@ -118,8 +120,21 @@ if (!function_exists('module_icon')) {
             'chats' => 'comments',
             'services' => 'concierge-bell',
             'reports' => 'chart-bar',
-            'contactus' => 'envelope',
+            'contact_us' => 'envelope',
+            'articles' => 'newspaper',
             'faqs' => 'question-circle',
+            'countries' => 'flag',
+            'employees' => 'id-badge',
+            'managers' => 'user-tie',
+            'regions' => 'map',
+            'visitors' => 'chart-line',
+            'payments' => 'money-check-dollar',
+            'payment_methods' => 'credit-card',
+            'operations' => 'receipt',
+            'subscriptions' => 'bell',
+            'static_pages' => 'file-lines',
+            'errors' => 'bug',
+            'logistic_services' => 'truck-fast',
         ];
         return $icons[$module] ?? 'layer-group';
     }
@@ -128,6 +143,7 @@ if (!function_exists('module_icon')) {
 if (!function_exists('module_display_name')) {
     function module_display_name($module) {
         $names = [
+            'dashboard' => 'لوحة التحكم',
             'users' => 'المستخدمين',
             'roles' => 'الرتب',
             'permissions' => 'الصلاحيات',
@@ -142,9 +158,21 @@ if (!function_exists('module_display_name')) {
             'services' => 'الخدمات',
             'reports' => 'التقارير',
             'faqs' => 'الأسئلة الشائعة',
-            'contactus' => 'تواصل معنا',
+            'contact_us' => 'تواصل معنا',
             'admins' => 'المدراء',
             'employees' => 'الموظفين',
+            'articles' => 'المقالات',
+            'countries' => 'الدول',
+            'managers' => 'المديرين',
+            'regions' => 'المناطق',
+            'visitors' => 'الزوار',
+            'payments' => 'المدفوعات',
+            'payment_methods' => 'طرق الدفع',
+            'operations' => 'العمليات',
+            'subscriptions' => 'الاشتراكات',
+            'static_pages' => 'الصفحات الثابتة',
+            'errors' => 'الأخطاء',
+            'logistic_services' => 'الخدمات اللوجستية',
         ];
         return $names[$module] ?? ucfirst($module);
     }
@@ -191,5 +219,204 @@ if (!function_exists('permission_badge_class')) {
             'manage' => 'badge-manage',
         ];
         return $classes[$type] ?? 'badge-secondary';
+    }
+}
+
+if (!function_exists('dashboard_permission_modules')) {
+    function dashboard_permission_modules(): array
+    {
+        return [
+            'dashboard' => 'لوحة التحكم',
+            'users' => 'المستخدمين',
+            'admins' => 'المشرفين',
+            'roles' => 'الرتب',
+            'permissions' => 'الصلاحيات',
+            'products' => 'المنتجات',
+            'categories' => 'الأقسام',
+            'orders' => 'الطلبات',
+            'banners' => 'البانرات',
+            'coupons' => 'الكوبونات',
+            'settings' => 'الإعدادات',
+            'reports' => 'التقارير',
+            'payment_methods' => 'طرق الدفع',
+            'contact_us' => 'تواصل معنا',
+            'about' => 'عن الموقع',
+            'articles' => 'المقالات',
+            'faqs' => 'الأسئلة الشائعة',
+            'static_pages' => 'الصفحات الثابتة',
+            'visitors' => 'الزوار',
+            'chats' => 'المحادثات',
+            'contracts' => 'العقود',
+            'payments' => 'المدفوعات',
+            'operations' => 'العمليات',
+            'services' => 'الخدمات',
+            'drivers' => 'السائقين',
+            'countries' => 'الدول',
+            'employees' => 'الموظفين',
+            'managers' => 'المديرين',
+            'regions' => 'المناطق',
+            'logistic_services' => 'الخدمات اللوجستية',
+            'subscriptions' => 'الاشتراكات',
+            'errors' => 'الأخطاء',
+        ];
+    }
+}
+
+if (!function_exists('dashboard_route_permission_map')) {
+    function dashboard_route_permission_map(): array
+    {
+        return [
+            'admin.home' => 'dashboard',
+            'admin.index' => 'admins',
+            'admin.admins.' => 'admins',
+            'admin.users.' => 'users',
+            'admin.roles.' => 'roles',
+            'admin.permissions.' => 'permissions',
+            'admin.countries.' => 'countries',
+            'admin.contactus.' => 'contact_us',
+            'admin.contact.' => 'contact_us',
+            'admin.faqs.' => 'faqs',
+            'admin.logistic-services.' => 'logistic_services',
+            'admin.employees.' => 'employees',
+            'admin.managers.' => 'managers',
+            'admin.regions.' => 'regions',
+            'admin.setting.' => 'settings',
+            'admin.social-media.' => 'settings',
+            'admin.subscribe.' => 'subscriptions',
+            'admin.payment-methods.' => 'payment_methods',
+            'admin.banners.' => 'banners',
+            'admin.orders.' => 'orders',
+            'admin.operations.' => 'operations',
+            'admin.articles.' => 'articles',
+            'admin.coupons.' => 'coupons',
+            'admin.contracts.' => 'contracts',
+            'admin.payments.' => 'payments',
+            'admin.static-pages.' => 'static_pages',
+            'admin.chats.' => 'chats',
+            'admin.adminChats.' => 'chats',
+            'admin.drivers.map.' => 'drivers',
+            'admin.drivers.' => 'drivers',
+            'admin.services.' => 'services',
+            'admin.visitors.' => 'visitors',
+            'admin.errors.' => 'errors',
+        ];
+    }
+}
+
+if (!function_exists('dashboard_route_module')) {
+    function dashboard_route_module(?string $routeName): ?string
+    {
+        if (!$routeName) {
+            return null;
+        }
+
+        foreach (dashboard_route_permission_map() as $prefix => $module) {
+            if ($routeName === $prefix || str_starts_with($routeName, $prefix)) {
+                return $module;
+            }
+        }
+
+        return null;
+    }
+}
+
+if (!function_exists('dashboard_route_action')) {
+    function dashboard_route_action(?string $routeName): ?string
+    {
+        if (!$routeName) {
+            return null;
+        }
+
+        if (preg_match('/^admin\.roles\.(assign|permissions)(\.|$)/', $routeName)) {
+            return 'manage';
+        }
+
+        if (preg_match('/\.(destroy|delete)(\.|$)/', $routeName)) {
+            return 'delete';
+        }
+
+        if (preg_match('/\.(create|store)(\.|$)/', $routeName)) {
+            return 'create';
+        }
+
+        if (preg_match('/\.(edit|update|toggle-status|toggle-featured|toggle-maintenance|approve|reject|assign|bulk|mark|read|send|sync|extend|refund|clear|upload|remove|process|change|reset|duplicate|validate|generate)(\.|$)/', $routeName)) {
+            return 'edit';
+        }
+
+        if (preg_match('/\.(permissions|tracking|wallet|statistics|stats|chart|show|index|export|print|receipt|details|locations|orders|payments|devices|search|filter|check-number|generate-number)(\.|$)/', $routeName)) {
+            return 'view';
+        }
+
+        return 'manage';
+    }
+}
+
+if (!function_exists('dashboard_permission_candidates')) {
+    function dashboard_permission_candidates(string $module, string $action = 'view'): array
+    {
+        return match ($action) {
+            'create' => ["{$module}.create", "{$module}.manage"],
+            'edit' => ["{$module}.edit", "{$module}.manage"],
+            'delete' => ["{$module}.delete", "{$module}.manage"],
+            'manage' => ["{$module}.manage"],
+            default => ["{$module}.view", "{$module}.manage"],
+        };
+    }
+}
+
+if (!function_exists('admin_can_access_module')) {
+    function admin_can_access_module(string $module, string $action = 'view', $admin = null): bool
+    {
+        $admin = $admin ?: auth('admin')->user();
+
+        if (!$admin) {
+            return false;
+        }
+
+        if (method_exists($admin, 'hasRole') && $admin->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $admin->hasAnyPermission(dashboard_permission_candidates($module, $action));
+    }
+}
+
+if (!function_exists('admin_can_access_any_module')) {
+    function admin_can_access_any_module(array $modules, string $action = 'view', $admin = null): bool
+    {
+        foreach ($modules as $module) {
+            if (admin_can_access_module($module, $action, $admin)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
+if (!function_exists('admin_can_access_route')) {
+    function admin_can_access_route(?string $routeName, $admin = null): bool
+    {
+        $admin = $admin ?: auth('admin')->user();
+
+        if (!$admin || !$routeName) {
+            return false;
+        }
+
+        if ($admin->hasRole('super_admin')) {
+            return true;
+        }
+
+        if ($routeName === 'admin.logout') {
+            return true;
+        }
+
+        $module = dashboard_route_module($routeName);
+
+        if (!$module) {
+            return true;
+        }
+
+        return admin_can_access_module($module, dashboard_route_action($routeName), $admin);
     }
 }

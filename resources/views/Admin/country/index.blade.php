@@ -11,11 +11,12 @@
 @endsection
 
 @section('content')
-    @if (!auth()->user()->role || auth()->user()->hasPermissionTo('عرض الدول'))
+    @php($adminUser = auth('admin')->user())
+    @if (admin_can_access_module('countries', 'view', $adminUser))
         <div class="col-sm-12">
             <div class="card">
                 <div class="card-header">
-                    @if (!auth()->user()->role || auth()->user()->hasPermissionTo('إضافة دولة'))
+                    @if (admin_can_access_module('countries', 'create', $adminUser))
                         <a class="btn btn-success" href="{{ route('admin.country.create') }}">إضافة دولة</a>
                     @endif
                 </div>
@@ -39,13 +40,13 @@
                                         <td style="text-align: center;">{{ $country->message ?? 'غير محدد' }}</td>
                                         <td style="text-align: center;">{{ $country->collection_commission ?? '0' }}</td>
                                         <td style="text-align: center;" class="d-flex gap-1 justify-content-center">
-                                            @if (!auth()->user()->role || auth()->user()->hasPermissionTo('تعديل الدول'))
+                                            @if (admin_can_access_module('countries', 'edit', $adminUser))
                                                 <a href="{{ route('admin.country.edit', $country->id) }}"
                                                     class="btn btn-success">
                                                     <i class="fa fa-edit text-white"></i>
                                                 </a>
                                             @endif
-                                            @if (!auth()->user()->role || auth()->user()->hasPermissionTo('حذف الدول'))
+                                            @if (admin_can_access_module('countries', 'delete', $adminUser))
                                                 <form method="POST"
                                                     action="{{ route('admin.country.destroy', $country->id) }}"
                                                     onsubmit="return confirm('هل أنت متأكد من حذف هذه الدولة؟')">

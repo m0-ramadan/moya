@@ -224,6 +224,7 @@
 @endsection
 
 @section('content')
+    @php($adminUser = auth('admin')->user())
     <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -300,9 +301,11 @@
                                         <input type="text" class="form-control" placeholder="بحث في وسائل الدفع..."
                                             id="searchInput" style="width: 250px;">
                                     </div>
+                                    @if (admin_can_access_module('payment_methods', 'create', $adminUser))
                                     <a href="{{ route('admin.payment-methods.create') }}" class="btn btn-light">
                                         <i class="fas fa-plus me-2"></i>إضافة وسيلة دفع
                                     </a>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -368,12 +371,14 @@
                                         </td>
                                         <td>
                                             <div class="d-flex align-items-center gap-2" bis_skin_checked="1">
+                                                @if (admin_can_access_module('payment_methods', 'edit', $adminUser))
                                                 <label class="toggle-switch">
                                                     <input type="checkbox" class="status-toggle"
                                                         data-id="{{ $method->id }}"
                                                         {{ $method->is_active ? 'checked' : '' }}>
                                                     <span class="toggle-slider"></span>
                                                 </label>
+                                                @endif
                                                 <span
                                                     class="status-badge {{ $method->is_active ? 'status-active' : 'status-inactive' }}">
                                                     {{ $method->is_active ? 'نشط' : 'غير نشط' }}
@@ -391,15 +396,19 @@
                                                     class="btn btn-action btn-info" title="عرض التفاصيل">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
+                                                @if (admin_can_access_module('payment_methods', 'edit', $adminUser))
                                                 <a href="{{ route('admin.payment-methods.edit', $method) }}"
                                                     class="btn btn-action btn-warning" title="تعديل">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
+                                                @endif
+                                                @if (admin_can_access_module('payment_methods', 'delete', $adminUser))
                                                 <button type="button" class="btn btn-action btn-danger delete-btn"
                                                     title="حذف" data-id="{{ $method->id }}"
                                                     data-name="{{ $method->name }}">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -411,10 +420,12 @@
                                                     <i class="fas fa-credit-card"></i>
                                                 </div>
                                                 <h5 class="empty-state-text">لا توجد وسائل دفع</h5>
+                                                @if (admin_can_access_module('payment_methods', 'create', $adminUser))
                                                 <a href="{{ route('admin.payment-methods.create') }}"
                                                     class="btn btn-primary">
                                                     <i class="fas fa-plus me-2"></i>إضافة وسيلة دفع جديدة
                                                 </a>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>

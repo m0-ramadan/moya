@@ -245,7 +245,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
-                     <a href="{{ route('admin.home') }}">الرئيسية</a>
+                    <a href="{{ route('admin.home') }}">الرئيسية</a>
                 </li>
                 <li class="breadcrumb-item">
                     <a href="{{ route('admin.users.index') }}">المستخدمين</a>
@@ -385,7 +385,7 @@
                                     قام بإنشاء طلب جديد
                                 </div>
                                 <div class="timeline-description" bis_skin_checked="1">
-                                    تم إنشاء طلب جديد برقم #ORD-2025-00123 بقيمة 250.00 ج.م
+                                    تم إنشاء طلب جديد برقم #ORD-2025-00123 بقيمة 250.00 ر.س
                                 </div>
                             </div>
                         </div>

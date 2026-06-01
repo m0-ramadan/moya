@@ -77,6 +77,7 @@ class Kernel extends HttpKernel
         'driver' => \App\Http\Middleware\CheckDriver::class,
         'permission' => PermissionMiddleware::class,
         'driver.only' => DriverOnly::class,
+        'dashboard.permission' => \App\Http\Middleware\EnsureAdminHasDashboardPermission::class,
         'role' => RoleMiddleware::class, // Optional
     ];
 }

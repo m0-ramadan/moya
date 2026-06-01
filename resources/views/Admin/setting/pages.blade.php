@@ -6,6 +6,7 @@
 @endsection
 
 @section('content')
+@php($adminUser = auth('admin')->user())
 
 <div class="card">
   <div class="card-header pb-0">
@@ -14,7 +15,7 @@
     <div class="card-body">
      <div class="row">
         <div class="col-12">
-  <form class="form theme-form" action="{{route('admin.setting.update')}}" method="post" enctype="multipart/form-data">
+  <form class="form theme-form" @if (admin_can_access_module('settings', 'edit', $adminUser)) action="{{route('admin.setting.updatepages')}}" method="post" enctype="multipart/form-data" @endif>
     @csrf
     
 
@@ -146,7 +147,9 @@
 
 
 <div class="card-footer text-end">
+  @if (admin_can_access_module('settings', 'edit', $adminUser))
   <button class="btn btn-primary" type="submit">حفظ الأعدادات </button>
+  @endif
   <a class="btn btn-light" href="{{ URL::previous() }}">إلغاء </a>
 </div>
 

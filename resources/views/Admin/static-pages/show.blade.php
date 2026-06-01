@@ -219,6 +219,12 @@
 @endsection
 
 @section('content')
+    <?php
+    $adminUser = auth('admin')->user();
+    $canCreateStaticPages = admin_can_access_module('static_pages', 'create', $adminUser);
+    $canEditStaticPages = admin_can_access_module('static_pages', 'edit', $adminUser);
+    $canDeleteStaticPages = admin_can_access_module('static_pages', 'delete', $adminUser);
+    ?>
     <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -243,9 +249,11 @@
                                 <small class="opacity-75">عرض تفاصيل الصفحة</small>
                             </div>
                             <div class="d-flex gap-2" bis_skin_checked="1">
-                                <a href="{{ route('admin.static-pages.edit', $staticPage) }}" class="btn btn-warning">
-                                    <i class="fas fa-edit me-2"></i>تعديل
-                                </a>
+                                @if ($canEditStaticPages)
+                                    <a href="{{ route('admin.static-pages.edit', $staticPage) }}" class="btn btn-warning">
+                                        <i class="fas fa-edit me-2"></i>تعديل
+                                    </a>
+                                @endif
                                 <a href="{{ route('admin.static-pages.index') }}" class="btn btn-secondary">
                                     <i class="fas fa-arrow-right me-2"></i>رجوع
                                 </a>
@@ -398,11 +406,13 @@
                     </div>
                     <div class="card-body" bis_skin_checked="1">
                         <div class="d-grid gap-2" bis_skin_checked="1">
-                            <a href="{{ route('admin.static-pages.edit', $staticPage) }}" class="btn btn-primary">
-                                <i class="fas fa-edit me-2"></i>تعديل الصفحة
-                            </a>
+                            @if ($canEditStaticPages)
+                                <a href="{{ route('admin.static-pages.edit', $staticPage) }}" class="btn btn-primary">
+                                    <i class="fas fa-edit me-2"></i>تعديل الصفحة
+                                </a>
+                            @endif
 
-                            @if (!in_array($staticPage->slug, ['syas-alkhsosy', 'syas-alastrgaaa', 'aldman', 'mn-nhn', 'alshrot-oalahkam']))
+                            @if ($canDeleteStaticPages && !in_array($staticPage->slug, ['syas-alkhsosy', 'syas-alastrgaaa', 'aldman', 'mn-nhn', 'alshrot-oalahkam']))
                                 <button type="button" class="btn btn-danger"
                                     onclick="deletePage({{ $staticPage->id }}, '{{ $staticPage->title }}')">
                                     <i class="fas fa-trash me-2"></i>حذف الصفحة
@@ -413,9 +423,11 @@
                                 <i class="fas fa-external-link-alt me-2"></i>عرض في الموقع
                             </a>
 
-                            <a href="{{ route('admin.static-pages.create') }}" class="btn btn-success">
-                                <i class="fas fa-plus me-2"></i>إنشاء صفحة جديدة
-                            </a>
+                            @if ($canCreateStaticPages)
+                                <a href="{{ route('admin.static-pages.create') }}" class="btn btn-success">
+                                    <i class="fas fa-plus me-2"></i>إنشاء صفحة جديدة
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </div>

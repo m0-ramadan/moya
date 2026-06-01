@@ -9,11 +9,12 @@
 @endsection
 
 @section('content')
-    @if (!auth()->user()->role || auth()->user()->hasPermissionTo('عرض موظفي التحويلات'))
+    @php($adminUser = auth('admin')->user())
+    @if (admin_can_access_module('employees', 'view', $adminUser))
         <div class="col-sm-12">
             <div class="card">
                 <div class="card-header">
-                    @if (!auth()->user()->role || auth()->user()->hasPermissionTo('إضافة موظف تحويلات'))
+                    @if (admin_can_access_module('employees', 'create', $adminUser))
                         <a class="btn btn-success" href="{{ route('admin.employees.create') }}">إضافة موظف</a>
                     @endif
                 </div>
@@ -46,13 +47,13 @@
                                             {{ $transfer->branch ? $transfer->branch->name : 'غير محدد' }}</td>
                                         <td style="text-align: center;">{{ $transfer->transfer_moneys_count }}</td>
                                         <td class="d-flex gap-1 justify-content-center">
-                                            @if (!auth()->user()->role || auth()->user()->hasPermissionTo('تعديل موظفي التحويلات'))
+                                            @if (admin_can_access_module('employees', 'edit', $adminUser))
                                                 <a href="{{ route('admin.employees.edit', $transfer->id) }}"
                                                     class="btn btn-success" title="تعديل">
                                                     <i class="fa fa-edit text-white"></i>
                                                 </a>
                                             @endif
-                                            @if (!auth()->user()->role || auth()->user()->hasPermissionTo('حذف موظفي التحويلات'))
+                                            @if (admin_can_access_module('employees', 'delete', $adminUser))
                                                 <form method="POST"
                                                     action="{{ route('admin.employees.destroy', $transfer->id) }}"
                                                     style="display:inline;"

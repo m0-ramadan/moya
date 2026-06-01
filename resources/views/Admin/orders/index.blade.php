@@ -552,6 +552,7 @@
 @endsection
 
 @section('content')
+    @php($adminUser = auth('admin')->user())
     <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -751,15 +752,21 @@
                                 <small class="opacity-75">إدارة جميع طلبات التوصيل</small>
                             </div>
                             <div class="d-flex gap-2">
+                                @if (admin_can_access_module('orders', 'view', $adminUser))
                                 <a href="{{ route('admin.orders.statistics') }}" class="btn btn-light">
                                     <i class="fas fa-chart-bar me-2"></i>الإحصائيات
                                 </a>
+                                @endif
+                                @if (admin_can_access_module('orders', 'create', $adminUser))
                                 <a href="{{ route('admin.orders.create') }}" class="btn btn-light">
                                     <i class="fas fa-plus me-2"></i>إضافة طلب جديد
                                 </a>
+                                @endif
+                                @if (admin_can_access_module('orders', 'view', $adminUser))
                                 <button class="btn btn-light" onclick="exportOrders()">
                                     <i class="fas fa-download me-2"></i>تصدير
                                 </button>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -772,9 +779,11 @@
                                 </div>
                                 <h5 class="empty-state-text">لا توجد طلبات</h5>
                                 <p class="text-muted">لم يتم إنشاء أي طلبات حتى الآن</p>
+                                @if (admin_can_access_module('orders', 'create', $adminUser))
                                 <a href="{{ route('admin.orders.create') }}" class="btn btn-primary">
                                     <i class="fas fa-plus me-2"></i>إنشاء طلب جديد
                                 </a>
+                                @endif
                             </div>
                         @else
                             @foreach ($orders as $order)
@@ -920,9 +929,11 @@
                                         <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-sm btn-info">
                                             <i class="fas fa-eye me-1"></i>تفاصيل
                                         </a>
+                                        @if (admin_can_access_module('orders', 'edit', $adminUser))
                                         <a href="{{ route('admin.orders.edit', $order) }}" class="btn btn-sm btn-warning">
                                             <i class="fas fa-edit me-1"></i>تعديل
                                         </a>
+                                        @endif
                                         <a href="{{ route('admin.orders.print', $order) }}" class="btn btn-sm btn-secondary" target="_blank">
                                             <i class="fas fa-print me-1"></i>طباعة
                                         </a>
@@ -931,20 +942,22 @@
                                             <i class="fas fa-map-marked-alt me-1"></i>تتبع
                                         </button>
                                         @endif
-                                        @if(!in_array($order->payment_status, ['paid', 'refunded']))
+                                        @if(!in_array($order->payment_status, ['paid', 'refunded']) && admin_can_access_module('orders', 'edit', $adminUser))
                                         <button type="button" class="btn btn-sm btn-outline-success" onclick="updatePaymentStatus({{ $order->id }})">
                                             <i class="fas fa-credit-card me-1"></i>تحديث الدفع
                                         </button>
                                         @endif
-                                        @if(!$order->driver && $order->status->name == 'pending')
+                                        @if(!$order->driver && $order->status->name == 'pending' && admin_can_access_module('orders', 'edit', $adminUser))
                                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="assignDriver({{ $order->id }})">
                                             <i class="fas fa-user-plus me-1"></i>تعيين سائق
                                         </button>
                                         @endif
+                                        @if (admin_can_access_module('orders', 'delete', $adminUser))
                                         <button type="button" class="btn btn-sm btn-outline-danger delete-btn"
                                             data-id="{{ $order->id }}" data-name="طلب #{{ $order->id }}">
                                             <i class="fas fa-trash me-1"></i>حذف
                                         </button>
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach
