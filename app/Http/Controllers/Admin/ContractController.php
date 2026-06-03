@@ -247,8 +247,18 @@ class ContractController extends Controller
 
         // Get recent activities (you might need to implement activity logging)
         $activities = $this->getContractActivities($contract);
+        $nextTransactionId = Payment::previewNextTransactionId();
 
-        return view('Admin.contracts.show', compact('contract', 'ordersCount', 'paymentStats', 'activities'));
+        return view('Admin.contracts.show', compact('contract', 'ordersCount', 'paymentStats', 'activities', 'nextTransactionId'));
+    }
+
+    public function createPayment($id)
+    {
+        return redirect()->route('admin.contracts.show', [
+            'contract' => $id,
+            'tab' => 'payments',
+            'open_payment_modal' => 1,
+        ]);
     }
 
     /**
@@ -650,8 +660,9 @@ class ContractController extends Controller
     {
         $contract = Contract::findOrFail($id);
         $payments = $contract->payments()->with('user')->latest()->paginate(15);
+        $nextTransactionId = Payment::previewNextTransactionId();
 
-        return view('Admin.contracts.payments', compact('contract', 'payments'));
+        return view('Admin.contracts.payments', compact('contract', 'payments', 'nextTransactionId'));
     }
 
     /**
@@ -1056,7 +1067,6 @@ public function storePayment(Request $request, $id)
             'payment_date' => $data['payment_date'],
             'payment_method' => $data['payment_method'],
             'status' => $data['status'],
-            'transaction_id' => $data['transaction_id'] ?? null,
             'reference_number' => $data['reference_number'] ?? null,
             'notes' => $data['notes'] ?? null,
             'receipt_path' => $data['receipt_path'] ?? null,
@@ -1070,6 +1080,13 @@ public function storePayment(Request $request, $id)
         }
 
         DB::commit();
+
+        $redirectTo = $request->input('redirect_to');
+
+        if (is_string($redirectTo) && str_starts_with($redirectTo, url('/'))) {
+            return redirect()->to($redirectTo)
+                ->with('success', 'تم تسجيل الدفعة بنجاح');
+        }
 
         return redirect()->route('admin.contracts.payments', $contract->id)
             ->with('success', 'تم تسجيل الدفعة بنجاح');

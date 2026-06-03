@@ -973,10 +973,11 @@
                             <i class="fas fa-money-bill-wave"></i>
                             سجل المدفوعات
                         </div>
-                        <a href="{{ route('admin.contracts.payments.create', $contract->id) }}" class="btn btn-sm btn-success">
+                        <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal"
+                            data-bs-target="#addPaymentModal">
                             <i class="fas fa-plus me-1"></i>
                             تسديد دفعة جديدة
-                        </a>
+                        </button>
                     </div>
                     <div class="card-body">
                         @if($contract->payments->isEmpty())
@@ -987,10 +988,11 @@
                                 <div class="empty-state-text">
                                     لا توجد مدفوعات مسجلة لهذا العقد
                                 </div>
-                                <a href="{{ route('admin.contracts.payments.create', $contract->id) }}" class="btn btn-success mt-3">
+                                <button type="button" class="btn btn-success mt-3" data-bs-toggle="modal"
+                                    data-bs-target="#addPaymentModal">
                                     <i class="fas fa-plus me-2"></i>
                                     تسجيل دفعة جديدة
-                                </a>
+                                </button>
                             </div>
                         @else
                             @foreach($contract->payments as $payment)
@@ -1294,14 +1296,146 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: var(--dark-card); color: #fff;">
+                <div class="modal-header">
+                    <h5 class="modal-title">تسجيل دفعة جديدة</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <form action="{{ route('admin.contracts.payments.store', $contract->id) }}" method="POST"
+                    enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" name="redirect_to"
+                        value="{{ route('admin.contracts.show', ['contract' => $contract->id, 'tab' => 'payments']) }}">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-money-bill-wave me-2"></i>
+                                    المبلغ <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" name="amount" class="form-control" step="0.01"
+                                        min="0.01" max="{{ $contract->remaining_amount }}"
+                                        value="{{ old('amount') }}" required>
+                                    <span class="input-group-text">ر.س</span>
+                                </div>
+                                <small class="text-muted">المتبقي: {{ number_format($contract->remaining_amount, 2) }} ر.س</small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    تاريخ الدفع <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" name="payment_date" class="form-control"
+                                    value="{{ old('payment_date', now()->format('Y-m-d')) }}" required>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-credit-card me-2"></i>
+                                    طريقة الدفع <span class="text-danger">*</span>
+                                </label>
+                                <select name="payment_method" class="form-select" required>
+                                    <option value="">اختر طريقة الدفع</option>
+                                    <option value="cash" {{ old('payment_method') == 'cash' ? 'selected' : '' }}>نقدي</option>
+                                    <option value="card" {{ old('payment_method') == 'card' ? 'selected' : '' }}>بطاقة ائتمان</option>
+                                    <option value="bank_transfer" {{ old('payment_method') == 'bank_transfer' ? 'selected' : '' }}>تحويل بنكي</option>
+                                    <option value="wallet" {{ old('payment_method') == 'wallet' ? 'selected' : '' }}>محفظة إلكترونية</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-tag me-2"></i>
+                                    الحالة <span class="text-danger">*</span>
+                                </label>
+                                <select name="status" class="form-select" required>
+                                    <option value="completed" {{ old('status', 'completed') == 'completed' ? 'selected' : '' }}>مكتملة</option>
+                                    <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>معلقة</option>
+                                    <option value="failed" {{ old('status') == 'failed' ? 'selected' : '' }}>فاشلة</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-hashtag me-2"></i>
+                                    رقم العملية
+                                </label>
+                                <input type="text" name="transaction_id" class="form-control"
+                                    value="{{ $nextTransactionId }}" readonly>
+                                <small class="text-muted">يتم توليد رقم العملية تلقائياً حسب التسلسل.</small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-reference me-2"></i>
+                                    رقم المرجع
+                                </label>
+                                <input type="text" name="reference_number" class="form-control"
+                                    value="{{ old('reference_number') }}" placeholder="رقم مرجعي للدفعة">
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-sticky-note me-2"></i>
+                                    ملاحظات
+                                </label>
+                                <textarea name="notes" class="form-control" rows="3" placeholder="ملاحظات إضافية عن الدفعة...">{{ old('notes') }}</textarea>
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-paperclip me-2"></i>
+                                    إرفاق إيصال
+                                </label>
+                                <input type="file" name="receipt" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                                <small class="text-muted">PDF, JPG, PNG (الحد الأقصى 5MB)</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-success">تسجيل الدفعة</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('js')
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function activatePaymentsTab() {
+            const paymentsTabTrigger = document.getElementById('payments-tab');
+
+            if (paymentsTabTrigger) {
+                bootstrap.Tab.getOrCreateInstance(paymentsTabTrigger).show();
+            }
+        }
+
+        function openPaymentModal() {
+            const paymentModal = document.getElementById('addPaymentModal');
+
+            if (paymentModal) {
+                activatePaymentsTab();
+                bootstrap.Modal.getOrCreateInstance(paymentModal).show();
+            }
+        }
+
         $(document).ready(function() {
+            @if (request('tab') === 'payments')
+                activatePaymentsTab();
+            @endif
+
+            @if (request()->boolean('open_payment_modal') || $errors->hasAny(['amount', 'payment_date', 'payment_method', 'status', 'transaction_id', 'reference_number', 'notes', 'receipt']) || old('amount') !== null)
+                openPaymentModal();
+            @endif
+
             // تبديل حالة العقد
             $('.toggle-status-btn').on('click', function() {
                 const contractId = '{{ $contract->id }}';

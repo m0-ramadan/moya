@@ -510,7 +510,6 @@ $method = PaymentMethod::where('key', '{{ $paymentMethod->key }}')->first();
 @endsection
 
 @section('js')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function confirmDelete() {
             Swal.fire({

@@ -70,6 +70,22 @@
 
     .app-shell {
         position: relative;
+        isolation: isolate;
+        --bs-backdrop-zindex: 2000;
+        --bs-modal-zindex: 2005;
+        --bs-offcanvas-zindex: 1995;
+    }
+
+    .modal-backdrop {
+        z-index: var(--bs-backdrop-zindex) !important;
+    }
+
+    .modal {
+        z-index: var(--bs-modal-zindex) !important;
+    }
+
+    .swal2-container {
+        z-index: 2010 !important;
     }
 
     .light-style .app-shell::before {
@@ -80,7 +96,7 @@
         background:
             radial-gradient(circle at 85% 10%, rgba(241, 144, 34, 0.06), transparent 25%),
             radial-gradient(circle at 12% 88%, rgba(251, 200, 117, 0.05), transparent 18%);
-        z-index: 0;
+        z-index: -1;
     }
 
     .dark-style .app-shell::before {
@@ -91,14 +107,13 @@
         background:
             radial-gradient(circle at 85% 10%, rgba(238, 155, 0, 0.08), transparent 25%),
             radial-gradient(circle at 12% 88%, rgba(187, 62, 3, 0.08), transparent 18%);
-        z-index: 0;
+        z-index: -1;
     }
 
     .layout-container,
     .layout-page,
     .content-wrapper {
         position: relative;
-        z-index: 1;
     }
 
     .layout-navbar {

@@ -240,7 +240,9 @@
 @endsection
 
 @section('content')
-    @php($adminUser = auth('admin')->user())
+    @php
+        $adminUser = auth('admin')->user();
+    @endphp
     <div class="container-xxl flex-grow-1 container-p-y" bis_skin_checked="1">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -370,8 +372,6 @@
 @endsection
 
 @section('js')
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function() {
             // البحث مع تأخير

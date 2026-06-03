@@ -80,6 +80,55 @@
     <!-- Core JS -->
     @include('Admin.layout.js')
     @yield('js')
+    <script>
+        (function() {
+            function bindBootstrapPlugin($, pluginName, Constructor) {
+                if (!$ || !$.fn || !Constructor || $.fn[pluginName]) {
+                    return;
+                }
+
+                $.fn[pluginName] = function(config) {
+                    return this.each(function() {
+                        const instance = Constructor.getOrCreateInstance(
+                            this,
+                            typeof config === 'object' ? config : undefined
+                        );
+
+                        if (typeof config === 'string') {
+                            if (typeof instance[config] !== 'function') {
+                                throw new Error(`No method named "${config}"`);
+                            }
+
+                            instance[config]();
+                        }
+                    });
+                };
+
+                $.fn[pluginName].Constructor = Constructor;
+            }
+
+            function rebindDashboardBootstrapJQuery() {
+                const $ = window.jQuery;
+                const bootstrap = window.bootstrap;
+
+                if (!$ || !bootstrap) {
+                    return;
+                }
+
+                bindBootstrapPlugin($, 'modal', bootstrap.Modal);
+                bindBootstrapPlugin($, 'offcanvas', bootstrap.Offcanvas);
+                bindBootstrapPlugin($, 'collapse', bootstrap.Collapse);
+                bindBootstrapPlugin($, 'dropdown', bootstrap.Dropdown);
+                bindBootstrapPlugin($, 'tab', bootstrap.Tab);
+                bindBootstrapPlugin($, 'tooltip', bootstrap.Tooltip);
+                bindBootstrapPlugin($, 'popover', bootstrap.Popover);
+                bindBootstrapPlugin($, 'toast', bootstrap.Toast);
+            }
+
+            rebindDashboardBootstrapJQuery();
+            window.rebindDashboardBootstrapJQuery = rebindDashboardBootstrapJQuery;
+        })();
+    </script>
 </body>
 
 </html>

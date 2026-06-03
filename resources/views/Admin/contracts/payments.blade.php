@@ -200,10 +200,21 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
+        .filter-form {
+            flex: 1 1 720px;
+            min-width: 0;
+        }
+
         .filter-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            display: flex;
+            flex-wrap: nowrap;
             gap: 15px;
+            width: 100%;
+        }
+
+        .filter-row>* {
+            flex: 1 1 0;
+            min-width: 0;
         }
 
         .form-control,
@@ -497,8 +508,16 @@
                 justify-content: center;
             }
 
+            .filter-form {
+                width: 100%;
+            }
+
             .filter-row {
-                grid-template-columns: 1fr;
+                flex-wrap: wrap;
+            }
+
+            .filter-row>* {
+                flex: 1 1 100%;
             }
         }
     </style>
@@ -510,7 +529,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
-                     <a href="{{ route('admin.home') }}">الرئيسية</a>
+                    <a href="{{ route('admin.home') }}">الرئيسية</a>
                 </li>
                 <li class="breadcrumb-item">
                     <a href="{{ route('admin.contracts.index') }}">العقود</a>
@@ -702,7 +721,8 @@
             </div>
 
             <!-- فلترة -->
-            <form method="GET" action="{{ route('admin.contracts.payments', $contract->id) }}" id="filterForm">
+            <form method="GET" action="{{ route('admin.contracts.payments', $contract->id) }}" id="filterForm"
+                class="filter-form">
                 <div class="filter-row">
                     <select name="status" class="form-select" onchange="this.form.submit()">
                         <option value="">جميع الحالات</option>
@@ -1079,7 +1099,8 @@
                                     رقم العملية
                                 </label>
                                 <input type="text" name="transaction_id" class="form-control"
-                                    placeholder="رقم العملية من البنك">
+                                    value="{{ $nextTransactionId }}" readonly>
+                                <small class="text-muted">يتم توليد رقم العملية تلقائياً حسب التسلسل.</small>
                             </div>
 
                             <div class="col-md-6 mb-3">
@@ -1143,9 +1164,6 @@
 @endsection
 
 @section('js')
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         $(document).ready(function() {
             // تفعيل tooltips

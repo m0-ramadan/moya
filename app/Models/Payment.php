@@ -23,6 +23,23 @@ class Payment extends Model
         'payment_date' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (Payment $payment) {
+            $sequence = null;
+
+            if (empty($payment->payment_number)) {
+                $sequence ??= static::nextSequenceValue(true);
+                $payment->payment_number = static::formatPaymentNumber($sequence);
+            }
+
+            if (empty($payment->transaction_id)) {
+                $sequence ??= static::nextSequenceValue(true);
+                $payment->transaction_id = static::formatTransactionId($sequence);
+            }
+        });
+    }
+
     // علاقة الدفع مع المستخدم
     public function user(): BelongsTo
     {
@@ -33,5 +50,33 @@ class Payment extends Model
     public function contract(): BelongsTo
     {
         return $this->belongsTo(Contract::class);
+    }
+
+    public static function previewNextTransactionId(): string
+    {
+        return static::formatTransactionId(static::nextSequenceValue());
+    }
+
+    protected static function nextSequenceValue(bool $lockForUpdate = false): int
+    {
+        $query = static::query()->orderByDesc('id');
+
+        if ($lockForUpdate) {
+            $query->lockForUpdate();
+        }
+
+        $lastId = $query->value('id');
+
+        return ($lastId ?? 0) + 1;
+    }
+
+    protected static function formatPaymentNumber(int $sequence): string
+    {
+        return 'PAY-' . str_pad((string) $sequence, 6, '0', STR_PAD_LEFT);
+    }
+
+    protected static function formatTransactionId(int $sequence): string
+    {
+        return 'TRX-' . str_pad((string) $sequence, 6, '0', STR_PAD_LEFT);
     }
 }
