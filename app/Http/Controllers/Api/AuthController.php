@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api;
 
 use App\DataTransferObjects\PhoneLoginData;
 use App\Http\Controllers\Controller;
+use App\Exceptions\OtpException;
 use App\Http\Requests\Auth\PhoneLoginRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Http\Resources\AppUser\UserResource;
@@ -48,6 +49,8 @@ class AuthController extends Controller
                 'method' => $res['method'],
                 //   'otp' => $res['otp'],
             ], 'تم إرسال رمز التحقق بنجاح');
+        } catch (OtpException $e) {
+            return $this->errorResponse($e->getMessage(), 403);
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);
         }
@@ -80,6 +83,8 @@ class AuthController extends Controller
                 'token' => $res['token'],
                 'token_type' => 'Bearer',
             ], 'تم التحقق من رمز OTP بنجاح');
+        } catch (OtpException $e) {
+            return $this->errorResponse($e->getMessage(), 403);
         } catch (\Exception $e) {
             return $this->validationError(['otp' => [$e->getMessage()]]);
         }

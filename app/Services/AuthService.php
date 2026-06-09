@@ -12,6 +12,8 @@ use App\DataTransferObjects\PhoneLoginData;
 
 class AuthService
 {
+    private const BLOCKED_ACCOUNT_MESSAGE = 'لا يمكن إتمام الطلب الآن، لأن حسابك موقوف مؤقتًا. برجاء التواصل مع الدعم.';
+
     protected UserRepository $users;
     protected TwilioService $twilio;
     protected WhatsappService $whatsapp;
@@ -34,6 +36,10 @@ class AuthService
     {
         $user = $this->users->findByFullPhone($data->full_phone)
             ?? $this->users->createByPhone($data->country_code, $data->phone_number);
+
+        if ($user->isBanned()) {
+            throw new OtpException(self::BLOCKED_ACCOUNT_MESSAGE);
+        }
 
         $otp = $this->otpManager->generateAndStore($user);
 
@@ -115,6 +121,9 @@ class AuthService
     {
         $user = $this->users->findByFullPhone($fullPhone);
         if (!$user) throw new OtpException('Phone number not registered');
+        if ($user->isBanned()) {
+            throw new OtpException(self::BLOCKED_ACCOUNT_MESSAGE);
+        }
 
         $tw = $this->twilio->verifyOtp($fullPhone, $otp);
         if ($tw['success'] ?? false) {

@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -108,7 +109,7 @@ class UserController extends Controller
         // Get statistics
         $totalUsers = User::count();
         $activeUsers = User::where('status', 'active')->count();
-        $inactiveUsers = User::where('status', '!=', 'active')->count();
+        $bannedUsers = User::where('status', 'banned')->count();
         $verifiedUsers = User::whereNotNull('phone_verified_at')->count();
 
 
@@ -120,7 +121,7 @@ class UserController extends Controller
             ->whereDate('updated_at', today())
             ->count();
 
-        $suspendedToday = User::where('status', 'inactive')
+        $bannedToday = User::where('status', 'banned')
             ->whereDate('updated_at', today())
             ->count();
 
@@ -133,11 +134,11 @@ class UserController extends Controller
             'users',
             'totalUsers',
             'activeUsers',
-            'inactiveUsers',
+            'bannedUsers',
             'verifiedUsers',
             'newThisMonth',
             'activeToday',
-            'suspendedToday',
+            'bannedToday',
             'verifiedThisMonth',
 
         ));
@@ -178,7 +179,7 @@ class UserController extends Controller
             'phone' => 'nullable|string|unique:users,phone',
             'country_code' => 'nullable|string|max:5',
             'avatar' => 'nullable|image|max:2048',
-            'status' => 'required|in:active,inactive',
+            'status' => 'nullable|in:active,banned',
             'allow_notifications' => 'boolean',
         ]);
 
@@ -207,6 +208,7 @@ class UserController extends Controller
 
             // Set default values
             $data['allow_notifications'] = $request->boolean('allow_notifications', true);
+            $data['status'] = $request->input('status', 'active');
 
             // Create user
             $user = User::create($data);
@@ -336,7 +338,7 @@ class UserController extends Controller
             'phone' => 'nullable|string|unique:users,phone,' . $user->id,
             'country_code' => 'nullable|string|max:5',
             'avatar' => 'nullable|image|max:2048',
-            'status' => 'required|in:active,inactive',
+            'status' => 'nullable|in:active,banned',
             'allow_notifications' => 'boolean',
             'phone_verified' => 'boolean',
         ]);
@@ -382,9 +384,14 @@ class UserController extends Controller
             }
 
             $data['allow_notifications'] = $request->boolean('allow_notifications', true);
+            $data['status'] = $request->input('status', $user->status);
 
             // Update user
             $user->update($data);
+
+            if ($user->isBanned()) {
+                $user->revokeAllSessions();
+            }
 
             DB::commit();
 
@@ -464,7 +471,7 @@ class UserController extends Controller
     }
 
     /**
-     * Toggle user status (active/inactive)
+     * Toggle user status (active/banned)
      *
      * @param Request $request
      * @param User $user
@@ -472,11 +479,23 @@ class UserController extends Controller
      */
     public function toggleStatus(Request $request, User $user)
     {
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|in:active,inactive'
+        $targetStatus = $request->input('status', $user->isActive() ? 'banned' : 'active');
+
+        $validator = Validator::make([
+            'status' => $targetStatus,
+        ], [
+            'status' => 'required|in:active,banned'
         ]);
 
+        $expectsJson = $request->expectsJson() || $request->ajax();
+
         if ($validator->fails()) {
+            if (! $expectsJson) {
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput();
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'بيانات غير صالحة',
@@ -486,25 +505,50 @@ class UserController extends Controller
 
         try {
             $oldStatus = $user->status;
-            $user->status = $request->status;
-            $user->save();
 
-            // Log the action
-            activity()
-                ->performedOn($user)
-                ->causedBy(auth()->user())
-                ->withProperties(['old_status' => $oldStatus, 'new_status' => $request->status])
-                ->log('تم تغيير حالة المستخدم');
+            DB::transaction(function () use ($user, $targetStatus, &$oldStatus) {
+                $user->update(['status' => $targetStatus]);
+
+                if ($user->isBanned()) {
+                    $user->revokeAllSessions();
+                }
+            });
+
+            if (function_exists('activity')) {
+                \activity()
+                    ->performedOn($user)
+                    ->causedBy(auth()->guard('admin')->user())
+                    ->withProperties(['old_status' => $oldStatus, 'new_status' => $targetStatus])
+                    ->log('تم تغيير حالة المستخدم');
+            } else {
+                Log::info('User status changed from admin panel', [
+                    'user_id' => $user->id,
+                    'old_status' => $oldStatus,
+                    'new_status' => $targetStatus,
+                    'admin_id' => auth()->guard('admin')->id(),
+                ]);
+            }
+
+            $message = $targetStatus === 'active' ? 'تم فك حظر المستخدم بنجاح' : 'تم حظر المستخدم بنجاح';
+
+            if (! $expectsJson) {
+                return redirect()->back()->with('success', $message);
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => $request->status == 'active' ? 'تم تفعيل المستخدم بنجاح' : 'تم تعطيل المستخدم بنجاح',
+                'message' => $message,
                 'data' => [
                     'user_id' => $user->id,
                     'status' => $user->status
                 ]
             ]);
         } catch (\Exception $e) {
+            if (! $expectsJson) {
+                return redirect()->back()
+                    ->with('error', 'حدث خطأ أثناء تغيير حالة المستخدم: ' . $e->getMessage());
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'حدث خطأ أثناء تغيير حالة المستخدم: ' . $e->getMessage()
@@ -1087,7 +1131,7 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
-            'status' => 'required|in:active,inactive'
+            'status' => 'required|in:active,banned'
         ]);
 
         if ($validator->fails()) {
@@ -1101,8 +1145,16 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
 
+            $users = User::whereIn('id', $request->user_ids)->get();
+
             $count = User::whereIn('id', $request->user_ids)
                 ->update(['status' => $request->status]);
+
+            if ($request->status === 'banned') {
+                $users->each(function ($user) {
+                    $user->revokeAllSessions();
+                });
+            }
 
             DB::commit();
 

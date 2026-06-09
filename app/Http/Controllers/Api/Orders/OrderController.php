@@ -226,7 +226,7 @@ class OrderController extends Controller
 
     private function sendOrderWhatsappNotification(Order $order): void
     {
-        $recipients = $this->resolveOrderWhatsappRecipients();
+        +$recipients = $this->resolveOrderWhatsappRecipients();
 
         if (empty($recipients)) {
             Log::warning('Order WhatsApp recipient is not configured.', [
@@ -259,7 +259,7 @@ class OrderController extends Controller
             $roleRecipients = Admin::role($configuredRole)
                 ->whereNotNull('phone')
                 ->pluck('phone')
-                ->map(fn ($phone) => $this->normalizeWhatsappPhone($phone))
+                ->map(fn($phone) => $this->normalizeWhatsappPhone($phone))
                 ->filter()
                 ->unique()
                 ->values()
@@ -312,7 +312,7 @@ class OrderController extends Controller
         $isScheduled = ! empty($order->order_date);
 
         $orderDate = $isScheduled
-            ? $order->order_date?->format('Y-m-d h:i A')
+            ? $order->order_date?->format(format: 'Y-m-d h:i A')
             : 'فوري';
 
         $createdAt = $order->created_at?->format('Y-m-d h:i A') ?? now()->format('Y-m-d h:i A');

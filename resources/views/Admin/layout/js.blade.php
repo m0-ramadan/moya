@@ -599,15 +599,12 @@
         })
 
 
-        $(".btn-action").click(function() {
+        $(".btn-action[data-url][data-method]").click(function() {
             var url = $(this).data("url");
             var method = $(this).data("method");
             var message = $(this).data("message");
             var text_btn_confirm = $(this).data("text_btn_confirm");
             var text_btn_cancel = $(this).data("text_btn_cancel");
-
-
-            console.log(url, method)
 
             const swalWithBootstrapButtons = Swal.mixin({
                 customClass: {
@@ -627,10 +624,6 @@
 
                 if (result.isConfirmed) {
                     $("#form_action_" + method).attr("action", url).submit();
-                    console.log("Done")
-                } else if (result.dismiss === Swal.DismissReason.cancel) {
-                    console.log("else Done")
-
                 }
             });
         })

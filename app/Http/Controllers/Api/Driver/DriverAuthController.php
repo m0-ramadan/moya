@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Driver;
 
 use App\DataTransferObjects\PhoneLoginData;
+use App\Exceptions\OtpException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Http\Requests\Driver\CompleteProfileRequest;
@@ -58,6 +59,8 @@ class DriverAuthController extends Controller
                 'method' => $res['method'],
                 //   'otp' => $res['otp'],
             ], 'تم إرسال رمز التحقق بنجاح');
+        } catch (OtpException $e) {
+            return $this->errorResponse($e->getMessage(), 403);
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);
         }
@@ -110,6 +113,8 @@ class DriverAuthController extends Controller
                 'token_type' => 'Bearer',
                 'is_registered' => $isRegistered,
             ], 'تم التحقق من رمز OTP بنجاح');
+        } catch (OtpException $e) {
+            return $this->errorResponse($e->getMessage(), 403);
         } catch (\Exception $e) {
             return $this->validationError(['otp' => [$e->getMessage()]]);
         }
@@ -293,7 +298,7 @@ class DriverAuthController extends Controller
                 'is_verified' => false,
                 'verified_at' => null,
                 'rejection_reason' => null,
-                'status' => $validator->validated()['citizenship'] ?? null,
+                'status' => 'pending',
                 'is_active' => false,
             ]);
 

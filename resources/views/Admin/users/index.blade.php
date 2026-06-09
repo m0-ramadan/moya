@@ -84,7 +84,7 @@
             border-left-color: #198754;
         }
 
-        .stat-card.inactive {
+        .stat-card.banned {
             border-left-color: #dc3545;
         }
 
@@ -118,7 +118,7 @@
             background: linear-gradient(135deg, #198754 0%, #20c997 100%);
         }
 
-        .stat-card.inactive .stat-icon {
+        .stat-card.banned .stat-icon {
             background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
         }
 
@@ -431,7 +431,7 @@
             color: var(--bs-success-text);
         }
 
-        .badge-status.inactive {
+        .badge-status.banned {
             background: var(--bs-secondary-bg-subtle);
             color: var(--bs-secondary-text);
         }
@@ -764,7 +764,7 @@
                 </div>
                 <div class="row">
                     <div class="col-md-8">
-                        <p class="mb-0">يمكنك متابعة المستخدمين، تفعيل أو تعطيل حساباتهم، وإدارة محافظهم وعقودهم بكل سهولة.</p>
+                        <p class="mb-0">يمكنك متابعة المستخدمين، حظرهم أو فك الحظر عنهم، وإدارة محافظهم وعقودهم بكل سهولة.</p>
                     </div>
                     <div class="col-md-4 text-end">
                         <div class="mt-3">
@@ -815,20 +815,20 @@
                     </div>
                 </div>
 
-                <div class="stat-card inactive">
+                <div class="stat-card banned">
                     <div class="stat-header">
                         <div class="stat-icon">
                             <i class="fas fa-ban"></i>
                         </div>
                         <div>
-                            <div class="stat-title">غير نشطين</div>
-                            <div class="stat-description">حسابات موقوفة أو محظورة</div>
+                            <div class="stat-title">محظورون</div>
+                            <div class="stat-description">حسابات تم حظرها</div>
                         </div>
                     </div>
-                    <div class="stat-value">{{ $inactiveUsers ?? 0 }}</div>
+                    <div class="stat-value">{{ $bannedUsers ?? 0 }}</div>
                     <div class="stat-actions">
-                        <span class="badge bg-danger">موقوف</span>
-                        <span class="text-muted">{{ $suspendedToday ?? 0 }} اليوم</span>
+                        <span class="badge bg-danger">محظور</span>
+                        <span class="text-muted">{{ $bannedToday ?? 0 }} اليوم</span>
                     </div>
                 </div>
 
@@ -868,7 +868,7 @@
                         <select name="status" class="filter-select">
                             <option value="">الكل</option>
                             <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>نشط</option>
-                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>غير نشط</option>
+                            <option value="banned" {{ request('status') == 'banned' ? 'selected' : '' }}>محظور</option>
                         </select>
                     </div>
 
@@ -985,9 +985,9 @@
                                     </td>
 
                                     <td>
-                                        <span class="badge-status {{ $user->status }}">
-                                            <i class="fas {{ $user->status == 'active' ? 'fa-circle' : 'fa-circle' }}"></i>
-                                            {{ $user->status == 'active' ? 'نشط' : 'غير نشط' }}
+                                        <span class="badge-status {{ $user->status === 'active' ? 'active' : 'banned' }}">
+                                            <i class="fas {{ $user->status === 'active' ? 'fa-circle-check' : 'fa-ban' }}"></i>
+                                            {{ $user->status === 'active' ? 'نشط' : 'محظور' }}
                                         </span>
                                     </td>
 
@@ -1039,7 +1039,7 @@
 
                                     <td>
                                         <div class="action-buttons">
-                                            <button class="btn-action view" onclick="viewUser({{ $user->id }})" title="عرض التفاصيل">
+                                            <button type="button" class="btn-action view" onclick="viewUser({{ $user->id }})" title="عرض التفاصيل">
                                                 <i class="fas fa-eye"></i>
                                             </button>
                                             
@@ -1047,11 +1047,11 @@
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             
-                                            <button class="btn-action toggle" onclick="toggleUserStatus({{ $user->id }}, '{{ $user->status }}')" title="تغيير الحالة">
-                                                <i class="fas {{ $user->status == 'active' ? 'fa-pause' : 'fa-play' }}"></i>
+                                            <button type="button" class="btn-action toggle" onclick="toggleUserStatus({{ $user->id }}, '{{ $user->status }}')" title="{{ $user->status === 'active' ? 'حظر المستخدم' : 'فك الحظر' }}">
+                                                <i class="fas {{ $user->status === 'active' ? 'fa-user-slash' : 'fa-user-check' }}"></i>
                                             </button>
                                             
-                                            <button class="btn-action wallet" onclick="viewUserWallet({{ $user->id }})" title="المحفظة">
+                                            <button type="button" class="btn-action wallet" onclick="viewUserWallet({{ $user->id }})" title="المحفظة">
                                                 <i class="fas fa-wallet"></i>
                                             </button>
                                             
@@ -1061,7 +1061,7 @@
                                                 </a>
                                             @endif
                                             
-                                            <button class="btn-action orders" onclick="viewUserOrders({{ $user->id }})" title="الطلبات">
+                                            <button type="button" class="btn-action orders" onclick="viewUserOrders({{ $user->id }})" title="الطلبات">
                                                 <i class="fas fa-shopping-cart"></i>
                                             </button>
                                             
@@ -1236,7 +1236,7 @@
                                     <span class="info-label">حالة الحساب:</span>
                                     <span class="info-value">
                                         <span class="badge ${response.status == 'active' ? 'bg-success' : 'bg-danger'}">
-                                            ${response.status == 'active' ? '<i class="fas fa-check-circle me-1"></i>نشط' : '<i class="fas fa-times-circle me-1"></i>غير نشط'}
+                                            ${response.status == 'active' ? '<i class="fas fa-check-circle me-1"></i>نشط' : '<i class="fas fa-ban me-1"></i>محظور'}
                                         </span>
                                     </span>
                                 </div>
@@ -1387,15 +1387,15 @@
 
         // Toggle user status
         function toggleUserStatus(userId, currentStatus) {
-            const newStatus = currentStatus == 'active' ? 'inactive' : 'active';
-            const action = newStatus == 'active' ? 'تفعيل' : 'تعطيل';
+            const newStatus = currentStatus === 'active' ? 'banned' : 'active';
+            const action = newStatus === 'active' ? 'فك حظر' : 'حظر';
             
             Swal.fire({
                 title: `${action} المستخدم`,
                 text: `هل أنت متأكد من ${action} هذا المستخدم؟`,
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: newStatus == 'active' ? '#198754' : '#dc3545',
+                confirmButtonColor: newStatus === 'active' ? '#198754' : '#dc3545',
                 cancelButtonColor: '#3085d6',
                 confirmButtonText: `نعم، ${action}`,
                 cancelButtonText: 'إلغاء'
@@ -1404,6 +1404,12 @@
                     $.ajax({
                         url: `/admin/users/${userId}/toggle-status`,
                         type: 'POST',
+                        dataType: 'json',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
                         data: {
                             _token: '{{ csrf_token() }}',
                             status: newStatus
@@ -1432,7 +1438,7 @@
                             Swal.fire({
                                 icon: 'error',
                                 title: 'خطأ!',
-                                text: xhr.responseJSON?.message || 'حدث خطأ أثناء تغيير الحالة'
+                                text: xhr.responseJSON?.message || xhr.responseText || 'حدث خطأ أثناء تغيير الحالة'
                             });
                         }
                     });

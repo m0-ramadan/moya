@@ -349,6 +349,12 @@
                             @if ($user->phone)
                                 <p class="mb-0 opacity-75">{{ $user->phone }}</p>
                             @endif
+                            <div class="mt-3">
+                                <span class="badge {{ $user->status === 'active' ? 'bg-success' : 'bg-danger' }}">
+                                    <i class="fas {{ $user->status === 'active' ? 'fa-circle-check' : 'fa-ban' }} me-1"></i>
+                                    {{ $user->status === 'active' ? 'نشط' : 'محظور' }}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
@@ -608,12 +614,15 @@
                                         </a>
 
                                         <form action="{{ route('admin.users.toggle-status', $user) }}" method="POST"
-                                            style="display: inline;">
+                                            style="display: inline;" id="toggleStatusForm">
                                             @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn btn-secondary w-100">
-                                                <i class="fas fa-power-off me-2"></i>
-                                                {{ isset($user->is_active) && $user->is_active ? 'تعطيل' : 'تفعيل' }}
+                                            <input type="hidden" name="status"
+                                                value="{{ $user->status === 'active' ? 'banned' : 'active' }}">
+                                            <button type="button" class="btn btn-secondary w-100"
+                                                onclick="confirmToggleStatus()">
+                                                <i
+                                                    class="fas {{ $user->status === 'active' ? 'fa-user-slash' : 'fa-user-check' }} me-2"></i>
+                                                {{ $user->status === 'active' ? 'حظر المستخدم' : 'فك الحظر' }}
                                             </button>
                                         </form>
 
@@ -653,6 +662,26 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.getElementById('deleteForm').submit();
+                }
+            });
+        }
+
+        function confirmToggleStatus() {
+            const isActive = @json($user->status === 'active');
+            const action = isActive ? 'حظر' : 'فك حظر';
+
+            Swal.fire({
+                title: `${action} المستخدم`,
+                text: `هل أنت متأكد من ${action} المستخدم "{{ $user->name }}"؟`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: isActive ? '#dc3545' : '#198754',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: `نعم، ${action}`,
+                cancelButtonText: 'إلغاء'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('toggleStatusForm').submit();
                 }
             });
         }

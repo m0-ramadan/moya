@@ -18,6 +18,8 @@ class AuthController extends Controller
 {
     use ApiResponseTrait;
 
+    private const BLOCKED_ACCOUNT_MESSAGE = 'لا يمكن إتمام الطلب الآن، لأن حسابك موقوف مؤقتًا. برجاء التواصل مع الدعم.';
+
     /**
      * 🔹 تسجيل مستخدم جديد
      */
@@ -54,6 +56,10 @@ class AuthController extends Controller
 
             if (!$user || !Hash::check($request->password, $user->password)) {
                 return $this->error('بيانات الدخول غير صحيحة', 401);
+            }
+
+            if ($user->isBanned()) {
+                return $this->error(self::BLOCKED_ACCOUNT_MESSAGE, 403);
             }
 
             if ($request->has('device_token')) {
@@ -95,6 +101,10 @@ class AuthController extends Controller
                     $column       => $request->provider_id,
                     'password'    => Hash::make(uniqid()), // كلمة مرور عشوائية
                 ]);
+            }
+
+            if ($user->isBanned()) {
+                return $this->error(self::BLOCKED_ACCOUNT_MESSAGE, 403);
             }
 
             $token = $user->createToken('api_token')->plainTextToken;

@@ -447,7 +447,12 @@ class DriverController extends Controller
                 'is_verified' => true,
                 'verified_at' => now(),
                 'rejection_reason' => null,
+                'status' => 'active',
                 'is_active' => true
+            ]);
+
+            $driver->user?->update([
+                'status' => 'active',
             ]);
 
             // TODO: Send notification to driver
@@ -487,6 +492,7 @@ class DriverController extends Controller
                 'is_verified' => false,
                 'verified_at' => null,
                 'rejection_reason' => $request->rejection_reason,
+                'status' => 'inactive',
                 'is_active' => false
             ]);
 
@@ -509,8 +515,13 @@ class DriverController extends Controller
      */
     public function toggleStatus(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|in:active,inactive,suspended'
+        $driver = Driver::with('user')->findOrFail($id);
+        $targetUserStatus = $request->input('status', $driver->user?->status === 'banned' ? 'active' : 'banned');
+
+        $validator = Validator::make([
+            'status' => $targetUserStatus,
+        ], [
+            'status' => 'required|in:active,banned'
         ]);
 
         if ($validator->fails()) {
@@ -521,23 +532,32 @@ class DriverController extends Controller
         }
 
         try {
-            $driver = Driver::findOrFail($id);
+            DB::transaction(function () use ($driver, $targetUserStatus) {
+                if ($driver->user) {
+                    $driver->user->update([
+                        'status' => $targetUserStatus,
+                    ]);
 
-            $driver->update([
-                // 'status' => $request->status,
+                    if ($targetUserStatus === 'banned') {
+                        $driver->user->revokeAllSessions();
+                    }
+                }
 
-                'is_active' => $request->status == 'active' ? 1 : 0
-            ]);
-
-            $statusText = [
-                'active' => 'تفعيل',
-                'inactive' => 'تعطيل',
-                'suspended' => 'إيقاف'
-            ];
+                $driver->update([
+                    'status' => $targetUserStatus === 'banned'
+                        ? 'suspended'
+                        : ($driver->is_verified
+                            ? 'active'
+                            : ($driver->rejection_reason ? 'inactive' : 'pending')),
+                    'is_active' => $targetUserStatus === 'active' && $driver->is_verified ? 1 : 0,
+                ]);
+            });
 
             return response()->json([
                 'success' => true,
-                'message' => 'تم ' . $statusText[$request->status] . ' السائق بنجاح'
+                'message' => $targetUserStatus === 'banned'
+                    ? 'تم حظر السائق بنجاح'
+                    : 'تم فك حظر السائق بنجاح'
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -840,6 +860,7 @@ class DriverController extends Controller
                 'is_verified' => false,
                 'verified_at' => null,
                 'rejection_reason' => null,
+                'status' => 'pending',
                 'is_active' => false
             ]);
 

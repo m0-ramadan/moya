@@ -487,6 +487,11 @@
             color: var(--bs-danger-text);
         }
 
+        .badge-status.pending {
+            background: var(--bs-warning-bg-subtle);
+            color: var(--bs-warning-text);
+        }
+
         /* Vehicle Info */
         .vehicle-info {
             display: flex;
@@ -1004,6 +1009,8 @@
                         <select name="status" class="filter-select">
                             <option value="">الكل</option>
                             <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>نشط</option>
+                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>قيد المراجعة
+                            </option>
                             <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>غير نشط
                             </option>
                             <option value="suspended" {{ request('status') == 'suspended' ? 'selected' : '' }}>موقوف
@@ -1203,10 +1210,10 @@
                                             </span>
                                         </div>
                                         <div>
-                                            <span class="badge-status {{ $driver->status }}">
+                                            <span class="badge-status {{ ($driver->user?->status ?? 'active') === 'banned' ? 'suspended' : $driver->status }}">
                                                 <i
-                                                    class="fas {{ $driver->status == 'active' ? 'fa-circle' : ($driver->status == 'suspended' ? 'fa-ban' : 'fa-circle') }}"></i>
-                                                {{ $driver->status == 'active' ? 'نشط' : ($driver->status == 'suspended' ? 'موقوف' : 'غير نشط') }}
+                                                    class="fas {{ ($driver->user?->status ?? 'active') === 'banned' ? 'fa-ban' : ($driver->status == 'active' ? 'fa-circle' : ($driver->status == 'suspended' ? 'fa-ban' : ($driver->status == 'pending' ? 'fa-clock' : 'fa-circle'))) }}"></i>
+                                                {{ ($driver->user?->status ?? 'active') === 'banned' ? 'محظور' : ($driver->status == 'active' ? 'نشط' : ($driver->status == 'suspended' ? 'موقوف' : ($driver->status == 'pending' ? 'قيد المراجعة' : 'غير نشط'))) }}
                                             </span>
                                         </div>
                                     </td>
@@ -1222,7 +1229,7 @@
 
                                     <td>
                                         <div class="action-buttons">
-                                            <button class="btn-action view" onclick="viewDriver({{ $driver->id }})"
+                                            <button type="button" class="btn-action view" onclick="viewDriver({{ $driver->id }})"
                                                 title="عرض التفاصيل">
                                                 <i class="fas fa-eye"></i>
                                             </button>
@@ -1233,28 +1240,28 @@
                                             </a>
 
                                             @if (!$driver->is_verified && !$driver->rejection_reason)
-                                                <button class="btn-action approve"
+                                                <button type="button" class="btn-action approve"
                                                     onclick="approveDriver({{ $driver->id }})" title="توثيق السائق">
                                                     <i class="fas fa-check"></i>
                                                 </button>
 
-                                                <button class="btn-action reject"
+                                                <button type="button" class="btn-action reject"
                                                     onclick="rejectDriver({{ $driver->id }})" title="رفض الطلب">
                                                     <i class="fas fa-times"></i>
                                                 </button>
                                             @endif
 
-                                            <button class="btn-action wallet" onclick="viewWallet({{ $driver->id }})"
+                                            <button type="button" class="btn-action wallet" onclick="viewWallet({{ $driver->id }})"
                                                 title="المحفظة">
                                                 <i class="fas fa-wallet"></i>
                                             </button>
 
-                                            {{-- <button class="btn-action toggle"
-                                                onclick="toggleStatus({{ $driver->id }}, '{{ $driver->status }}')"
-                                                title="تغيير الحالة">
+                                            <button type="button" class="btn-action toggle"
+                                                onclick="toggleStatus({{ $driver->id }}, '{{ $driver->user?->status ?? 'active' }}')"
+                                                title="{{ ($driver->user?->status ?? 'active') === 'banned' ? 'فك حظر السائق' : 'حظر السائق' }}">
                                                 <i
-                                                    class="fas {{ $driver->status == 'active' ? 'fa-pause' : 'fa-play' }}"></i>
-                                            </button> --}}
+                                                    class="fas {{ ($driver->user?->status ?? 'active') === 'banned' ? 'fa-user-check' : 'fa-user-slash' }}"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -1708,15 +1715,15 @@
 
         // Toggle driver status
         function toggleStatus(driverId, currentStatus) {
-            const newStatus = currentStatus == 'active' ? 'inactive' : 'active';
-            const action = newStatus == 'active' ? 'تفعيل' : 'تعطيل';
+            const newStatus = currentStatus === 'banned' ? 'active' : 'banned';
+            const action = newStatus === 'active' ? 'فك حظر' : 'حظر';
 
             Swal.fire({
                 title: `${action} السائق`,
                 text: `هل أنت متأكد من ${action} هذا السائق؟`,
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: newStatus == 'active' ? '#198754' : '#dc3545',
+                confirmButtonColor: newStatus === 'active' ? '#198754' : '#dc3545',
                 cancelButtonColor: '#3085d6',
                 confirmButtonText: `نعم، ${action}`,
                 cancelButtonText: 'إلغاء'
@@ -1725,6 +1732,12 @@
                     $.ajax({
                         url: `/admin/drivers/${driverId}/toggle-status`,
                         type: 'POST',
+                        dataType: 'json',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
                         data: {
                             _token: '{{ csrf_token() }}',
                             status: newStatus
@@ -1753,7 +1766,7 @@
                             Swal.fire({
                                 icon: 'error',
                                 title: 'خطأ!',
-                                text: xhr.responseJSON?.message || 'حدث خطأ أثناء تغيير الحالة'
+                                text: xhr.responseJSON?.message || xhr.responseText || 'حدث خطأ أثناء تغيير الحالة'
                             });
                         }
                     });

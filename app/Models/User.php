@@ -11,6 +11,7 @@ use App\Traits\CustomNotifiable;
 use App\Models\Wallet\UserWallet;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Wallet\LedgerEntry;
+use Illuminate\Support\Str;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable as LaravelNotifiable;
@@ -72,6 +73,22 @@ class User extends Authenticatable
     public function isPhoneVerified(): bool
     {
         return !is_null($this->phone_verified_at);
+    }
+
+    /**
+     * Check if the user account is active.
+     */
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    /**
+     * Check if the user account is banned.
+     */
+    public function isBanned(): bool
+    {
+        return $this->status === 'banned';
     }
 
     /**
@@ -175,6 +192,23 @@ class User extends Authenticatable
         return $this->hasMany(DeviceToken::class)->where('is_active', true);
     }
 
+    /**
+     * Revoke all authenticated sessions/devices for this user.
+     */
+    public function revokeAllSessions(): void
+    {
+        $this->tokens()->delete();
+
+        $this->deviceTokens()->update([
+            'is_active' => false,
+            'session_id' => null,
+        ]);
+
+        $this->forceFill([
+            'remember_token' => Str::random(60),
+        ])->saveQuietly();
+    }
+
 
 
     /**
@@ -245,7 +279,7 @@ public function reviews()
      */
     public function canTransact(float $amount, string $type = 'withdrawal'): bool
     {
-        if ($this->status !== 'active') {
+        if (!$this->isActive()) {
             return false;
         }
 
