@@ -226,7 +226,7 @@ class OrderController extends Controller
 
     private function sendOrderWhatsappNotification(Order $order): void
     {
-        +$recipients = $this->resolveOrderWhatsappRecipients();
+        $recipients = $this->resolveOrderWhatsappRecipients();
 
         if (empty($recipients)) {
             Log::warning('Order WhatsApp recipient is not configured.', [
@@ -359,6 +359,41 @@ class OrderController extends Controller
         ]);
     }
 
+    private function resolveNumericValue(mixed $value, float $default, string $context): float
+    {
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        if (is_array($value)) {
+            $numericValue = null;
+
+            array_walk_recursive($value, function ($item) use (&$numericValue) {
+                if ($numericValue === null && is_numeric($item)) {
+                    $numericValue = (float) $item;
+                }
+            });
+
+            if ($numericValue !== null) {
+                Log::warning('Numeric value arrived as array; using first numeric item.', [
+                    'context' => $context,
+                    'value' => $value,
+                    'resolved' => $numericValue,
+                ]);
+
+                return $numericValue;
+            }
+        }
+
+        Log::warning('Invalid numeric value encountered; falling back to default.', [
+            'context' => $context,
+            'value' => $value,
+            'default' => $default,
+        ]);
+
+        return $default;
+    }
+
     /**
      * قبول السائق للطلب
      */
@@ -415,11 +450,17 @@ class OrderController extends Controller
             // ✅ إضافة وقت انتهاء الصلاحية للعرض (مثلاً 3 دقائق)
             $offerExpirationMinutes = env('OFFER_EXPIRATION_MINUTES', 3);
             $expiredAt = Carbon::now()->addMinutes($offerExpirationMinutes);
+            $basePrice = (float) $validated['price'];
+            $vatPercentage = $this->resolveNumericValue(
+                config('services.percentages.vat', 15),
+                15.0,
+                'services.percentages.vat'
+            );
 
             $offer = OrderOffer::create([
                 'order_id' => $orderId,
                 'driver_id' => $driver->id,
-                'price' => $validated['price'] + ($validated['price'] * (config('services.percentages.vat', 15) / 100)),
+                'price' => $basePrice + ($basePrice * ($vatPercentage / 100)),
                 'delivery_duration_minutes' => $validated['delivery_duration_minutes'],
                 'status' => 'pending',
                 'expires_at' => $expiredAt, // 
