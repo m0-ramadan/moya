@@ -193,16 +193,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Revoke all authenticated sessions/devices for this user.
+     * Revoke authenticated API sessions for this user without touching device tokens.
      */
     public function revokeAllSessions(): void
     {
         $this->tokens()->delete();
-
-        $this->deviceTokens()->update([
-            'is_active' => false,
-            'session_id' => null,
-        ]);
 
         $this->forceFill([
             'remember_token' => Str::random(60),
